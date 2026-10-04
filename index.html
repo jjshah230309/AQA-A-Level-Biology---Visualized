@@ -1,0 +1,1795 @@
+<!doctype html>
+<!-- AQA A-level Biology topic by topic -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AQA A-level Biology, topic by topic</title><link rel="icon" href="data:,">
+<style>
+html,body{margin:0;height:100%;background:#26211d;overflow:hidden;font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block;cursor:grab}canvas:active{cursor:grabbing}
+#card{position:fixed;left:24px;top:50%;width:min(430px,34vw);max-height:84vh;overflow:auto;box-sizing:border-box;background:#f6eedb;color:#2a3a66;border:2px solid #3d5588;border-radius:6px 16px 6px 16px;padding:15px 18px 12px;box-shadow:6px 7px 0 #ff48b0b0,0 14px 44px #000a;opacity:0;pointer-events:none;transform:translateY(-44%);transition:opacity .5s,transform .5s}
+#card.on{opacity:1;pointer-events:auto;transform:translateY(-50%)}
+#card .n{font-weight:700;letter-spacing:.06em;color:#00838a}#card .n b{background:#ff48b0;color:#fff;padding:1px 7px;border-radius:9px;margin-left:6px;font-size:12px;letter-spacing:0}
+#card h2{margin:2px 0 3px;font:700 21px/1.18 Georgia,"Times New Roman",serif;color:#3d5588}#card .s{font-size:13px;color:#7b6f5a;margin-bottom:5px}#card p{margin:8px 0}
+#card .t span{display:inline-block;margin:2px 4px 2px 0;padding:1px 8px;border:1.5px solid #3d5588;border-radius:10px;font-size:12.5px;background:#fff8}
+#card .e{margin:9px 0;padding:7px 10px;background:#ffe80044;border-left:4px solid #ffc800;border-radius:3px}#card .e i{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a6d00}#card .e small{display:block;font-size:12px;color:#5b5238}
+#card math{font-size:1.18em}#card .q{margin:8px 0 2px;padding:6px 10px;background:#00838a1c;border-radius:4px}#card .q summary{cursor:pointer;font-weight:600;color:#00656b}#card .h{margin-top:9px;font-size:11px;color:#9a8e76}
+@media(max-width:759px){#card{left:0;right:0;top:auto;bottom:0;width:auto;max-height:50vh;border-radius:16px 16px 0 0;transform:translateY(10%);padding-bottom:max(12px,env(safe-area-inset-bottom))}#card.on{transform:none}#card h2{font-size:18px}#card .h{display:none}}
+</style></head><body><canvas id="c"></canvas><div id="card"></div>
+<script>
+'use strict';
+/* ===================== 10 CORE: maths, PRNG, noise, inks ===================== */
+const TAU = Math.PI * 2, PI = Math.PI;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = t => t * t * (3 - 2 * t);
+const sat = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const rad = d => d * PI / 180;
+
+function hashStr(s) {
+  let h = 1779033703 ^ s.length;
+  for (let i = 0; i < s.length; i++) { h = Math.imul(h ^ s.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; }
+  h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909);
+  return (h ^ h >>> 16) >>> 0;
+}
+const mix2 = (a, b) => { let h = Math.imul(a ^ 0x9E3779B9, 0x85EBCA6B) ^ Math.imul(b + 0x7F4A7C15, 0xC2B2AE35); h ^= h >>> 15; h = Math.imul(h, 0x2C1B3C6D); h ^= h >>> 12; return h >>> 0; };
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* 4 spot inks, print order Y,P,T,B.  Colours are the multiply (transmittance) colour of a solid ink on paper. */
+const INK = {
+  Y: { bit: 1, idx: 0, name: 'Yellow', hex: '#FFE800', rgb: [255, 232, 0] },
+  P: { bit: 2, idx: 1, name: 'Fluorescent Pink', hex: '#FF48B0', rgb: [255, 72, 176] },
+  T: { bit: 4, idx: 2, name: 'Teal', hex: '#00838A', rgb: [0, 131, 138] },
+  B: { bit: 8, idx: 3, name: 'Federal Blue', hex: '#3D5588', rgb: [61, 85, 136] },
+};
+const INK_ORDER = ['Y', 'P', 'T', 'B'];
+const PAPER = [242, 232, 210];
+function inkMask(s) { let m = 0; for (let i = 0; i < s.length; i++) { const k = INK[s[i]]; if (k) m |= k.bit; } return m; }
+
+/* 1-D value-noise lattice, cubic-smoothed. Fills Float32Array `a` with values in [-1,1]. */
+function fillLattice(rng, n, closed) {
+  const a = new Float32Array(n + 3);
+  for (let i = 0; i < n; i++) a[i] = rng() * 2 - 1;
+  if (closed) { a[n] = a[0]; a[n + 1] = a[1]; a[n + 2] = a[2]; }
+  else { a[n] = rng() * 2 - 1; a[n + 1] = rng() * 2 - 1; a[n + 2] = rng() * 2 - 1; }
+  return a;
+}
+function lat(a, x) {
+  const i = x | 0, f = x - i, t = f * f * (3 - 2 * f);
+  return a[i] + (a[i + 1] - a[i]) * t;
+}
+
+/* Poly utilities */
+function polyArea(p) { let a = 0; for (let i = 0, n = p.length; i < n; i += 2) { const j = (i + 2) % n; a += p[i] * p[j + 1] - p[j] * p[i + 1]; } return a / 2; }
+function pointInPoly(x, y, p) {
+  let c = false;
+  for (let i = 0, n = p.length, j = n - 2; i < n; j = i, i += 2) {
+    const xi = p[i], yi = p[i + 1], xj = p[j], yj = p[j + 1];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+/* Catmull-Rom resample. pts flat [x,y,...]; returns flat array with ~`sp` spacing */
+function catmull(p, closed, sp) {
+  const n = p.length / 2;
+  if (n < 2) return p.slice();
+  const out = [];
+  const get = (i) => {
+    if (closed) { i = ((i % n) + n) % n; } else { i = i < 0 ? 0 : i >= n ? n - 1 : i; }
+    return [p[i * 2], p[i * 2 + 1]];
+  };
+  const segs = closed ? n : n - 1;
+  for (let s = 0; s < segs; s++) {
+    const p0 = get(s - 1), p1 = get(s), p2 = get(s + 1), p3 = get(s + 2);
+    const L = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
+    const k = Math.max(1, Math.ceil(L / sp));
+    for (let j = 0; j < k; j++) {
+      const t = j / k, t2 = t * t, t3 = t2 * t;
+      out.push(
+        0.5 * ((2 * p1[0]) + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        0.5 * ((2 * p1[1]) + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3));
+    }
+  }
+  if (!closed) out.push(p[(n - 1) * 2], p[(n - 1) * 2 + 1]);
+  return out;
+}
+/* straight-segment densify */
+function densify(p, closed, sp) {
+  const n = p.length / 2, out = [];
+  const segs = closed ? n : n - 1;
+  for (let s = 0; s < segs; s++) {
+    const a = s * 2, b = ((s + 1) % n) * 2;
+    const L = Math.hypot(p[b] - p[a], p[b + 1] - p[a + 1]);
+    const k = Math.max(1, Math.ceil(L / sp));
+    for (let j = 0; j < k; j++) { const t = j / k; out.push(p[a] + (p[b] - p[a]) * t, p[a + 1] + (p[b + 1] - p[a + 1]) * t); }
+  }
+  if (!closed) out.push(p[(n - 1) * 2], p[(n - 1) * 2 + 1]);
+  return out;
+}
+
+/* ===================== 11 STROKE FONT (single-line, hand-drawn) =====================
+   Glyph box: cap height 7 (y=0 top, y=7 baseline), x-height top y=2.6, descender to y=10.
+   Stroke strings: "x,y x,y ..." ; leading 'c' = smooth open curve, 'o' = smooth closed curve. */
+const GLYPHS = (() => {
+  const E = (cx, cy, rx, ry, a0, a1, n) => {
+    const o = [];
+    for (let i = 0; i <= n; i++) { const a = rad(a0 + (a1 - a0) * i / n); o.push((cx + Math.cos(a) * rx).toFixed(2) + ',' + (cy + Math.sin(a) * ry).toFixed(2)); }
+    return o.join(' ');
+  };
+  const Ec = (cx, cy, rx, ry, n = 10) => 'o' + E(cx, cy, rx, ry, -90, 270, n).split(' ').slice(0, n).join(' ');
+  const G = {};
+  const def = (ch, w, ...s) => { G[ch] = [w, ...s]; };
+  // ---- uppercase
+  def('A', 6, '0,7 2.6,0 5.2,7', '0.9,4.7 4.3,4.7');
+  def('B', 5.4, '0,0 0,7', 'c0,0 2.4,0 3.9,0.6 4,1.8 3.5,3 2.3,3.4 0,3.5', 'c0,3.5 2.8,3.5 4.5,4.2 4.7,5.3 4.2,6.5 2.7,7 0,7');
+  def('C', 5.6, 'c4.9,1.3 4,0.3 2.6,0 1.2,0.5 0.3,2 0.1,3.5 0.4,5.2 1.4,6.6 2.8,7 4.1,6.6 4.9,5.6');
+  def('D', 5.6, '0,0 0,7', 'c0,0 2.4,0 4,0.8 4.8,2.4 4.9,4 4.4,5.8 3.2,6.8 1.8,7 0,7');
+  def('E', 4.8, '4.4,0 0,0 0,7 4.4,7', '0,3.5 3.4,3.5');
+  def('F', 4.6, '4.4,0 0,0 0,7', '0,3.5 3.4,3.5');
+  def('G', 6, 'c5,1.3 4.1,0.3 2.8,0 1.3,0.4 0.3,2 0.1,3.5 0.4,5.3 1.4,6.6 2.9,7 4.4,6.6 5.2,5.4 5.2,3.7', '2.9,3.7 5.2,3.7');
+  def('H', 5.6, '0,0 0,7', '4.6,0 4.6,7', '0,3.5 4.6,3.5');
+  def('I', 2.4, '0.2,0 2.2,0', '1.2,0 1.2,7', '0.2,7 2.2,7');
+  def('J', 4, 'c3.4,0 3.4,5.2 3.2,6.1 2.6,6.9 1.6,7 0.8,6.7 0.2,5.7');
+  def('K', 5.4, '0,0 0,7', '4.6,0 0,4.2', '1.4,3.2 4.8,7');
+  def('L', 4.4, '0,0 0,7 4.2,7');
+  def('M', 7, '0,7 0,0 3.3,5.2 6.6,0 6.6,7');
+  def('N', 5.6, '0,7 0,0 4.8,7 4.8,0');
+  def('O', 6.2, Ec(3.1, 3.5, 2.9, 3.5, 12));
+  def('P', 5, '0,0 0,7', 'c0,0 2.4,0 3.8,0.5 4.5,1.6 4.4,2.9 3.4,3.8 2,4.1 0,4.2');
+  def('Q', 6.2, Ec(3.1, 3.5, 2.9, 3.5, 12), '3.6,5 5.8,7.7');
+  def('R', 5.6, '0,0 0,7', 'c0,0 2.4,0 3.9,0.5 4.6,1.6 4.5,2.9 3.5,3.8 2,4.1 0,4.2', '2,4.2 4.9,7');
+  def('S', 5.2, 'c4.5,1.2 4,0.3 2.8,0 1.4,0.2 0.6,1.1 0.7,2.3 1.6,3.1 2.8,3.6 4.2,4.2 4.7,5.2 4.3,6.4 3,7 1.6,6.9 0.5,5.9');
+  def('T', 5.2, '0,0 5,0', '2.5,0 2.5,7');
+  def('U', 5.6, 'c0,0 0,4.4 0.4,5.9 1.4,6.8 2.4,7 3.4,6.8 4.4,5.9 4.8,4.4 4.8,0');
+  def('V', 5.6, '0,0 2.6,7 5.2,0');
+  def('W', 8, '0,0 1.9,7 3.9,1.6 5.9,7 7.8,0');
+  def('X', 5.4, '0,0 5,7', '5,0 0,7');
+  def('Y', 5.4, '0,0 2.6,3.6 5.2,0', '2.6,3.6 2.6,7');
+  def('Z', 5.2, '0,0 4.8,0 0,7 4.8,7');
+  // ---- lowercase
+  def('a', 5, Ec(2.2, 4.8, 2.1, 2.2, 10), '4.3,2.6 4.3,7');
+  def('b', 5, '0.2,0 0.2,7', Ec(2.5, 4.8, 2.1, 2.2, 10));
+  def('c', 4.4, 'c' + E(2.3, 4.8, 2.1, 2.2, -40, -320, 8));
+  def('d', 5, Ec(2.2, 4.8, 2.1, 2.2, 10), '4.3,0 4.3,7');
+  def('e', 4.8, '0.2,4.8 4.4,4.8', 'c' + E(2.3, 4.8, 2.1, 2.2, 0, -320, 9));
+  def('f', 3.2, 'c3.2,0.3 2.4,0 1.6,0.6 1.4,1.8 1.4,7', '0,2.7 3,2.7');
+  def('g', 5, Ec(2.2, 4.8, 2.1, 2.2, 10), 'c4.3,2.6 4.3,8 4.1,9.2 3.2,10 1.8,10 0.6,9.4');
+  def('h', 5, '0.2,0 0.2,7', '0.2,4.8 0.8,3.3 1.9,2.6 3.1,2.7 3.9,3.6 4.1,5 4.1,7');
+  def('i', 2.2, '1,2.6 1,7', '1,0.2 1,0.7');
+  def('j', 2.6, '1.4,2.6 1.4,8.5 1.2,9.6 0.3,10', '1.4,0.2 1.4,0.7');
+  def('k', 4.4, '0.2,0 0.2,7', '3.8,2.6 0.2,5.2', '1.3,4.5 4.2,7');
+  def('l', 2.2, '1,0 1,7');
+  def('m', 7.4, '0.2,2.6 0.2,7', '0.2,4.2 0.7,3.1 1.7,2.6 2.7,2.8 3.3,3.8 3.3,7', '3.3,4.2 3.9,3.1 4.9,2.6 5.9,2.8 6.5,3.8 6.5,7');
+  def('n', 5, '0.2,2.6 0.2,7', '0.2,4.4 0.8,3.2 1.9,2.6 3.1,2.8 3.9,3.7 4.1,5 4.1,7');
+  def('o', 5, Ec(2.4, 4.8, 2.2, 2.2, 10));
+  def('p', 5, '0.2,2.6 0.2,10', Ec(2.5, 4.8, 2.1, 2.2, 10));
+  def('q', 5, Ec(2.2, 4.8, 2.1, 2.2, 10), '4.3,2.6 4.3,10');
+  def('r', 3.6, '0.2,2.6 0.2,7', '0.2,4.6 0.8,3.3 1.8,2.6 3,2.7');
+  def('s', 4.2, 'c3.6,3.4 3.1,2.7 2,2.6 0.9,2.8 0.5,3.7 1.2,4.6 2.2,4.9 3.4,5.5 3.8,6.3 3.2,6.9 2,7 0.9,6.8 0.3,6.1');
+  def('t', 3.6, '1.3,0.8 1.3,6 1.5,6.8 2.3,7 3.2,6.9', '0,2.7 3.2,2.7');
+  def('u', 5, 'c0.2,2.6 0.2,5 0.6,6.3 1.6,6.9 2.8,6.8 3.8,6 4.1,4.8', '4.1,2.6 4.1,7');
+  def('v', 4.8, '0,2.6 2.3,7 4.6,2.6');
+  def('w', 7, '0,2.6 1.6,7 3.4,3.4 5.2,7 6.8,2.6');
+  def('x', 4.6, '0,2.6 4.4,7', '4.4,2.6 0,7');
+  def('y', 4.8, '0,2.6 2.3,7', '4.6,2.6 2.3,7 1.7,8.8 0.9,9.8 0,10');
+  def('z', 4.4, '0,2.6 4,2.6 0,7 4.2,7');
+  // ---- digits
+  def('0', 4.8, Ec(2.3, 3.5, 2.1, 3.5, 10));
+  def('1', 3.2, '0.6,1.4 1.9,0 1.9,7', '0.8,7 3,7');
+  def('2', 4.8, 'c0.3,1.6 0.7,0.5 1.7,0 2.9,0 4,0.6 4.3,1.8 3.8,3.1 2.6,4.3 1.2,5.6 0.2,6.6 0,7', '0,7 4.4,7');
+  def('3', 4.8, 'c0.3,1.2 1,0.2 2.2,0 3.4,0.3 4,1.3 3.7,2.5 2.7,3.2 1.6,3.4', 'c1.6,3.4 3,3.5 4,4.2 4.3,5.3 3.8,6.5 2.6,7 1.4,7 0.4,6.4 0,5.6');
+  def('4', 5, '3.6,7 3.6,0 0,5.2 4.8,5.2');
+  def('5', 4.8, '4.2,0 0.8,0 0.5,3.2', 'c0.5,3.2 1.5,2.7 2.7,2.8 3.8,3.5 4.3,4.7 4,6 3,6.9 1.8,7 0.7,6.6 0.1,5.7');
+  def('6', 4.8, 'c4,0.8 3.2,0.1 2.1,0 1,0.8 0.3,2.4 0.2,4.6', Ec(2.3, 4.8, 2.1, 2.2, 10));
+  def('7', 4.8, '0,0 4.4,0 1.6,7');
+  def('8', 4.8, Ec(2.3, 1.9, 1.8, 1.9, 9), Ec(2.3, 5.2, 2.1, 1.8, 9));
+  def('9', 4.8, Ec(2.3, 2.2, 2.1, 2.2, 10), 'c4.4,2.5 4.3,4.8 3.5,6.1 2.5,6.8 1.3,7 0.4,6.4');
+  // ---- punctuation / maths
+  def('.', 1.8, '0.9,6.5 0.9,7');
+  def(',', 1.8, '1,6.5 0.9,7.3 0.5,8.3');
+  def(':', 1.8, '0.9,2.9 0.9,3.3', '0.9,6.5 0.9,7');
+  def(';', 1.8, '0.9,2.9 0.9,3.3', '1,6.5 0.9,7.3 0.5,8.3');
+  def('-', 3.4, '0.3,3.6 3,3.6');
+  def('−', 4.4, '0.4,3.8 4,3.8');
+  def('–', 4.4, '0.2,3.6 4.2,3.6');
+  def('+', 4.6, '0.6,3.8 4,3.8', '2.3,2 2.3,5.6');
+  def('=', 4.6, '0.6,2.8 4,2.8', '0.6,4.9 4,4.9');
+  def('×', 4.4, '0.6,2 3.8,5.6', '3.8,2 0.6,5.6');
+  def('÷', 4.6, '0.6,3.8 4,3.8', '2.3,1.9 2.3,2.2', '2.3,5.4 2.3,5.7');
+  def('/', 3.6, '0.2,7.6 3.4,-0.4');
+  def('(', 2.8, 'c2.2,-0.8 1.1,0.6 0.8,3.5 1.1,6.4 2.2,8');
+  def(')', 2.8, 'c0.6,-0.8 1.7,0.6 2,3.5 1.7,6.4 0.6,8');
+  def('[', 2.6, '2.2,-0.6 0.6,-0.6 0.6,7.6 2.2,7.6');
+  def(']', 2.6, '0.4,-0.6 2,-0.6 2,7.6 0.4,7.6');
+  def('%', 6.8, Ec(1.5, 1.7, 1.3, 1.5, 8), Ec(5.2, 5.3, 1.3, 1.5, 8), '5.9,0 0.9,7');
+  def('°', 2.8, Ec(1.4, 1.3, 1.1, 1.1, 8));
+  def("'", 1.6, '0.8,0 0.7,1.8');
+  def('′', 1.8, '1,0 0.7,2');
+  def('"', 2.6, '0.7,0 0.6,1.8', '1.9,0 1.8,1.8');
+  def('?', 4.2, 'c0.4,1.4 1,0.3 2,0 3.2,0.3 3.8,1.3 3.4,2.5 2.4,3.4 2.1,4.4 2.1,5', '2.1,6.5 2.1,7');
+  def('!', 1.8, '0.9,0 0.9,4.8', '0.9,6.5 0.9,7');
+  def('·', 1.8, '0.9,3.5 0.9,3.9');
+  def('±', 4.6, '0.6,3 4,3', '2.3,1.2 2.3,4.8', '0.6,6.6 4,6.6');
+  def('≈', 4.6, 'c0.4,3 1.2,2.3 2.3,3 3.4,3.7 4.2,3', 'c0.4,5.4 1.2,4.7 2.3,5.4 3.4,6.1 4.2,5.4');
+  def('~', 4.6, 'c0.2,4.2 0.9,2.8 2.2,3.2 3.4,4.6 4.4,3.8');
+  def('<', 4.4, '4,1.4 0.5,3.7 4,6');
+  def('>', 4.4, '0.5,1.4 4,3.7 0.5,6');
+  def('≤', 4.4, '4,0.8 0.5,3 4,5.2', '0.5,6.6 4,6.6');
+  def('≥', 4.4, '0.5,0.8 4,3 0.5,5.2', '0.5,6.6 4,6.6');
+  def('≪', 7, '3.6,1.4 0.4,3.7 3.6,6', '6.6,1.4 3.4,3.7 6.6,6');
+  def('≫', 7, '0.4,1.4 3.6,3.7 0.4,6', '3.4,1.4 6.6,3.7 3.4,6');
+  def('∝', 6, Ec(1.9, 4.8, 1.7, 1.8, 8), 'c3.4,4.6 4.4,3.4 5.8,3');
+  def('∞', 6.4, 'o0.2,4.7 1,3.3 2.2,3.3 3.2,4.7 4.2,6.1 5.4,6.1 6.2,4.7 5.4,3.3 4.2,3.3 3.2,4.7 2.2,6.1 1,6.1');
+  def('→', 7, '0.2,3.6 6.6,3.6', '4.6,1.6 6.7,3.6 4.6,5.6');
+  def('←', 7, '0.4,3.6 6.8,3.6', '2.4,1.6 0.3,3.6 2.4,5.6');
+  def('↑', 4, '2,7 2,0', '0.2,2 2,0 3.8,2');
+  def('↓', 4, '2,0 2,7', '0.2,5 2,7 3.8,5');
+  def('↔', 7.4, '0.4,3.6 7,3.6', '2.4,1.6 0.3,3.6 2.4,5.6', '5,1.6 7.1,3.6 5,5.6');
+  def('⇌', 7, '0.2,2.4 6.6,2.4', '5,0.8 6.8,2.4', '0.4,5.2 6.8,5.2', '2,6.8 0.2,5.2');
+  // ---- greek & symbols
+  def('α', 5.4, Ec(2.1, 4.8, 2, 2.2, 10), 'c4.1,2.6 4.2,5.5 4.6,6.6 5.3,7');
+  def('β', 4.8, 'c0.3,10 0.3,1.6 0.9,0.4 2.2,0 3.4,0.3 3.9,1.4 3.4,2.5 2.4,3.2 1.2,3.6', 'c1.2,3.6 2.8,3.8 4.2,4.4 4.5,5.6 4,6.6 2.8,7 1.2,6.8 0.3,6.2');
+  def('γ', 5, '0,2.6 2.4,7 2.4,10', '4.8,2.6 2.4,7');
+  def('Δ', 6.4, '0,7 3.2,0 6.2,7 0,7');
+  def('Σ', 5.4, '4.8,0 0,0 2.6,3.5 0,7 4.8,7');
+  def('π', 5.6, '0,2.6 5.2,2.6', '1.2,2.6 1,7', '4,2.6 4.2,7');
+  def('ψ', 5.8, 'c0.1,2.4 0.3,5 1.2,6.3 2.8,6.6 4.4,6.3 5.2,5 5.4,2.4', '2.8,0 2.8,10');
+  def('χ', 5, '0.2,2.6 4.6,10', '4.6,2.6 0.2,10');
+  def('θ', 4.6, Ec(2.3, 3.5, 2, 3.5, 10), '0.5,3.5 4.1,3.5');
+  def('μ', 5, '0.2,2.6 0.2,10', 'c0.2,5.6 0.6,6.6 1.6,7 2.7,6.6 3.7,5.6 4.1,4.8', '4.1,2.6 4.1,7');
+  def('µ', 5, '0.2,2.6 0.2,10', 'c0.2,5.6 0.6,6.6 1.6,7 2.7,6.6 3.7,5.6 4.1,4.8', '4.1,2.6 4.1,7');
+  def('δ', 4.8, Ec(2.3, 4.9, 2.1, 2.1, 10), 'c2.4,2.8 1.7,1.7 1.5,0.8 2.2,0.2 3.2,0 4.4,0.3');
+  def('ε', 4.4, 'c3.9,3.3 3.2,2.7 2,2.6 0.9,3 0.8,3.9 1.8,4.6', 'c1.8,4.6 0.7,5.1 0.5,6 1.2,6.8 2.4,7 3.5,6.8 4,6.1');
+  def('—', 7, '0.2,3.6 6.8,3.6');
+  def('{', 2.8, 'c2.4,-0.6 1.4,-0.4 1.4,0.8 1.4,2.4 1.4,3 0.2,3.5 1.4,4 1.4,4.6 1.4,6.2 1.4,7.4 2.4,7.6');
+  def('}', 2.8, 'c0.4,-0.6 1.4,-0.4 1.4,0.8 1.4,2.4 1.4,3 2.6,3.5 1.4,4 1.4,4.6 1.4,6.2 1.4,7.4 0.4,7.6');
+  def('*', 3.4, '1.7,1.2 1.7,4.2', '0.3,1.9 3.1,3.5', '3.1,1.9 0.3,3.5');
+  def('&', 5.6, 'c5,7 2.2,3.8 1.5,2.6 1.3,1.2 2.2,0.2 3.2,0.5 3.4,1.8 2.6,3 0.9,4.5 0.4,5.8 1.2,6.8 2.4,7 3.6,6.2 4.6,4.4');
+  def('λ', 5, '0.2,0 4.6,7', '2.6,3.8 0.1,7');
+  def('τ', 4.8, '0,2.8 4.4,2.8', '2.2,2.8 2.2,6.2 2.6,6.9 3.4,7');
+  def('ρ', 5, '0.3,2.6 0.3,10', Ec(2.5, 4.8, 2.1, 2.2, 10));
+  def('σ', 5, Ec(2.2, 4.9, 2.1, 2.1, 10), '2.2,2.8 4.8,2.8');
+  def('•', 2.4, '1.2,3 1.2,4');
+  def('∆', 6.4, '0,7 3.2,0 6.2,7 0,7');
+  def('√', 5, '0,4.2 1,5.6 2.4,0 5,0');
+  def('∩', 5, 'c0.5,7 0.5,2 1.5,0.6 2.6,0.2 3.7,0.6 4.5,2 4.5,7');
+  def(' ', 3);
+  return G;
+})();
+
+const SUPMAP = { '²': '^2', '³': '^3', '⁴': '^4', '⁵': '^5', '⁺': '^+', '⁻': '^−', '⁰': '^0', '¹': '^1',
+  '₂': '_2', '₃': '_3', '₁': '_1', '₄': '_4', '₀': '_0' };
+const GLYPH_CACHE = new Map(), MISSING_GLYPHS = new Set();
+function glyphStrokes(ch) {
+  let g = GLYPH_CACHE.get(ch);
+  if (g) return g;
+  if (!GLYPHS[ch]) MISSING_GLYPHS.add(ch);
+  const d = GLYPHS[ch] || GLYPHS['?'];
+  g = { w: d[0], strokes: [] };
+  for (let i = 1; i < d.length; i++) {
+    let s = d[i], mode = 0;
+    if (s[0] === 'c') { mode = 1; s = s.slice(1); } else if (s[0] === 'o') { mode = 2; s = s.slice(1); }
+    const pts = [];
+    s.trim().split(/\s+/).forEach(t => { const xy = t.split(','); pts.push(+xy[0], +xy[1]); });
+    g.strokes.push({ mode, pts });
+  }
+  GLYPH_CACHE.set(ch, g);
+  return g;
+}
+/* Parse label markup: ^x  _x  ^{...} _{...} -> array of {ch, lvl} (lvl 0 normal, 1 super, -1 sub) */
+const NORM = { '\u2019': "'", '\u2018': "'", '\u201C': '"', '\u201D': '"', '\u2010': '-', '\u2011': '-', '\u2026': '...', '\u00A0': ' ', '\u2212': '\u2212' };
+function parseLabel(str) {
+  let s = '';
+  for (const c of str) s += SUPMAP[c] || NORM[c] || c;
+  const out = [];
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if ((c === '^' || c === '_') && i + 1 < s.length) {
+      const lvl = c === '^' ? 1 : -1;
+      if (s[i + 1] === '{') { const j = s.indexOf('}', i + 2); const body = s.slice(i + 2, j < 0 ? s.length : j); for (const b of body) out.push({ ch: b, lvl }); i = j < 0 ? s.length : j; }
+      else { out.push({ ch: s[i + 1], lvl }); i++; }
+    } else out.push({ ch: c, lvl: 0 });
+  }
+  return out;
+}
+function labelWidth(str, size) {
+  const k = size / 7; let w = 0;
+  for (const t of parseLabel(str)) { const g = glyphStrokes(t.ch); w += (g.w + 1.1) * k * (t.lvl ? 0.68 : 1); }
+  return w;
+}
+
+/* ===================== 12 RECORDER: hand-drawn strokes -> display lists ===================== */
+const F_SOLID = 16, F_KNOCK = 32;
+class DL {
+  constructor() { this.b = new Float32Array(4096); this.n = 0; this.count = 0; this.minx = 1e9; this.miny = 1e9; this.maxx = -1e9; this.maxy = -1e9; }
+  _grow(k) {
+    if (this.n + k > this.b.length) {
+      let nl = this.b.length * 2; while (nl < this.n + k) nl *= 2;
+      const nb = new Float32Array(nl); nb.set(this.b.subarray(0, this.n)); this.b = nb;
+    }
+  }
+  poly(flags, alpha, p, x0, y0, x1, y1) {
+    const len = p.length; this._grow(8 + len);
+    const b = this.b; let n = this.n;
+    b[n] = 0; b[n + 1] = flags; b[n + 2] = alpha; b[n + 3] = len >> 1; b[n + 4] = x0; b[n + 5] = y0; b[n + 6] = x1; b[n + 7] = y1;
+    for (let i = 0; i < len; i++) b[n + 8 + i] = p[i];
+    this.n = n + 8 + len; this.count++;
+    if (x0 < this.minx) this.minx = x0; if (y0 < this.miny) this.miny = y0; if (x1 > this.maxx) this.maxx = x1; if (y1 > this.maxy) this.maxy = y1;
+  }
+  circle(flags, alpha, x, y, r) {
+    this._grow(11); const b = this.b; let n = this.n;
+    b[n] = 1; b[n + 1] = flags; b[n + 2] = alpha; b[n + 3] = 1; b[n + 4] = x - r; b[n + 5] = y - r; b[n + 6] = x + r; b[n + 7] = y + r;
+    b[n + 8] = x; b[n + 9] = y; b[n + 10] = r;
+    this.n = n + 11; this.count++;
+    if (x - r < this.minx) this.minx = x - r; if (y - r < this.miny) this.miny = y - r; if (x + r > this.maxx) this.maxx = x + r; if (y + r > this.maxy) this.maxy = y + r;
+  }
+  done() { this.b = this.b.slice(0, this.n); return this; }
+  bytes() { return this.b.byteLength; }
+}
+
+function flat(p) {
+  if (!p.length) return [];
+  if (typeof p[0] === 'number') return p;
+  const o = new Array(p.length * 2);
+  for (let i = 0; i < p.length; i++) { o[i * 2] = p[i][0]; o[i * 2 + 1] = p[i][1]; }
+  return o;
+}
+
+class Recorder {
+  constructor(dl, seed, variant) {
+    this.dl = dl; this.seed = seed; this.variant = variant; this.v = variant;
+    this.rng = mulberry32(seed ^ 0x51ED270B);          // structural: identical in every variant
+    this.vr = mulberry32(mix2(seed, 977 + variant * 31)); // variant-dependent
+    this.pc = 0;
+    this.m = [1, 0, 0, 1, 0, 0]; this.stack = [];
+    this.wobK = 1; this.lo = false;
+  }
+  /* ---- transforms ---- */
+  push(tx = 0, ty = 0, rot = 0, sc = 1, sy) {
+    this.stack.push(this.m.slice());
+    const m = this.m, c = Math.cos(rot) * sc, s = Math.sin(rot) * sc, sy2 = sy === undefined ? 1 : sy;
+    // M' = M * [c -s*sy2 ; s c*sy2]
+    const a = m[0] * c + m[2] * s, b = m[1] * c + m[3] * s;
+    const cc = (m[0] * -s + m[2] * c) * sy2, d = (m[1] * -s + m[3] * c) * sy2;
+    const e = m[0] * tx + m[2] * ty + m[4], f = m[1] * tx + m[3] * ty + m[5];
+    this.m = [a, b, cc, d, e, f];
+    return this;
+  }
+  pop() { this.m = this.stack.pop(); return this; }
+  get scale() { return Math.hypot(this.m[0], this.m[1]); }
+  tp(p) { // transform flat pts -> new flat array
+    const m = this.m, n = p.length, o = new Array(n);
+    for (let i = 0; i < n; i += 2) { const x = p[i], y = p[i + 1]; o[i] = m[0] * x + m[2] * y + m[4]; o[i + 1] = m[1] * x + m[3] * y + m[5]; }
+    return o;
+  }
+  pt(x, y) { const m = this.m; return [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]]; }
+  prng() { this.pc++; return mulberry32(mix2(mix2(this.seed, this.pc * 2654435761 >>> 0), this.variant * 7919 + 13)); }
+
+  /* ---- core stroke ---- */
+  stroke(pts, o = {}) {
+    let p = flat(pts);
+    if (p.length < 4) return this;
+    const ink = inkMask(o.ink === undefined ? 'B' : o.ink); if (!ink) return this;
+    const closed = !!o.closed;
+    p = this.tp(p);
+    const sc = this.scale;
+    let q;
+    const smoothOn = o.smooth !== undefined ? o.smooth : (p.length > 4 && !o.sharp);
+    q = smoothOn ? catmull(p, closed, 2.6) : densify(p, closed, 3.2);
+    const n = q.length / 2;
+    if (n < 2) return this;
+    const w = (o.w === undefined ? 1.1 : o.w);
+    const amp = (o.wob === undefined ? 0.5 : o.wob) * this.wobK;
+    const rng = this.prng();
+    // cumulative length
+    const S = new Float32Array(n);
+    let L = 0;
+    for (let i = 1; i < n; i++) { L += Math.hypot(q[i * 2] - q[i * 2 - 2], q[i * 2 + 1] - q[i * 2 - 1]); S[i] = L; }
+    if (closed) L += Math.hypot(q[0] - q[n * 2 - 2], q[1] - q[n * 2 - 1]);
+    if (L < 0.05) return this;
+    const K1 = closed ? Math.max(2, Math.round(L / 15)) : Math.ceil(L / 15) + 1;
+    const K2 = closed ? Math.max(3, Math.round(L / 5.5)) : Math.ceil(L / 5.5) + 1;
+    const K3 = closed ? Math.max(2, Math.round(L / 9)) : Math.ceil(L / 9) + 1;
+    const A = fillLattice(rng, K1, closed), B = fillLattice(rng, K2, closed), W = fillLattice(rng, K3, closed);
+    const invL = 1 / L;
+    const taper = closed ? 'none' : (o.taper || 'both');
+    const tl = Math.min(o.tl === undefined ? 7 : o.tl, L * 0.45);
+    const L1 = new Array(n * 2), R1 = new Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      const i0 = closed ? (i - 1 + n) % n : Math.max(0, i - 1), i1 = closed ? (i + 1) % n : Math.min(n - 1, i + 1);
+      let tx = q[i1 * 2] - q[i0 * 2], ty = q[i1 * 2 + 1] - q[i0 * 2 + 1];
+      const tn = Math.hypot(tx, ty) || 1; tx /= tn; ty /= tn;
+      const nx = -ty, ny = tx;
+      const u = S[i] * invL;
+      const d = amp * (lat(A, u * (closed ? K1 : K1 - 1)) + 0.45 * lat(B, u * (closed ? K2 : K2 - 1)));
+      let wi = w * (1 + 0.17 * lat(W, u * (closed ? K3 : K3 - 1)));
+      if (taper !== 'none') {
+        const s = S[i];
+        if ((taper === 'both' || taper === 'start') && s < tl) wi *= 0.25 + 0.75 * smooth(s / tl);
+        if ((taper === 'both' || taper === 'end') && L - s < tl) wi *= 0.25 + 0.75 * smooth((L - s) / tl);
+      }
+      const px = q[i * 2] + nx * d, py = q[i * 2 + 1] + ny * d, h = wi * 0.5;
+      L1[i * 2] = px + nx * h; L1[i * 2 + 1] = py + ny * h;
+      R1[i * 2] = px - nx * h; R1[i * 2 + 1] = py - ny * h;
+    }
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(L1[i * 2], L1[i * 2 + 1]);
+    if (closed) out.push(L1[0], L1[1], R1[0], R1[1]);
+    for (let i = n - 1; i >= 0; i--) out.push(R1[i * 2], R1[i * 2 + 1]);
+    this._emit(out, ink, o.t === undefined ? 1 : o.t, o.solid === undefined ? true : o.solid, o.knock);
+    return this;
+  }
+  _emit(out, ink, alpha, solid, knock) {
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (let i = 0; i < out.length; i += 2) { const x = out[i], y = out[i + 1]; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    this.dl.poly(ink | (solid ? F_SOLID : 0) | (knock ? F_KNOCK : 0), alpha, out, x0, y0, x1, y1);
+  }
+  /* ---- filled polygon (wobbly edges) ---- */
+  fill(pts, o = {}) {
+    let p = flat(pts);
+    if (p.length < 6) return this;
+    const ink = inkMask(o.ink === undefined ? 'B' : o.ink); if (!ink && !o.knock) return this;
+    p = this.tp(p);
+    const smoothOn = o.smooth !== undefined ? o.smooth : false;
+    const q = smoothOn ? catmull(p, true, 3) : densify(p, true, 4);
+    const n = q.length / 2;
+    const amp = (o.wob === undefined ? 0.45 : o.wob) * this.wobK;
+    const rng = this.prng();
+    let L = 0; const S = new Float32Array(n);
+    for (let i = 1; i < n; i++) { L += Math.hypot(q[i * 2] - q[i * 2 - 2], q[i * 2 + 1] - q[i * 2 - 1]); S[i] = L; }
+    L += Math.hypot(q[0] - q[n * 2 - 2], q[1] - q[n * 2 - 1]);
+    const K1 = Math.max(2, Math.round(L / 14)), K2 = Math.max(3, Math.round(L / 5));
+    const A = fillLattice(rng, K1, true), B = fillLattice(rng, K2, true);
+    const out = new Array(n * 2);
+    for (let i = 0; i < n; i++) {
+      const i0 = (i - 1 + n) % n, i1 = (i + 1) % n;
+      let tx = q[i1 * 2] - q[i0 * 2], ty = q[i1 * 2 + 1] - q[i0 * 2 + 1];
+      const tn = Math.hypot(tx, ty) || 1; tx /= tn; ty /= tn;
+      const u = S[i] / L;
+      const d = amp * (lat(A, u * K1) + 0.45 * lat(B, u * K2));
+      out[i * 2] = q[i * 2] - ty * d; out[i * 2 + 1] = q[i * 2 + 1] + tx * d;
+    }
+    const t = o.t === undefined ? 1 : o.t;
+    this._emit(out, ink, t, o.solid === undefined ? t >= 0.999 : o.solid, o.knock);
+    return this;
+  }
+  knock(pts, o = {}) { return this.fill(pts, Object.assign({}, o, { knock: true, ink: 'B', t: 1, wob: o.wob === undefined ? 0 : o.wob })); }
+  dot(x, y, r, o = {}) {
+    const ink = inkMask(o.ink === undefined ? 'B' : o.ink); if (!ink) return this;
+    const [wx, wy] = this.pt(x, y);
+    const t = o.t === undefined ? 1 : o.t;
+    this.dl.circle(ink | ((o.solid === undefined ? t >= 0.999 : o.solid) ? F_SOLID : 0), t, wx, wy, r * this.scale);
+    return this;
+  }
+  /* ---- shapes. Fill options: fi (ink), ft (tint). Stroke options: ink, w ---- */
+  _shape(pts, o, closedSmooth) {
+    if (o.fi) this.fill(pts, { ink: o.fi, t: o.ft === undefined ? 1 : o.ft, smooth: closedSmooth, wob: o.fwob });
+    if (o.fi2) this.fill(pts, { ink: o.fi2, t: o.ft2 === undefined ? 1 : o.ft2, smooth: closedSmooth, wob: o.fwob });
+    if (o.ink !== '' && o.ink !== null && o.w !== 0) this.stroke(pts, { ink: o.ink === undefined ? 'B' : o.ink, w: o.w === undefined ? 1.1 : o.w, closed: true, smooth: closedSmooth, wob: o.wob, t: o.st });
+    return this;
+  }
+  ellipse(cx, cy, rx, ry, o = {}) {
+    const per = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
+    const n = clamp(Math.round(per / 3.2), 10, 96), rot = o.rot ? rad(o.rot) : 0, cr = Math.cos(rot), sr = Math.sin(rot);
+    const a0 = o.a0 === undefined ? 0 : o.a0;
+    const p = [];
+    for (let i = 0; i < n; i++) {
+      const a = a0 + TAU * i / n, x = Math.cos(a) * rx, y = Math.sin(a) * ry;
+      p.push(cx + x * cr - y * sr, cy + x * sr + y * cr);
+    }
+    return this._shape(p, o, true);
+  }
+  circle(cx, cy, r, o) { return this.ellipse(cx, cy, r, r, o); }
+  rect(x, y, w, h, o = {}) { return this._shape([x, y, x + w, y, x + w, y + h, x, y + h], o, false); }
+  rrectPts(x, y, w, h, r) {
+    r = Math.min(r, w / 2, h / 2);
+    const p = [], seg = 5;
+    const corner = (cx, cy, a0) => { for (let i = 0; i <= seg; i++) { const a = a0 + (PI / 2) * i / seg; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } };
+    corner(x + w - r, y + r, -PI / 2); corner(x + w - r, y + h - r, 0); corner(x + r, y + h - r, PI / 2); corner(x + r, y + r, PI);
+    return p;
+  }
+  rrect(x, y, w, h, r, o = {}) { return this._shape(this.rrectPts(x, y, w, h, r), o, false); }
+  knockRRect(x, y, w, h, r) { return this.knock(this.rrectPts(x, y, w, h, r)); }
+  poly(pts, o = {}) { return this._shape(flat(pts), o, o.smooth === true); }
+  line(x1, y1, x2, y2, o = {}) { return this.stroke([x1, y1, x2, y2], Object.assign({ smooth: false }, o)); }
+  curve(pts, o = {}) { return this.stroke(pts, Object.assign({ smooth: true }, o)); }
+  arc(cx, cy, rx, ry, a0, a1, o = {}) {
+    const n = Math.max(6, Math.ceil(Math.abs(a1 - a0) * Math.max(rx, ry) / 3.5)), p = [];
+    const rot = o.rot ? rad(o.rot) : 0, cr = Math.cos(rot), sr = Math.sin(rot);
+    for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n, x = Math.cos(a) * rx, y = Math.sin(a) * ry; p.push(cx + x * cr - y * sr, cy + x * sr + y * cr); }
+    return this.stroke(p, Object.assign({ smooth: false }, o));
+  }
+  bez(p0, p1, p2, p3, o = {}) {
+    const L = Math.hypot(p3[0] - p0[0], p3[1] - p0[1]) + Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) + Math.hypot(p3[0] - p2[0], p3[1] - p2[1]);
+    const n = Math.max(6, Math.ceil(L / 5)), p = [];
+    for (let i = 0; i <= n; i++) {
+      const t = i / n, u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+      p.push(a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]);
+    }
+    return this.stroke(p, Object.assign({ smooth: false }, o));
+  }
+  /* arrow along pts (curve); head at end (and start if both) */
+  arrow(pts, o = {}) {
+    const p = flat(pts); const n = p.length / 2;
+    const w = o.w === undefined ? 1.1 : o.w, hs = o.hs === undefined ? 3.4 + w * 2.2 : o.hs;
+    const pp = p.slice();
+    const head =(ex, ey, bx, by) => {
+      const dx = ex - bx, dy = ey - by, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+      const tri = [ex, ey, ex - ux * hs - uy * hs * 0.5, ey - uy * hs + ux * hs * 0.5, ex - ux * hs * 0.45, ey - uy * hs * 0.45, ex - ux * hs + uy * hs * 0.5, ey - uy * hs - ux * hs * 0.5];
+      this.fill(tri, { ink: o.ink === undefined ? 'B' : o.ink, wob: 0.12, solid: true });
+    };
+    const back = (idx, dir) => { let j = idx; const ex = p[idx * 2], ey = p[idx * 2 + 1]; while (j + dir >= 0 && j + dir < n && Math.hypot(p[j * 2] - ex, p[j * 2 + 1] - ey) < hs * 0.9) j += dir; return [p[j * 2], p[j * 2 + 1]]; };
+    if (o.noHead !== true) {
+      const e = [p[(n - 1) * 2], p[(n - 1) * 2 + 1]], b = back(n - 1, -1);
+      head(e[0], e[1], b[0], b[1]);
+      const dx = e[0] - b[0], dy = e[1] - b[1], d = Math.hypot(dx, dy) || 1;
+      pp[(n - 1) * 2] = e[0] - dx / d * hs * 0.5; pp[(n - 1) * 2 + 1] = e[1] - dy / d * hs * 0.5;
+      if (o.both) {
+        const s = [p[0], p[1]], b2 = back(0, 1);
+        head(s[0], s[1], b2[0], b2[1]);
+        const dx2 = s[0] - b2[0], dy2 = s[1] - b2[1], d2 = Math.hypot(dx2, dy2) || 1;
+        pp[0] = s[0] - dx2 / d2 * hs * 0.5; pp[1] = s[1] - dy2 / d2 * hs * 0.5;
+      }
+    }
+    return this.stroke(pp, Object.assign({ smooth: n > 2 && o.smooth !== false, taper: 'start' }, o));
+  }
+  /* ---- hatching and stippling ---- */
+  hatch(pts, ang, sp, o = {}) {
+    const p = flat(pts), a = rad(ang), ca = Math.cos(-a), sa = Math.sin(-a), cb = Math.cos(a), sb = Math.sin(a);
+    const r = []; let ymin = 1e9, ymax = -1e9;
+    for (let i = 0; i < p.length; i += 2) { const x = p[i] * ca - p[i + 1] * sa, y = p[i] * sa + p[i + 1] * ca; r.push(x, y); if (y < ymin) ymin = y; if (y > ymax) ymax = y; }
+    const inset = o.inset || 0, skip = o.skip || 0;
+    if (this.lo) sp *= 2.2;
+    for (let y = ymin + sp * 0.5 + (o.off || 0); y < ymax; y += sp) {
+      const xs = [];
+      for (let i = 0, n = r.length, j = n - 2; i < n; j = i, i += 2) {
+        const yi = r[i + 1], yj = r[j + 1];
+        if ((yi <= y && yj > y) || (yj <= y && yi > y)) xs.push(r[i] + (y - yi) / (yj - yi) * (r[j] - r[i]));
+      }
+      xs.sort((u, v) => u - v);
+      for (let k = 0; k + 1 < xs.length; k += 2) {
+        const x0 = xs[k] + inset, x1 = xs[k + 1] - inset; if (x1 - x0 < 0.6) continue;
+        if (skip && this.rng() < skip) continue;
+        this.stroke([x0 * cb - y * sb, x0 * sb + y * cb, x1 * cb - y * sb, x1 * sb + y * cb], { ink: o.ink === undefined ? 'B' : o.ink, w: o.w === undefined ? 0.5 : o.w, wob: o.wob === undefined ? 0.35 : o.wob, smooth: false, t: o.t, tl: 3 });
+      }
+    }
+    return this;
+  }
+  stipple(pts, dens, r, o = {}) { // dens = dots per 100 u^2
+    const p = flat(pts); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (let i = 0; i < p.length; i += 2) { x0 = Math.min(x0, p[i]); x1 = Math.max(x1, p[i]); y0 = Math.min(y0, p[i + 1]); y1 = Math.max(y1, p[i + 1]); }
+    const area = Math.abs(polyArea(p)), cnt = Math.min(4000, Math.round(area * dens / 100));
+    const vj = o.jit === undefined ? 0.35 : o.jit;
+    let made = 0, tries = 0;
+    while (made < cnt && tries < cnt * 12) {
+      tries++;
+      const x = x0 + this.rng() * (x1 - x0), y = y0 + this.rng() * (y1 - y0);
+      const rr = r * (0.6 + this.rng() * 0.8);
+      if (pointInPoly(x, y, p)) { const jx = (this.vr() - 0.5) * vj, jy = (this.vr() - 0.5) * vj; if (!this.lo) this.dot(x + jx, y + jy, rr, { ink: o.ink === undefined ? 'B' : o.ink, t: o.t }); made++; }
+    }
+    return this;
+  }
+  /* scatter dots randomly in an ellipse/rect region using structural rng */
+  scatter(cx, cy, rx, ry, n, r, o = {}) {
+    for (let i = 0; i < n; i++) {
+      const a = this.rng() * TAU, d = Math.sqrt(this.rng());
+      const px = cx + Math.cos(a) * rx * d + (this.vr() - 0.5) * 0.3, py = cy + Math.sin(a) * ry * d + (this.vr() - 0.5) * 0.3, rr = r * (0.7 + this.rng() * 0.6);
+      if (!this.lo) this.dot(px, py, rr, o);
+    }
+    return this;
+  }
+  /* ---- text ---- */
+  text(str, x, y, size = 8, o = {}) {
+    if (this.lo && size < 12) return this;
+    const toks = parseLabel(String(str)), k = size / 7;
+    let width = 0;
+    for (const t of toks) { const g = glyphStrokes(t.ch); width += (g.w + 1.1) * k * (t.lvl ? 0.68 : 1); }
+    width -= 1.1 * k;
+    let cx = o.al === 'c' ? -width / 2 : o.al === 'r' ? -width : 0;
+    const ink = o.ink === undefined ? 'B' : o.ink;
+    const w = o.w === undefined ? Math.max(0.42, size * 0.108) : o.w;
+    this.push(x, y, o.rot ? rad(o.rot) : 0, 1);
+    const wk = this.wobK; this.wobK *= 0.55;
+    for (const t of toks) {
+      const g = glyphStrokes(t.ch), ks = k * (t.lvl ? 0.68 : 1), oy = t.lvl === 1 ? -3.4 * k : t.lvl === -1 ? 2.3 * k : 0;
+      for (const s of g.strokes) {
+        const pts = new Array(s.pts.length);
+        for (let i = 0; i < s.pts.length; i += 2) { pts[i] = cx + s.pts[i] * ks; pts[i + 1] = (s.pts[i + 1] - 7) * ks + oy; }
+        if (s.pts.length === 4 && Math.hypot(s.pts[2] - s.pts[0], s.pts[3] - s.pts[1]) < 0.8) {
+          this.dot((pts[0] + pts[2]) / 2, (pts[1] + pts[3]) / 2, w * 0.62, { ink });
+        } else this.stroke(pts, { ink, w: w * (t.lvl ? 0.85 : 1), wob: 0.2, smooth: s.mode > 0, closed: s.mode === 2, tl: size * 0.22, taper: 'both' });
+      }
+      cx += (g.w + 1.1) * ks;
+    }
+    this.wobK = wk;
+    this.pop();
+    return this;
+  }
+}
+
+/* ===================== 13 RASTER: plates -> halftone -> riso composite -> tile cache ===================== */
+const TILE = 512, MARGIN = 24, PW = TILE + 2 * MARGIN, LOD_N = 13;
+const lodScale = k => 0.25 * Math.pow(2, k / 2);
+const lodFor = s => clamp(Math.ceil(2 * Math.log2(s / 0.25) - 1e-6), 0, LOD_N - 1);
+/* per-ink misregistration: [dx, dy] world units, rotation (rad) about sheet centre */
+const MISREG = [[0, 0, 0], [0.62, -0.4, 0.00019], [-0.48, 0.52, -0.00023], [0.3, 0.46, 0.00012]];
+const SHEET = { x0: 0, y0: 0, x1: 4000, y1: 3000 };
+const LAYERS = [];
+const KR = INK_ORDER.map(c => INK[c].rgb.map(v => 1 - v / 255));
+
+/* ---------- screens (integer-lattice clustered dots, exactly periodic) ---------- */
+const LATSETS = [
+  { Y: [4, 0], P: [1, 4], T: [4, 1], B: [3, 3] },
+  { Y: [6, 0], P: [2, 7], T: [7, 2], B: [5, 5] },
+  { Y: [9, 0], P: [3, 10], T: [10, 3], B: [7, 7] },
+];
+function makeScreen(m, n) {
+  const P = m * m + n * n, N = P * P, f = new Float32Array(N), nz = mulberry32(m * 131 + n * 17 + 7);
+  for (let y = 0; y < P; y++) for (let x = 0; x < P; x++) {
+    const u = ((x + .5) * m + (y + .5) * n) / P, v = (-(x + .5) * n + (y + .5) * m) / P;
+    f[y * P + x] = (2 - (Math.cos(TAU * u) + Math.cos(TAU * v))) / 4 + nz() * 1e-4;
+  }
+  const order = Array.from({ length: N }, (_, i) => i).sort((a, b) => f[a] - f[b]);
+  const t = new Float32Array(N);
+  for (let r = 0; r < N; r++) t[order[r]] = (r + 0.5) / N;
+  return { P, t };
+}
+const SCREENS = LATSETS.map(set => INK_ORDER.map(c => makeScreen(set[c][0], set[c][1])));
+const JIT = (() => { const a = new Float32Array(97 * 101), r = mulberry32(4242); for (let i = 0; i < a.length; i++) a[i] = (r() - 0.5) * 0.11; return a; })();
+/* paper grain 509 x 503 (packed RGB), with fibres */
+const PAPER_W = 509, PAPER_H = 503;
+const PAPER_PX = (() => {
+  const r = mulberry32(99), n = PAPER_W * PAPER_H, f = new Float32Array(n);
+  const G = 48, grid = new Float32Array(G * G); for (let i = 0; i < grid.length; i++) grid[i] = r() * 2 - 1;
+  for (let y = 0; y < PAPER_H; y++) for (let x = 0; x < PAPER_W; x++) {
+    const gx = x / PAPER_W * G, gy = y / PAPER_H * G, ix = gx | 0, iy = gy | 0, fx = gx - ix, fy = gy - iy;
+    const a = grid[iy % G * G + ix % G], b = grid[iy % G * G + (ix + 1) % G], c = grid[(iy + 1) % G * G + ix % G], d = grid[(iy + 1) % G * G + (ix + 1) % G];
+    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+    f[y * PAPER_W + x] = (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy) * 0.012 + (r() - 0.5) * 0.034;
+  }
+  for (let i = 0; i < 1400; i++) { // fibres
+    let x = r() * PAPER_W, y = r() * PAPER_H; const a = r() * TAU, L = 5 + r() * 16, s = (r() - 0.5) * 0.07;
+    for (let j = 0; j < L; j++) { const px = (((x + Math.cos(a) * j) | 0) + PAPER_W) % PAPER_W, py = (((y + Math.sin(a) * j) | 0) + PAPER_H) % PAPER_H; f[py * PAPER_W + px] += s; }
+  }
+  const o = new Uint32Array(n);
+  for (let i = 0; i < n; i++) {
+    const k = 1 + f[i];
+    const rr = clamp(PAPER[0] * k, 0, 255) | 0, gg = clamp(PAPER[1] * k, 0, 255) | 0, bb = clamp(PAPER[2] * k, 0, 255) | 0;
+    o[i] = (bb << 16) | (gg << 8) | rr;
+  }
+  return o;
+})();
+/* ink density maps: roller streaks, starved patches, dropout specks (per ink) */
+const DENS = INK_ORDER.map((c, ink) => {
+  const r = mulberry32(777 + ink * 101), d = new Uint8Array(256 * 256);
+  const rowN = new Float32Array(256), colN = new Float32Array(256);
+  const smoothArr = (arr, w) => { for (let p = 0; p < 2; p++) { const t = arr.slice(); for (let i = 0; i < 256; i++) { let s = 0; for (let j = -w; j <= w; j++) s += t[(i + j + 256) % 256]; arr[i] = s / (2 * w + 1); } } };
+  for (let i = 0; i < 256; i++) { rowN[i] = r() - 0.5; colN[i] = r() - 0.5; } smoothArr(rowN, 4); smoothArr(colN, 9);
+  const f = new Float32Array(65536);
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 256; x++) f[y * 256 + x] = 0.965 + rowN[y] * 0.2 + colN[x] * 0.07 + (r() - 0.5) * 0.04;
+  for (let b = 0; b < 7; b++) { // starved patches
+    const cx = r() * 256, cy = r() * 256, rr = 18 + r() * 40, dep = 0.12 + r() * 0.18;
+    for (let y = -rr * 1.3 | 0; y < rr * 1.3; y++) for (let x = -rr * 1.3 | 0; x < rr * 1.3; x++) {
+      const dd = Math.hypot(x, y) / rr; if (dd < 1) f[((cy + y | 0) + 256) % 256 * 256 + ((cx + x | 0) + 256) % 256] -= dep * (1 - dd) * (1 - dd);
+    }
+  }
+  for (let i = 0; i < 90; i++) { // specks / dropouts
+    const cx = r() * 256 | 0, cy = r() * 256 | 0, s = 1 + (r() * 3 | 0);
+    for (let y = 0; y < s; y++) for (let x = 0; x < s + (r() < 0.4 ? 1 : 0); x++) f[((cy + y) % 256) * 256 + (cx + x) % 256] = 0;
+  }
+  for (let i = 0; i < 65536; i++) d[i] = clamp(f[i], 0, 1) * 255;
+  return d;
+});
+
+/* ---------- plates ---------- */
+const plates = [], pctx = [];
+function initPlates() {
+  for (let i = 0; i < 4; i++) {
+    const c = document.createElement('canvas'); c.width = c.height = PW;
+    plates.push(c); pctx.push(c.getContext('2d', { willReadFrequently: true }));
+  }
+}
+
+/* ---------- display-list cache ---------- */
+const DLC = new Map(); let dlBytes = 0, DL_BUDGET = 120e6, dlTick = 0;
+function recordLayer(layer, v, lo) {
+  const dl = new DL();
+  const R = new Recorder(dl, hashStr(layer.id), v); R.lo = !!lo;
+  R.push(layer.ox || 0, layer.oy || 0);
+  layer.draw(R, layer);
+  return dl.done();
+}
+function getDL(layer, v, lo) {
+  const key = layer.id + '|' + v + (lo ? 'L' : '');
+  let e = DLC.get(key);
+  if (e) { e.t = ++dlTick; return e.dl; }
+  const dl = recordLayer(layer, v, lo);
+  DLC.set(key, { dl, t: ++dlTick }); dlBytes += dl.bytes();
+  if (dlBytes > DL_BUDGET) {
+    const arr = [...DLC.entries()].sort((a, b) => a[1].t - b[1].t);
+    for (const [k, en] of arr) { if (dlBytes <= DL_BUDGET * 0.7) break; if (en.t === dlTick) continue; DLC.delete(k); dlBytes -= en.dl.bytes(); }
+  }
+  return dl;
+}
+const hasDL = (layer, v, lo) => DLC.has(layer.id + '|' + v + (lo ? 'L' : ''));
+
+function drawDL(dl, S, cx0, cy0, cx1, cy1) {
+  const b = dl.b, N = dl.n, ctx = pctx;
+  let n = 0; const minPx = 0.28 / S;
+  for (let i = 0; i < N;) {
+    const kind = b[i], np = b[i + 3], len = kind === 0 ? 8 + np * 2 : 11;
+    const bx0 = b[i + 4], by0 = b[i + 5], bx1 = b[i + 6], by1 = b[i + 7];
+    if (bx1 < cx0 || bx0 > cx1 || by1 < cy0 || by0 > cy1 || (bx1 - bx0 < minPx && by1 - by0 < minPx)) { i += len; continue; }
+    const fl = b[i + 1] | 0, al = b[i + 2], solid = (fl & F_SOLID) !== 0;
+    if (fl & F_KNOCK) {
+      for (let k = 0; k < 4; k++) {
+        const c = ctx[k]; c.globalCompositeOperation = 'destination-out'; c.globalAlpha = al; c.fillStyle = '#000';
+        c.beginPath(); c.moveTo(b[i + 8], b[i + 9]); for (let j = 1; j < np; j++) c.lineTo(b[i + 8 + j * 2], b[i + 9 + j * 2]); c.closePath(); c.fill();
+        c.globalCompositeOperation = 'source-over';
+      }
+    } else {
+      for (let k = 0; k < 4; k++) {
+        if (!(fl & (1 << k))) continue;
+        const c = ctx[k]; c.globalAlpha = al; c.fillStyle = solid ? '#fff' : '#000';
+        c.beginPath();
+        if (kind === 0) { c.moveTo(b[i + 8], b[i + 9]); for (let j = 1; j < np; j++) c.lineTo(b[i + 8 + j * 2], b[i + 9 + j * 2]); c.closePath(); }
+        else c.arc(b[i + 8], b[i + 9], b[i + 10], 0, TAU);
+        c.fill();
+      }
+    }
+    i += len; if ((++n & 1023) === 0) { /* caller may yield between layers only */ }
+  }
+}
+
+/* ---------- halftone + composite for a block of rows ---------- */
+function amtFor(dd, idx, tab, P, gx, gy, dn, dsh) {
+  const a = dd[idx * 4 + 3];
+  if (a === 0) return 0;
+  let amt;
+  if (dd[idx * 4] >= 128) { amt = a * (1.3 / 255); if (amt > 1) amt = 1; }
+  else {
+    const t = tab[(gy % P) * P + (gx % P)] + JIT[(gy % 101) * 97 + (gx % 97)];
+    amt = (a / 255 - t) * 7 + 0.5;
+    if (amt <= 0) return 0; if (amt > 1) amt = 1;
+  }
+  return amt * dn[(((gy >> dsh) & 255) << 8) | ((gx >> dsh) & 255)] * (1 / 255);
+}
+function htChunk(H, ya, yb) {
+  const d0 = H.d[0], d1 = H.d[1], d2 = H.d[2], d3 = H.d[3], u0 = H.u[0], u1 = H.u[1], u2 = H.u[2], u3 = H.u[3];
+  const out = H.out, st = H.st, scr = H.scr, dsh = H.dsh;
+  const s0 = scr[0], s1 = scr[1], s2 = scr[2], s3 = scr[3];
+  const dn0 = DENS[0], dn1 = DENS[1], dn2 = DENS[2], dn3 = DENS[3];
+  const gx0 = H.tx * TILE, gy0 = H.ty * TILE;
+  const k00 = KR[0][0], k01 = KR[0][1], k02 = KR[0][2], k10 = KR[1][0], k11 = KR[1][1], k12 = KR[1][2];
+  const k20 = KR[2][0], k21 = KR[2][1], k22 = KR[2][2], k30 = KR[3][0], k31 = KR[3][1], k32 = KR[3][2];
+  const st0 = st ? st[0] : null, st1 = st ? st[1] : null, st2 = st ? st[2] : null;
+  for (let y = ya; y < yb; y++) {
+    const gy = gy0 + y, ro = y * TILE, ri = (y + MARGIN) * PW + MARGIN, pyo = (gy % PAPER_H) * PAPER_W;
+    const inY = gy >= H.sy0 && gy < H.sy1;
+    for (let x = 0; x < TILE; x++) {
+      const gx = gx0 + x;
+      if (!inY || gx < H.sx0 || gx >= H.sx1) { out[ro + x] = 0; if (st) { st0[ro + x] = 0; st1[ro + x] = 0; st2[ro + x] = 0; } continue; }
+      const pc = PAPER_PX[pyo + (gx % PAPER_W)];
+      let r = pc & 255, g = (pc >> 8) & 255, b = (pc >> 16) & 255;
+      const idx = ri + x;
+      if ((u0[idx] | u1[idx] | u2[idx] | u3[idx]) !== 0) {
+        let a;
+        if (u0[idx] !== 0 && (a = amtFor(d0, idx, s0.t, s0.P, gx, gy, dn0, dsh)) > 0.002) { r *= 1 - a * k00; g *= 1 - a * k01; b *= 1 - a * k02; }
+        if (st) st0[ro + x] = 0xFF000000 | ((b | 0) << 16) | ((g | 0) << 8) | (r | 0);
+        if (u1[idx] !== 0 && (a = amtFor(d1, idx, s1.t, s1.P, gx, gy, dn1, dsh)) > 0.002) { r *= 1 - a * k10; g *= 1 - a * k11; b *= 1 - a * k12; }
+        if (st) st1[ro + x] = 0xFF000000 | ((b | 0) << 16) | ((g | 0) << 8) | (r | 0);
+        if (u2[idx] !== 0 && (a = amtFor(d2, idx, s2.t, s2.P, gx, gy, dn2, dsh)) > 0.002) { r *= 1 - a * k20; g *= 1 - a * k21; b *= 1 - a * k22; }
+        if (st) st2[ro + x] = 0xFF000000 | ((b | 0) << 16) | ((g | 0) << 8) | (r | 0);
+        if (u3[idx] !== 0 && (a = amtFor(d3, idx, s3.t, s3.P, gx, gy, dn3, dsh)) > 0.002) { r *= 1 - a * k30; g *= 1 - a * k31; b *= 1 - a * k32; }
+      } else if (st) { const pp = 0xFF000000 | (b << 16) | (g << 8) | r; st0[ro + x] = pp; st1[ro + x] = pp; st2[ro + x] = pp; }
+      out[ro + x] = 0xFF000000 | ((b | 0) << 16) | ((g | 0) << 8) | (r | 0);
+    }
+  }
+}
+
+/* ---------- tile store + jobs ---------- */
+const TILES = new Map(), JOBS = new Map();
+let frameNo = 0, curJob = null, curGen = null, MAX_TILES = 360;
+const PIN = new Set();
+const tkey = (k, tx, ty, v) => k + ',' + tx + ',' + ty + ',' + v;
+const STAGE = new Map(); // `${k},${tx},${ty},s${i}` -> canvas
+function tileExists(k, tx, ty) {
+  const s = lodScale(k);
+  return !((tx + 1) * TILE < SHEET.x0 * s || tx * TILE > SHEET.x1 * s || (ty + 1) * TILE < SHEET.y0 * s || ty * TILE > SHEET.y1 * s);
+}
+function want(k, tx, ty, v, prio, stages) {
+  const key = tkey(k, tx, ty, v);
+  const t = TILES.get(key);
+  if (t) { t.used = frameNo; return t; }
+  let j = JOBS.get(key);
+  if (!j) { j = { k, tx, ty, v, prio, seen: frameNo, stages: !!stages, key }; JOBS.set(key, j); }
+  else { j.seen = frameNo; if (prio > j.prio) j.prio = prio; if (stages) j.stages = true; }
+  return null;
+}
+function makeCanvasFrom(buf32) {
+  const c = document.createElement('canvas'); c.width = c.height = TILE;
+  const id = new ImageData(new Uint8ClampedArray(buf32.buffer), TILE, TILE);
+  c.getContext('2d').putImageData(id, 0, 0);
+  return c;
+}
+function* bakeJob(job) {
+  const { k, tx, ty, v } = job, S = lodScale(k);
+  const cull = [(tx * TILE - MARGIN) / S - 4, (ty * TILE - MARGIN) / S - 4, ((tx + 1) * TILE + MARGIN) / S + 4, ((ty + 1) * TILE + MARGIN) / S + 4];
+  const ccx = (SHEET.x0 + SHEET.x1) / 2, ccy = (SHEET.y0 + SHEET.y1) / 2;
+  for (let i = 0; i < 4; i++) {
+    const c = pctx[i]; c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.clearRect(0, 0, PW, PW);
+    const m = MISREG[i], co = Math.cos(m[2]), si = Math.sin(m[2]);
+    c.setTransform(S * co, S * si, -S * si, S * co, S * (ccx - ccx * co + ccy * si + m[0]) - tx * TILE + MARGIN, S * (ccy - ccx * si - ccy * co + m[1]) - ty * TILE + MARGIN);
+  }
+  yield;
+  for (const layer of LAYERS) {
+    const r = layer.rect;
+    if (r[2] < cull[0] || r[0] > cull[2] || r[3] < cull[1] || r[1] > cull[3]) continue;
+    const lo = k <= 3;
+    if (!hasDL(layer, v, lo)) yield;
+    const dl = getDL(layer, v, lo);
+    drawDL(dl, S, cull[0], cull[1], cull[2], cull[3]);
+    yield;
+  }
+  const H = { d: [], u: [], out: new Uint32Array(TILE * TILE), st: null, tx, ty, scr: SCREENS[k <= 9 ? 0 : k <= 11 ? 1 : 2], dsh: k < 8 ? 0 : k < 11 ? 1 : 2,
+    sx0: SHEET.x0 * S, sx1: SHEET.x1 * S, sy0: SHEET.y0 * S, sy1: SHEET.y1 * S };
+  if (job.stages) H.st = [new Uint32Array(TILE * TILE), new Uint32Array(TILE * TILE), new Uint32Array(TILE * TILE)];
+  for (let i = 0; i < 4; i++) {
+    const id = pctx[i].getImageData(0, 0, PW, PW);
+    H.d.push(id.data); H.u.push(new Uint32Array(id.data.buffer));
+    yield;
+  }
+  for (let y = 0; y < TILE; y += 64) { htChunk(H, y, Math.min(TILE, y + 64)); yield; }
+  const c = makeCanvasFrom(H.out);
+  const ent = { c, used: frameNo, k };
+  TILES.set(job.key, ent);
+  if (H.st) {
+    for (let i = 0; i < 3; i++) STAGE.set(k + ',' + tx + ',' + ty + ',s' + i, makeCanvasFrom(H.st[i]));
+    STAGE.set(k + ',' + tx + ',' + ty + ',s3', c);
+  }
+  yield;
+  // evict
+  if (TILES.size > MAX_TILES) {
+    const arr = [...TILES.entries()].filter(e => !PIN.has(e[1].k) && e[1].used < frameNo - 2).sort((a, b) => a[1].used - b[1].used);
+    for (let i = 0; i < arr.length && TILES.size > MAX_TILES * 0.85; i++) TILES.delete(arr[i][0]);
+  }
+}
+function runJobs(budget) {
+  const t0 = performance.now();
+  while (performance.now() - t0 < budget) {
+    if (!curGen) {
+      let best = null;
+      for (const j of JOBS.values()) {
+        if (j.seen < frameNo - 24 && !j.keep) { JOBS.delete(j.key); continue; }
+        if (!best || j.prio > best.prio) best = j;
+      }
+      if (!best) return false;
+      JOBS.delete(best.key); curJob = best; curGen = bakeJob(best);
+    }
+    const r = curGen.next();
+    if (r.done) { curGen = null; curJob = null; }
+  }
+  return true;
+}
+
+/* ===================== 14 REGISTRY + SHEET LAYOUT ===================== */
+const SCENES = [], SCENE_BY_ID = Object.create(null);
+const SLOT_W = 320, SLOT_H = 240, GUT = 24, BLK_PAD = 28, BLK_TOP = 96, BLK_COLS = 4, BLK_ROWS = 4;
+const BW = BLK_COLS * SLOT_W + (BLK_COLS - 1) * GUT + 2 * BLK_PAD;
+const bhFor = rows => rows * SLOT_H + (rows - 1) * GUT + BLK_TOP + BLK_PAD;
+const BGAP = 64, MARG_X = 130, MARG_T = 170, MARG_B = 250;
+/* Topic blocks snake through the sheet so consecutive topics touch:  row0 L->R 3.1 3.2 3.3 ; row1 R->L 3.4 3.5 3.6 ; row2 L->R 3.7 3.8 Skills */
+const TOPICS = [
+  { id: '3.1', name: 'Biological molecules', col: 0, row: 0 },
+  { id: '3.2', name: 'Cells', col: 1, row: 0 },
+  { id: '3.3', name: 'Organisms exchange substances with their environment', col: 2, row: 0 },
+  { id: '3.4', name: 'Genetic information, variation and relationships between organisms', col: 2, row: 1 },
+  { id: '3.5', name: 'Energy transfers in and between organisms', col: 1, row: 1 },
+  { id: '3.6', name: 'Organisms respond to changes in their internal and external environments', col: 0, row: 1 },
+  { id: '3.7', name: 'Genetics, populations, evolution and ecosystems', col: 0, row: 2 },
+  { id: '3.8', name: 'The control of gene expression', col: 1, row: 2 },
+  { id: 'SK', name: 'Mathematical, practical and assessment skills', col: 2, row: 2 },
+];
+const TOPIC_BY_ID = Object.create(null); TOPICS.forEach(t => TOPIC_BY_ID[t.id] = t);
+function S(def) {
+  if (SCENE_BY_ID[def.id]) throw new Error('duplicate scene ' + def.id);
+  SCENES.push(def); SCENE_BY_ID[def.id] = def; return def;
+}
+function computeBlocks() {
+  for (const t of TOPICS) { t.rows = 1; }
+  for (const sc of SCENES) { const t = TOPIC_BY_ID[sc.topic], sp = sc.span || [1, 1]; t.rows = Math.max(t.rows, sc.slot[1] + sp[1]); }
+  const rowH = [0, 0, 0];
+  for (const t of TOPICS) { t.minRows = t.minRows || 1; t.rows = Math.max(t.rows, t.minRows); t.bh = bhFor(t.rows); rowH[t.row] = Math.max(rowH[t.row], t.bh); }
+  const rowY = [MARG_T, MARG_T + rowH[0] + BGAP, MARG_T + rowH[0] + rowH[1] + 2 * BGAP];
+  for (const t of TOPICS) { const x = MARG_X + t.col * (BW + BGAP); t.rect = [x, rowY[t.row], x + BW, rowY[t.row] + rowH[t.row]]; }
+  SHEET.x0 = 0; SHEET.y0 = 0;
+  SHEET.x1 = MARG_X * 2 + 3 * BW + 2 * BGAP; SHEET.y1 = MARG_T + MARG_B + rowH[0] + rowH[1] + rowH[2] + 2 * BGAP;
+}
+const BACKDROPS = Object.create(null), PATHS = [];
+let FURNITURE_DRAW = null, PATH_DRAW = null;
+function layoutSheet() {
+  LAYERS.length = 0;
+  computeBlocks();
+  for (const t of TOPICS) {
+    const bd = BACKDROPS[t.id];
+    LAYERS.push({ id: 'bd.' + t.id, rect: t.rect.slice(), ox: t.rect[0], oy: t.rect[1], w: BW, h: t.rect[3] - t.rect[1], topic: t, draw: (R, L) => { if (bd) bd(R, L); } });
+  }
+  if (PATH_DRAW) LAYERS.push({ id: 'paths', rect: [0, 0, SHEET.x1, SHEET.y1], ox: 0, oy: 0, draw: PATH_DRAW });
+  for (const sc of SCENES) {
+    const t = TOPIC_BY_ID[sc.topic]; if (!t) throw new Error('bad topic ' + sc.id);
+    const sl = sc.slot, sp = sc.span || [1, 1];
+    const x = t.rect[0] + BLK_PAD + sl[0] * (SLOT_W + GUT), y = t.rect[1] + BLK_TOP + sl[1] * (SLOT_H + GUT);
+    sc.w = sp[0] * SLOT_W + (sp[0] - 1) * GUT; sc.h = sp[1] * SLOT_H + (sp[1] - 1) * GUT;
+    sc.x = x; sc.y = y; sc.cx = x + sc.w / 2; sc.cy = y + sc.h / 2;
+    sc.rect = [x - 6, y - 6, x + sc.w + 6, y + sc.h + 6];
+    sc.layer = { id: 'sc.' + sc.id, rect: sc.rect, ox: x, oy: y, w: sc.w, h: sc.h, sc, draw: (R, L) => { sceneChrome(R, sc, true); sc.draw(R, sc); sceneChrome(R, sc, false); } };
+    LAYERS.push(sc.layer);
+  }
+  if (FURNITURE_DRAW) LAYERS.push({ id: 'furniture', rect: [0, 0, SHEET.x1, SHEET.y1], ox: 0, oy: 0, draw: FURNITURE_DRAW });
+}
+function sceneAt(wx, wy) {
+  for (const sc of SCENES) if (wx >= sc.x && wx <= sc.x + sc.w && wy >= sc.y && wy <= sc.y + sc.h) return sc;
+  return null;
+}
+
+/* ===================== 15 VIEW: camera, input, flights, tour, press, render loop ===================== */
+const cvs = document.getElementById('c'), ctx = cvs.getContext('2d', { alpha: false });
+let VW = 1, VH = 1, DPR = 1, CW = 1, CH = 1;
+const cam = { x: 2300, y: 2000, z: 0.2 };
+let zMin = 0.05, zMax = 20, cardOn = true;
+const MAXPX = 8.6e6;
+const isMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && innerWidth < 900);
+const sheetW = () => SHEET.x1 - SHEET.x0, sheetH = () => SHEET.y1 - SHEET.y0;
+
+function resize() {
+  VW = innerWidth; VH = innerHeight;
+  DPR = Math.min(window.devicePixelRatio || 1, Math.sqrt(MAXPX / (VW * VH)), 3);
+  CW = Math.round(VW * DPR); CH = Math.round(VH * DPR);
+  cvs.width = CW; cvs.height = CH; cvs.style.width = VW + 'px'; cvs.style.height = VH + 'px';
+  zMin = Math.min(VW / sheetW(), VH / sheetH()) * 0.55;
+  zMax = 20 / DPR;
+}
+const fitView = () => ({ x: (SHEET.x0 + SHEET.x1) / 2, y: (SHEET.y0 + SHEET.y1) / 2, z: Math.min((VW - 30) / sheetW(), (VH - 30) / sheetH()) });
+
+/* ---- card region (css px) ---- */
+function availArea() {
+  if (!cardOn) return { x: 0, y: 0, w: VW, h: VH };
+  if (VW >= 760) { const cw = Math.min(430, VW * 0.34) + 36; return { x: cw, y: 0, w: VW - cw, h: VH }; }
+  const ch = Math.min(VH * 0.5, 400); return { x: 0, y: 0, w: VW, h: VH - ch };
+}
+function viewFor(rect, pad = 1.08) {
+  const A = availArea(), w = rect[2] - rect[0], h = rect[3] - rect[1];
+  const z = Math.min(A.w / (w * pad), A.h / (h * pad * 1.04));
+  const scx = A.x + A.w / 2, scy = A.y + A.h / 2;
+  return { x: (rect[0] + rect[2]) / 2 - (scx - VW / 2) / z, y: (rect[1] + rect[3]) / 2 - (scy - VH / 2) / z, z: clamp(z, zMin, zMax) };
+}
+const sceneRect = sc => [sc.x, sc.y, sc.x + sc.w, sc.y + sc.h];
+
+/* ---- smooth, efficient zoom flights (van Wijk & Nuij) ---- */
+let flight = null;
+function makePath(a, b) {
+  const rho = 1.38, rho2 = rho * rho, dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+  if (d < 1e-3 || Math.abs(Math.log(b.w / a.w)) > 4.5 * Math.min(1, d / (a.w + b.w) * 4) + 3) {
+    return { S: Math.abs(Math.log(b.w / a.w)) / rho + d / (a.w + b.w), f: t => ({ x: lerp(a.x, b.x, smooth(t)), y: lerp(a.y, b.y, smooth(t)), w: a.w * Math.pow(b.w / a.w, smooth(t)) }) };
+  }
+  const b0 = (b.w * b.w - a.w * a.w + rho2 * rho2 * d * d) / (2 * a.w * rho2 * d);
+  const b1 = (b.w * b.w - a.w * a.w - rho2 * rho2 * d * d) / (2 * b.w * rho2 * d);
+  const r0 = Math.log(Math.sqrt(b0 * b0 + 1) - b0), r1 = Math.log(Math.sqrt(b1 * b1 + 1) - b1);
+  const S = (r1 - r0) / rho;
+  return {
+    S, f: t => {
+      const s = smooth(t) * S, u = a.w / rho2 * Math.cosh(r0) * Math.tanh(rho * s + r0) - a.w / rho2 * Math.sinh(r0);
+      return { x: a.x + dx * u / d, y: a.y + dy * u / d, w: a.w * Math.cosh(r0) / Math.cosh(rho * s + r0) };
+    }
+  };
+}
+function flyTo(to, dur, done) {
+  const a = { x: cam.x, y: cam.y, w: VW / cam.z }, b = { x: to.x, y: to.y, w: VW / to.z };
+  const p = makePath(a, b);
+  flight = { p, t0: NOW, dur: dur || clamp(0.7 + p.S * 0.95, 1.3, 4.6), to, done };
+  vel.x = vel.y = 0; zoomT = null;
+}
+function cancelFlight() { flight = null; }
+
+/* ---- input ---- */
+let NOW = 0;
+const vel = { x: 0, y: 0 }; // css px/s
+let zoomT = null; // {lz, ax, ay}
+const ptrs = new Map(); let drag = null, lastTap = { t: 0, x: 0, y: 0 }, pinch = null;
+const keys = new Set();
+function userInput() { tour.pause(); if (flight) cancelFlight(); if (press.on) press.skip(); }
+function zoomAt(sx, sy, factor) {
+  const wx = cam.x + (sx - VW / 2) / cam.z, wy = cam.y + (sy - VH / 2) / cam.z;
+  cam.z = clamp(cam.z * factor, zMin, zMax);
+  cam.x = wx - (sx - VW / 2) / cam.z; cam.y = wy - (sy - VH / 2) / cam.z;
+}
+function sceneUnder(sx, sy) { return sceneAt(cam.x + (sx - VW / 2) / cam.z, cam.y + (sy - VH / 2) / cam.z); }
+function doubleAction(x, y) {
+  const sc = sceneUnder(x, y);
+  if (sc && cam.z < viewFor(sceneRect(sc)).z * 0.9) { flyTo(viewFor(sceneRect(sc)), null); }
+  else {
+    const wx = cam.x + (x - VW / 2) / cam.z, wy = cam.y + (y - VH / 2) / cam.z, nz = clamp(cam.z * 2.4, zMin, zMax);
+    flyTo({ x: wx - (x - VW / 2) / nz, y: wy - (y - VH / 2) / nz, z: nz }, 0.9);
+  }
+}
+cvs.addEventListener('pointerdown', e => {
+  userInput();
+  cvs.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t0: performance.now() });
+  vel.x = vel.y = 0;
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 }; drag = null; }
+  else if (ptrs.size === 1) drag = { lx: e.clientX, ly: e.clientY, lt: performance.now(), moved: false };
+});
+cvs.addEventListener('pointermove', e => {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size >= 2 && pinch) {
+    const [a, b] = [...ptrs.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+    cam.x -= (mx - pinch.mx) / cam.z; cam.y -= (my - pinch.my) / cam.z;
+    zoomAt(mx, my, d / Math.max(pinch.d, 1));
+    pinch.d = d; pinch.mx = mx; pinch.my = my; zoomT = null;
+  } else if (drag) {
+    const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly, t = performance.now(), dtm = Math.max(1, t - drag.lt);
+    if (Math.hypot(e.clientX - p.x0, e.clientY - p.y0) > 5) drag.moved = true;
+    cam.x -= dx / cam.z; cam.y -= dy / cam.z;
+    vel.x = lerp(vel.x, dx / dtm * 1000, 0.45); vel.y = lerp(vel.y, dy / dtm * 1000, 0.45);
+    drag.lx = e.clientX; drag.ly = e.clientY; drag.lt = t;
+  }
+});
+function endPtr(e) {
+  const p = ptrs.get(e.pointerId); if (!p) return;
+  ptrs.delete(e.pointerId);
+  const tap = !(drag && drag.moved) && performance.now() - p.t0 < 320 && ptrs.size === 0;
+  if (ptrs.size < 2) pinch = null;
+  if (ptrs.size === 1) { const q = [...ptrs.values()][0]; drag = { lx: q.x, ly: q.y, lt: performance.now(), moved: true }; vel.x = vel.y = 0; }
+  else if (ptrs.size === 0) {
+    if (drag && performance.now() - drag.lt > 90) vel.x = vel.y = 0;
+    drag = null;
+  }
+  if (tap) {
+    const t = performance.now();
+    if (t - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 28) { doubleAction(e.clientX, e.clientY); lastTap.t = 0; vel.x = vel.y = 0; }
+    else lastTap = { t, x: e.clientX, y: e.clientY };
+  }
+}
+cvs.addEventListener('pointerup', endPtr); cvs.addEventListener('pointercancel', endPtr);
+cvs.addEventListener('wheel', e => {
+  e.preventDefault(); userInput();
+  const d = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1), k = e.ctrlKey ? 0.011 : 0.0017;
+  const lz = (zoomT ? zoomT.lz : Math.log(cam.z)) - clamp(d, -240, 240) * k;
+  zoomT = { lz: clamp(lz, Math.log(zMin), Math.log(zMax)), ax: e.clientX, ay: e.clientY };
+}, { passive: false });
+cvs.addEventListener('contextmenu', e => e.preventDefault());
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === 'c' || k === 'C') { cardOn = !cardOn; Card.setEnabled(cardOn); e.preventDefault(); return; }
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(k)) {
+    userInput(); e.preventDefault();
+    if (e.shiftKey && (k === 'ArrowLeft' || k === 'ArrowRight')) { stepScene(k === 'ArrowRight' ? 1 : -1); return; }
+    keys.add(k); return;
+  }
+  if (k === '+' || k === '=') { userInput(); zoomT = { lz: clamp(Math.log(cam.z) + 0.3, Math.log(zMin), Math.log(zMax)), ax: VW / 2, ay: VH / 2 }; e.preventDefault(); }
+  else if (k === '-' || k === '_') { userInput(); zoomT = { lz: clamp(Math.log(cam.z) - 0.3, Math.log(zMin), Math.log(zMax)), ax: VW / 2, ay: VH / 2 }; e.preventDefault(); }
+  else if (k === '0') { userInput(); flyTo(fitView(), 1.5); e.preventDefault(); }
+  else if (k === 'PageDown') { stepScene(1); e.preventDefault(); } else if (k === 'PageUp') { stepScene(-1); e.preventDefault(); }
+  else if (k === ' ') { if (tour.state === 'paused' || tour.state === 'off') tour.resume(true); else tour.pause(true); e.preventDefault(); }
+});
+addEventListener('keyup', e => keys.delete(e.key));
+addEventListener('blur', () => keys.clear());
+addEventListener('resize', () => { const a = cam.z; resize(); });
+
+function nearestSceneIdx() {
+  let best = 0, bd = 1e18;
+  for (let i = 0; i < SCENES.length; i++) { const s = SCENES[i], d = Math.hypot(s.cx - cam.x, s.cy - cam.y) + Math.abs(Math.log(cam.z / viewFor(sceneRect(s)).z)) * 300; if (d < bd) { bd = d; best = i; } }
+  return best;
+}
+function stepScene(dir) {
+  const i = clamp(nearestSceneIdx() + dir, 0, SCENES.length - 1);
+  tour.idx = i; flyTo(viewFor(sceneRect(SCENES[i])), null);
+}
+
+/* ---- tour ---- */
+const DWELL = 7.0;
+const tour = {
+  state: 'off', idx: -1, t0: 0, resumeAt: 0, cur: null,
+  start() { this.idx = 0; this.go(); },
+  go() {
+    const sc = SCENES[this.idx]; this.cur = sc; this.state = 'fly'; Card.hide();
+    prefetchView(viewFor(sceneRect(sc)), 9000);
+    flyTo(viewFor(sceneRect(sc)), null, () => { this.state = 'dwell'; this.t0 = NOW; });
+  },
+  pause(manual) { if (this.state === 'off') return; this.state = 'paused'; this.resumeAt = manual ? 1e9 : NOW + 12; },
+  resume(force) { this.idx = clamp(nearestSceneIdx(), 0, SCENES.length - 1); this.go(); },
+  update() {
+    if (this.state === 'dwell' && NOW - this.t0 > DWELL) {
+      this.idx = (this.idx + 1) % SCENES.length;
+      this.go();
+    } else if (this.state === 'dwell') {
+      const nx = SCENES[(this.idx + 1) % SCENES.length];
+      if (NOW - this.t0 > 1.2) prefetchView(viewFor(sceneRect(nx)), 4000);
+    } else if (this.state === 'paused' && NOW > this.resumeAt && !drag && !ptrs.size && !flight && Math.hypot(vel.x, vel.y) < 5) this.resume();
+  },
+};
+
+/* ---- tile drawing ---- */
+function prefetchView(v, prio) {
+  const Z = v.z * DPR, k = lodFor(Z), s = lodScale(k), hw = VW / v.z / 2, hh = VH / v.z / 2;
+  const tx0 = Math.floor((v.x - hw) * s / TILE), tx1 = Math.floor((v.x + hw) * s / TILE), ty0 = Math.floor((v.y - hh) * s / TILE), ty1 = Math.floor((v.y + hh) * s / TILE);
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+    if (!tileExists(k, tx, ty)) continue;
+    const d = Math.hypot((tx + .5) * TILE / s - v.x, (ty + .5) * TILE / s - v.y);
+    for (let vv = 0; vv < 3; vv++) want(k, tx, ty, vv, prio - d * 0.5 - vv * 400);
+  }
+}
+let PAPER_PATTERN = null;
+function paperPattern() {
+  if (PAPER_PATTERN) return PAPER_PATTERN;
+  const c = document.createElement('canvas'); c.width = PAPER_W; c.height = PAPER_H;
+  const id = new ImageData(new Uint8ClampedArray(new Uint32Array(PAPER_PX.map(p => 0xFF000000 | p)).buffer), PAPER_W, PAPER_H);
+  c.getContext('2d').putImageData(id, 0, 0);
+  return PAPER_PATTERN = ctx.createPattern(c, 'repeat');
+}
+function drawCanvasTile(c, wx0, wy0, ww, Z, ox, oy) {
+  const dx = (wx0 - cam.x) * Z + CW / 2 + ox, dy = (wy0 - cam.y) * Z + CH / 2 + oy, dw = ww * Z;
+  ctx.drawImage(c, Math.floor(dx), Math.floor(dy), Math.ceil(dw + (dx - Math.floor(dx))) + 1, Math.ceil(dw + (dy - Math.floor(dy))) + 1);
+}
+function drawTiles(v) {
+  const Z = cam.z * DPR, k = lodFor(Z), s = lodScale(k), tw = TILE / s;
+  const hw = CW / 2 / Z, hh = CH / 2 / Z;
+  const tx0 = Math.floor((cam.x - hw) * s / TILE), tx1 = Math.floor((cam.x + hw) * s / TILE), ty0 = Math.floor((cam.y - hh) * s / TILE), ty1 = Math.floor((cam.y + hh) * s / TILE);
+  const moving = !!flight || Math.hypot(vel.x, vel.y) > 40 || !!zoomT;
+  const miss = [];
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
+    if (!tileExists(k, tx, ty)) continue;
+    const d = Math.hypot((tx + .5) * tw - cam.x, (ty + .5) * tw - cam.y);
+    let e = want(k, tx, ty, v, 10000 - d * 0.4);
+    for (let o = 1; o < 3; o++) { const e2 = want(k, tx, ty, (v + o) % 3, 6000 - d * 0.4 - o * 100); if (!e && e2) e = e2; }
+    if (e) drawCanvasTile(e.c, tx * tw, ty * tw, tw, Z, 0, 0); else miss.push([tx, ty, k]);
+  }
+  // fallbacks from coarser levels
+  for (const [tx, ty] of miss) {
+    const x0 = tx * tw, y0 = ty * tw, dx = (x0 - cam.x) * Z + CW / 2, dy = (y0 - cam.y) * Z + CH / 2, dw = tw * Z;
+    ctx.save(); ctx.beginPath(); ctx.rect(dx, dy, dw + 1, dw + 1); ctx.clip();
+    for (let j = k - 1; j >= 0; j--) {
+      const sj = lodScale(j), twj = TILE / sj, a0 = Math.floor(x0 / twj), a1 = Math.floor((x0 + tw) / twj), b0 = Math.floor(y0 / twj), b1 = Math.floor((y0 + tw) / twj);
+      let found = 0;
+      for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) {
+        for (let vv = 0; vv < 3; vv++) { const e = TILES.get(tkey(j, a, b, (v + vv) % 3)); if (e) { drawCanvasTile(e.c, a * twj, b * twj, twj, Z, 0, 0); found++; break; } }
+      }
+      if (found === (a1 - a0 + 1) * (b1 - b0 + 1)) break;
+    }
+    ctx.restore();
+  }
+  // prefetch ring (idle)
+  if (!moving) for (let ty = ty0 - 1; ty <= ty1 + 1; ty++) for (let tx = tx0 - 1; tx <= tx1 + 1; tx++) {
+    if (tx >= tx0 && tx <= tx1 && ty >= ty0 && ty <= ty1) continue;
+    if (!tileExists(k, tx, ty)) continue;
+    const d = Math.hypot((tx + .5) * tw - cam.x, (ty + .5) * tw - cam.y);
+    want(k, tx, ty, v, 3000 - d * 0.4); want(k, tx, ty, (v + 1) % 3, 2000 - d * 0.4);
+  }
+  return k;
+}
+function drawShadow() {
+  const Z = cam.z * DPR, x0 = (SHEET.x0 - cam.x) * Z + CW / 2, y0 = (SHEET.y0 - cam.y) * Z + CH / 2, w = sheetW() * Z, h = sheetH() * Z;
+  for (let i = 7; i >= 1; i--) { ctx.fillStyle = 'rgba(0,0,0,0.075)'; const g = i * 3.2 * DPR; ctx.fillRect(x0 - g + 4 * DPR, y0 - g * 0.5 + 9 * DPR, w + 2 * g, h + 2 * g); }
+}
+
+/* ---- press (print-in) ---- */
+const press = {
+  on: false, phase: 0, t0: 0, pass: 0, sweep: 0, kS: 0, ready: false, slide: 0, rows: 0, cols: 0, tx0: 0, ty0: 0, done: false,
+  begin() {
+    this.on = true; this.t0 = NOW; this.pass = -1; this.sweep = 0;
+    const fv = fitView(); cam.x = fv.x; cam.y = fv.y; cam.z = fv.z;
+    this.kS = Math.min(lodFor(cam.z * DPR), 3); PIN.add(this.kS);
+    const s = lodScale(this.kS);
+    this.tx0 = Math.floor(SHEET.x0 * s / TILE); this.ty0 = Math.floor(SHEET.y0 * s / TILE);
+    this.cols = Math.floor(SHEET.x1 * s / TILE) - this.tx0 + 1; this.rows = Math.floor(SHEET.y1 * s / TILE) - this.ty0 + 1;
+    for (let ty = 0; ty < this.rows; ty++) for (let tx = 0; tx < this.cols; tx++) {
+      const j = want(this.kS, this.tx0 + tx, this.ty0 + ty, 0, 1e6 - ty * 1000 - tx, true);
+      if (!j) { const q = JOBS.get(tkey(this.kS, this.tx0 + tx, this.ty0 + ty, 0)); if (q) q.keep = true; }
+    }
+    prefetchView(viewFor(sceneRect(SCENES[0])), 5e5);
+  },
+  rowsReady() {
+    let r = 0;
+    for (; r < this.rows; r++) { for (let tx = 0; tx < this.cols; tx++) if (!STAGE.has(this.kS + ',' + (this.tx0 + tx) + ',' + (this.ty0 + r) + ',s3')) return r; }
+    return r;
+  },
+  skip() { this.on = false; this.done = true; cam.z = Math.max(cam.z, zMin); },
+  update(dt) {
+    const el = NOW - this.t0;
+    this.slide = 1 - Math.pow(1 - clamp(el / 1.5, 0, 1), 3);
+    const rr = this.rowsReady();
+    if (this.pass < 0 && el > 1.6) { this.pass = 0; this.sweep = 0; }
+    if (this.pass >= 0 && this.pass < 4) {
+      const lim = rr >= this.rows ? 1.02 : Math.max(0, (rr - 0.3) / this.rows);
+      this.sweep = Math.min(lim, this.sweep + dt / (this.pass === 0 ? 2.1 : 1.35));
+      if (this.sweep >= 1.015) { this.pass++; this.sweep = 0; if (this.pass === 4) this.endT = NOW; }
+    } else if (this.pass === 4 && NOW - this.endT > 0.7) {
+      this.on = false; this.done = true; Card.hide();
+      tour.idx = 0; tour.cur = SCENES[0]; tour.state = 'fly';
+      const tv = viewFor(sceneRect(SCENES[0]));
+      flyTo(tv, 4.2, () => { tour.state = 'dwell'; tour.t0 = NOW; });
+    }
+  },
+  draw() {
+    const Z = cam.z * DPR, s = lodScale(this.kS), tw = TILE / s;
+    const off = (1 - this.slide) * CH * 0.9;
+    const x0 = (SHEET.x0 - cam.x) * Z + CW / 2, y0 = (SHEET.y0 - cam.y) * Z + CH / 2 + off, w = sheetW() * Z, h = sheetH() * Z;
+    for (let i = 7; i >= 1; i--) { ctx.fillStyle = 'rgba(0,0,0,0.075)'; const g = i * 3.2 * DPR; ctx.fillRect(x0 - g + 4 * DPR, y0 - g * 0.5 + 9 * DPR, w + 2 * g, h + 2 * g); }
+    ctx.save(); ctx.translate(0, off);
+    ctx.fillStyle = paperPattern(); ctx.fillRect(x0, y0 - off, w, h);
+    const sy = y0 - off + this.sweep * h;
+    const drawStage = (stage, cy0, cy1) => {
+      if (stage < 0 || cy1 <= cy0) return;
+      ctx.save(); ctx.beginPath(); ctx.rect(0, cy0, CW, cy1 - cy0); ctx.clip();
+      for (let ty = 0; ty < this.rows; ty++) for (let tx = 0; tx < this.cols; tx++) {
+        const c = STAGE.get(this.kS + ',' + (this.tx0 + tx) + ',' + (this.ty0 + ty) + ',s' + stage);
+        if (c) drawCanvasTile(c, (this.tx0 + tx) * tw, (this.ty0 + ty) * tw, tw, Z, 0, 0);
+      }
+      ctx.restore();
+    };
+    if (this.pass >= 0 && this.pass < 4) {
+      drawStage(this.pass - 1, sy, y0 - off + h + 4);
+      drawStage(this.pass, y0 - off - 4, sy);
+    } else if (this.pass >= 4) drawStage(3, y0 - off - 4, y0 - off + h + 4);
+    // roller
+    if (this.pass >= 0 && this.pass < 4) {
+      const rh = 26 * DPR, g = ctx.createLinearGradient(0, sy - rh / 2, 0, sy + rh / 2);
+      g.addColorStop(0, '#2b2724'); g.addColorStop(0.25, '#8a8077'); g.addColorStop(0.5, '#cfc6bb'); g.addColorStop(0.75, '#6a625b'); g.addColorStop(1, '#1d1a18');
+      const wet = ctx.createLinearGradient(0, sy - 90 * DPR, 0, sy);
+      wet.addColorStop(0, 'rgba(255,255,255,0)'); wet.addColorStop(1, 'rgba(255,255,255,0.22)');
+      ctx.fillStyle = wet; ctx.fillRect(x0, Math.max(y0 - off, sy - 90 * DPR), w, Math.min(90 * DPR, sy - (y0 - off)));
+      ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x0 - 30 * DPR, sy + rh / 2, w + 60 * DPR, 7 * DPR);
+      ctx.fillStyle = g; ctx.fillRect(x0 - 30 * DPR, sy - rh / 2, w + 60 * DPR, rh);
+      ctx.fillStyle = INK[INK_ORDER[this.pass]].hex; ctx.globalAlpha = 0.85; ctx.fillRect(x0 - 30 * DPR, sy - 2 * DPR, w + 60 * DPR, 4 * DPR); ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  },
+};
+
+/* ---- frame ---- */
+let lastTS = 0, vIndex = 0, renderMs = 8, currentK = 0;
+function update(dt) {
+  // flight
+  if (flight) {
+    const t = clamp((NOW - flight.t0) / flight.dur, 0, 1), st = flight.p.f(t);
+    cam.x = st.x; cam.y = st.y; cam.z = VW / st.w;
+    if (t >= 1) { const f = flight; flight = null; cam.x = f.to.x; cam.y = f.to.y; cam.z = f.to.z; if (f.done) f.done(); }
+  } else {
+    // keyboard pan
+    let kx = 0, ky = 0;
+    if (keys.has('ArrowLeft')) kx -= 1; if (keys.has('ArrowRight')) kx += 1; if (keys.has('ArrowUp')) ky -= 1; if (keys.has('ArrowDown')) ky += 1;
+    if (kx || ky) { const sp = Math.min(VW, VH) * 0.95; vel.x = lerp(vel.x, -kx * sp, 1 - Math.exp(-dt * 10)); vel.y = lerp(vel.y, -ky * sp, 1 - Math.exp(-dt * 10)); }
+    if (!drag && !pinch) {
+      cam.x -= vel.x * dt / cam.z; cam.y -= vel.y * dt / cam.z;
+      const f = Math.exp(-dt * 3.4); if (!(kx || ky)) { vel.x *= f; vel.y *= f; }
+      if (Math.hypot(vel.x, vel.y) < 2) { vel.x = 0; vel.y = 0; }
+    }
+    if (zoomT) {
+      const lz = Math.log(cam.z), nl = lz + (zoomT.lz - lz) * (1 - Math.exp(-dt * 13));
+      zoomAt(zoomT.ax, zoomT.ay, Math.exp(nl - lz));
+      if (Math.abs(zoomT.lz - nl) < 0.0015) zoomT = null;
+    }
+  }
+  // clamp to sheet surroundings
+  const mx = sheetW() * 0.6, my = sheetH() * 0.6;
+  cam.x = clamp(cam.x, SHEET.x0 - mx * 0.2, SHEET.x1 + mx * 0.2); cam.y = clamp(cam.y, SHEET.y0 - my * 0.2, SHEET.y1 + my * 0.2);
+  if (press.on) press.update(dt); else tour.update();
+}
+function isMoving() { return !!flight || !!zoomT || Math.hypot(vel.x, vel.y) > 25 || !!drag || !!pinch || keys.size > 0; }
+function frame(ts) {
+  const dt = Math.min(0.05, Math.max(0.001, (ts - lastTS) / 1000)); lastTS = ts; NOW = ts / 1000;
+  const t0 = performance.now();
+  update(dt);
+  vIndex = Math.floor(NOW * 9) % 3;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#26211d'; ctx.fillRect(0, 0, CW, CH);
+  if (press.on) press.draw();
+  else {
+    drawShadow();
+    currentK = drawTiles(vIndex);
+    Anim.drawAll(NOW, vIndex);
+  }
+  Card.update(NOW, isMoving());
+  renderMs = lerp(renderMs, performance.now() - t0, 0.1);
+  // bake budget
+  const hurry = press.on || (NOW < 8);
+  const budget = hurry ? 22 : isMoving() ? clamp(13 - renderMs, 3, 7) : clamp(15 - renderMs, 5, 12);
+  runJobs(budget);
+  requestAnimationFrame(frame);
+}
+
+/* ===================== 16 TOPIC CARD (the one overlay) ===================== */
+const cardEl = document.getElementById('card');
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const Card = {
+  enabled: true, shownId: null, shown: false, lastMove: 0, filled: null,
+  setEnabled(b) { this.enabled = b; if (!b) this.hide(); },
+  hide() { if (this.shown) { cardEl.classList.remove('on'); this.shown = false; } },
+  fill(sc) {
+    if (this.filled === sc.id) return;
+    this.filled = sc.id;
+    const c = sc.card || {};
+    const terms = (c.terms || []).map(t => '<span>' + esc(t) + '</span>').join('');
+    cardEl.innerHTML =
+      '<div class="n">' + esc(sc.num || sc.id) + (sc.rp ? ' <b>Required practical ' + sc.rp + '</b>' : '') + '</div>' +
+      '<h2>' + esc(sc.title) + '</h2>' + (sc.sub ? '<div class="s">' + esc(sc.sub) + '</div>' : '') +
+      '<p>' + (c.text || '') + '</p>' +
+      (terms ? '<div class="t">' + terms + '</div>' : '') +
+      (c.eq ? '<div class="e"><i>' + esc(c.skill || 'Equation') + '</i>' + c.eq + (c.eqn ? '<small>' + c.eqn + '</small>' : '') + '</div>' : '') +
+      (c.q ? '<details class="q"><summary>' + (c.q) + '</summary>' + (c.a || '') + '</details>' : '') +
+      '<div class="h">C card · 0 whole sheet · drag, scroll, double-click · arrows · + −</div>';
+    cardEl.scrollTop = 0;
+  },
+  dominant() {
+    const A = availArea(), Z = cam.z;
+    let best = null, ba = 0;
+    for (const sc of SCENES) {
+      const x0 = (sc.x - cam.x) * Z + VW / 2, y0 = (sc.y - cam.y) * Z + VH / 2, x1 = x0 + sc.w * Z, y1 = y0 + sc.h * Z;
+      const ix = Math.max(0, Math.min(x1, A.x + A.w) - Math.max(x0, A.x)), iy = Math.max(0, Math.min(y1, A.y + A.h) - Math.max(y0, A.y));
+      const a = ix * iy; if (a > ba) { ba = a; best = sc; }
+    }
+    return ba > A.w * A.h * 0.2 ? best : null;
+  },
+  update(now, moving) {
+    if (!this.enabled || press.on) { return; }
+    if (moving) { this.lastMove = now; this.hide(); return; }
+    if (now - this.lastMove < 0.5) return;
+    const sc = (tour.state === 'dwell' && tour.cur) ? tour.cur : this.dominant();
+    if (!sc) { this.hide(); return; }
+    this.fill(sc);
+    if (!this.shown) { cardEl.classList.add('on'); this.shown = true; }
+  },
+};
+
+/* ===================== 17 ANIMATED LAYER (moving parts, redrawn each frame) =====================
+   Drawn with multiply blending in solid ink colours, offset by each ink's misregistration. */
+const Anim = {
+  sc: null, Z: 1, t: 0, v: 0,
+  drawAll(now, v) {
+    const Z = cam.z * DPR, hw = CW / 2 / Z, hh = CH / 2 / Z;
+    for (const sc of SCENES) {
+      if (!sc.anim) continue;
+      if (sc.x > cam.x + hw || sc.x + sc.w < cam.x - hw || sc.y > cam.y + hh || sc.y + sc.h < cam.y - hh) continue;
+      if (sc.w * Z < 170) continue;
+      this.sc = sc; this.Z = Z; this.t = now; this.v = v;
+      ctx.save();
+      ctx.beginPath(); ctx.rect((sc.x - cam.x) * Z + CW / 2, (sc.y - cam.y) * Z + CH / 2, sc.w * Z, sc.h * Z); ctx.clip();
+      ctx.globalCompositeOperation = 'multiply';
+      sc.anim(this, sc);
+      ctx.restore();
+    }
+  },
+  /* world->device for a scene-local point with ink misregistration */
+  X(x, ink) { const m = MISREG[INK[ink].idx]; return (this.sc.x + x + m[0] - cam.x) * this.Z + CW / 2; },
+  Y(y, ink) { const m = MISREG[INK[ink].idx]; return (this.sc.y + y + m[1] - cam.y) * this.Z + CH / 2; },
+  /* repeating phase 0..1 */
+  ph(period, off = 0) { return (((this.t / period) + off) % 1 + 1) % 1; },
+  /* tiny hand-drawn tremble, different on each of the 3 variants */
+  j(i, a = 0.35) { const h = mix2(i * 97 + 13, this.v * 31 + 5); return [((h & 1023) / 1023 - 0.5) * a, (((h >> 10) & 1023) / 1023 - 0.5) * a]; },
+  col(ink, a) { const c = INK[ink].rgb; return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (a === undefined ? 1 : a) + ')'; },
+  dot(x, y, r, ink = 'P', a = 1, i = 0) {
+    const jj = this.j(i); ctx.fillStyle = this.col(ink, a);
+    ctx.beginPath(); ctx.arc(this.X(x + jj[0], ink), this.Y(y + jj[1], ink), Math.max(0.5, r * this.Z), 0, TAU); ctx.fill();
+  },
+  ring(x, y, r, ink = 'B', w = 0.9, a = 1, i = 0) {
+    const jj = this.j(i); ctx.strokeStyle = this.col(ink, a); ctx.lineWidth = Math.max(1, w * this.Z);
+    ctx.beginPath(); ctx.arc(this.X(x + jj[0], ink), this.Y(y + jj[1], ink), Math.max(0.5, r * this.Z), 0, TAU); ctx.stroke();
+  },
+  line(x1, y1, x2, y2, ink = 'B', w = 0.9, a = 1) {
+    ctx.strokeStyle = this.col(ink, a); ctx.lineWidth = Math.max(1, w * this.Z); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(this.X(x1, ink), this.Y(y1, ink)); ctx.lineTo(this.X(x2, ink), this.Y(y2, ink)); ctx.stroke();
+  },
+  poly(p, ink = 'P', a = 1, closed = true, w = 0) {
+    ctx.beginPath();
+    for (let i = 0; i < p.length; i += 2) { const X = this.X(p[i], ink), Y = this.Y(p[i + 1], ink); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+    if (closed) ctx.closePath();
+    if (w) { ctx.strokeStyle = this.col(ink, a); ctx.lineWidth = Math.max(1, w * this.Z); ctx.stroke(); } else { ctx.fillStyle = this.col(ink, a); ctx.fill(); }
+  },
+  /* position along a polyline (flat array) at u in [0,1]; returns [x,y,angle] */
+  along(p, u) {
+    const n = p.length / 2; let L = 0; const seg = [];
+    for (let i = 1; i < n; i++) { const d = Math.hypot(p[i * 2] - p[i * 2 - 2], p[i * 2 + 1] - p[i * 2 - 1]); seg.push(d); L += d; }
+    let s = clamp(u, 0, 1) * L;
+    for (let i = 0; i < seg.length; i++) {
+      if (s <= seg[i] || i === seg.length - 1) { const t = seg[i] ? clamp(s / seg[i], 0, 1) : 0, x0 = p[i * 2], y0 = p[i * 2 + 1], x1 = p[i * 2 + 2], y1 = p[i * 2 + 3]; return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, Math.atan2(y1 - y0, x1 - x0)]; }
+      s -= seg[i];
+    }
+    return [p[0], p[1], 0];
+  },
+  text(str, x, y, size = 6, ink = 'B', al = 'c') {
+    const toks = parseLabel(String(str)), k = size / 7; let width = 0;
+    for (const t of toks) width += (glyphStrokes(t.ch).w + 1.1) * k * (t.lvl ? 0.68 : 1);
+    width -= 1.1 * k;
+    let cx = x - (al === 'c' ? width / 2 : al === 'r' ? width : 0);
+    ctx.strokeStyle = this.col(ink); ctx.lineWidth = Math.max(1, size * 0.105 * this.Z); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const t of toks) {
+      const g = glyphStrokes(t.ch), ks = k * (t.lvl ? 0.68 : 1), oy = t.lvl === 1 ? -3.4 * k : t.lvl === -1 ? 2.3 * k : 0;
+      for (const s of g.strokes) {
+        ctx.beginPath();
+        for (let i = 0; i < s.pts.length; i += 2) { const X = this.X(cx + s.pts[i] * ks, ink), Y = this.Y(y + (s.pts[i + 1] - 7) * ks + oy, ink); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }
+        if (s.mode === 2) ctx.closePath(); ctx.stroke();
+      }
+      cx += (g.w + 1.1) * ks;
+    }
+  },
+  /* ---- small reusable moving sprites ---- */
+  ion(x, y, label, ink = 'T', r = 3.2, i = 0) { this.dot(x, y, r, ink, 0.92, i); this.text(label, x, y + r * 0.42, r * 1.25, 'B'); },
+  glucose(x, y, r = 3.4, i = 0) { const p = []; for (let k = 0; k < 6; k++) p.push(x + Math.cos(k * TAU / 6 + 0.5) * r, y + Math.sin(k * TAU / 6 + 0.5) * r); this.poly(p, 'Y', 0.95); this.poly(p, 'B', 1, true, 0.55); },
+  atp(x, y, r = 3.4, i = 0) { this.dot(x, y, r, 'Y', 0.95, i); this.ring(x, y, r, 'B', 0.5); this.text('ATP', x, y + r * 0.33, r * 0.95, 'B'); },
+  photon(x, y, ang = 0, len = 9, i = 0) {
+    const p = []; for (let k = 0; k <= 12; k++) { const u = k / 12; p.push(x + Math.cos(ang) * len * u - Math.sin(ang) * Math.sin(u * 14) * 1.7, y + Math.sin(ang) * len * u + Math.cos(ang) * Math.sin(u * 14) * 1.7); }
+    this.poly(p, 'Y', 1, false, 1.2);
+  },
+  electron(x, y, i = 0) { this.dot(x, y, 1.5, 'B', 1, i); this.dot(x, y, 0.75, 'Y', 1, i); },
+  rbc(x, y, r = 4, i = 0, a = 0.95) { this.dot(x, y, r, 'P', a, i); this.dot(x, y, r * 0.38, 'Y', 0.3, i); },
+};
+
+/* ===================== 18 SHEET FURNITURE: crop marks, registration targets, ink swatches ===================== */
+const TRIM = 78; // trim line inset from paper edge
+function regTarget(R, x, y, s = 1) {
+  for (const k of INK_ORDER) {
+    R.circle(x, y, 7 * s, { ink: k, w: 0.8, wob: 0.05 });
+    R.line(x - 11 * s, y, x + 11 * s, y, { ink: k, w: 0.7, wob: 0.05, taper: 'none' });
+    R.line(x, y - 11 * s, x, y + 11 * s, { ink: k, w: 0.7, wob: 0.05, taper: 'none' });
+  }
+  R.circle(x, y, 2.4 * s, { ink: '', fi: 'B', ft: 1, w: 0 });
+}
+FURNITURE_DRAW = function (R) {
+  const W = SHEET.x1, H = SHEET.y1, t = TRIM, L = 30, g = 9;
+  // crop marks (blue, 4 corners x 2) and fold marks
+  for (const [cx, cy, sx, sy] of [[t, t, -1, -1], [W - t, t, 1, -1], [t, H - t, -1, 1], [W - t, H - t, 1, 1]]) {
+    R.line(cx + sx * g, cy, cx + sx * (g + L), cy, { ink: 'B', w: 0.8, wob: 0.06, taper: 'none' });
+    R.line(cx, cy + sy * g, cx, cy + sy * (g + L), { ink: 'B', w: 0.8, wob: 0.06, taper: 'none' });
+  }
+  // registration targets at mid-edges and corners
+  for (const [x, y] of [[W / 2, 34], [W / 2, H - 34], [34, H / 2], [W - 34, H / 2], [34, 34], [W - 34, 34], [34, H - 34], [W - 34, H - 34]]) regTarget(R, x, y);
+  // ink swatch strip along the bottom margin
+  const sy = H - 150, sh = 28, x0 = 340;
+  let x = x0;
+  const solid = [['Y'], ['P'], ['T'], ['B']];
+  solid.forEach(k => { R.rect(x, sy, sh, sh, { ink: '', fi: k[0], ft: 1, w: 0 }); R.rect(x, sy, sh, sh, { ink: 'B', w: 0.7, wob: 0.1 }); x += sh + 5; });
+  x += 14;
+  for (const k of INK_ORDER) { // tint ramps 10..100 %
+    for (let i = 1; i <= 10; i++) { R.rect(x, sy, 15, sh, { ink: '', fi: k, ft: i / 10, w: 0 }); x += 15; }
+    R.rect(x - 150, sy, 150, sh, { ink: 'B', w: 0.6, wob: 0.1 }); x += 12;
+  }
+  x += 6;
+  for (const pr of ['YP', 'YT', 'PT', 'PB', 'TB', 'YB', 'YPT']) { // overprints
+    pr.split('').forEach((k, i, a) => R.rect(x + i * (sh / a.length), sy, sh / a.length, sh, { ink: '', fi: k, ft: 1, w: 0 }));
+    R.rect(x, sy, sh, sh, { ink: 'B', w: 0.7, wob: 0.1 });
+    x += sh + 5;
+  }
+  // meaning of the inks (glyphs, no words): protein blob / water drop / ATP-energy / keyline
+  const kx = 2540, ky = sy + 14;
+  R.circle(kx, ky, 8, { ink: 'B', w: 1, fi: 'P', ft: 0.9 }); R.text('protein', kx + 12, ky + 3, 6.5, { ink: 'B' });
+  R.circle(kx + 112, ky, 8, { ink: 'B', w: 1, fi: 'T', ft: 0.55 }); R.text('water', kx + 124, ky + 3, 6.5, { ink: 'B' });
+  R.circle(kx + 218, ky, 8, { ink: 'B', w: 1, fi: 'Y', ft: 1 }); R.text('energy', kx + 230, ky + 3, 6.5, { ink: 'B' });
+  R.line(kx + 340, ky, kx + 366, ky, { ink: 'B', w: 1.4 }); R.text('structure', kx + 374, ky + 3, 6.5, { ink: 'B' });
+  // slug line
+  R.text('AQA A-LEVEL BIOLOGY 7402  ·  FOUR SPOT INKS  ·  Y  P  T  B', W / 2, H - 70, 8, { ink: 'B', al: 'c' });
+  R.helix(W / 2 - 200, H - 52, W / 2 + 200, H - 52, { amp: 4.5, turns: 14, w: 0.9 });
+  R.helix(150, 52, 330, 52, { amp: 3.5, turns: 6, w: 0.8 });
+};
+
+/* ===================== 20 LIB CORE: scene chrome, DNA motif, scale bars, shared marks ===================== */
+/* Double helix between (x0,y0)->(x1,y1). o: amp, turns, ink, rung ink, w */
+Recorder.prototype.helix = function (x0, y0, x1, y1, o = {}) {
+  const amp = o.amp === undefined ? 4 : o.amp, turns = o.turns === undefined ? 2.5 : o.turns, ink = o.ink === undefined ? 'B' : o.ink, w = o.w === undefined ? 1.0 : o.w;
+  const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  const N = Math.max(12, Math.round(L / 1.6)), ph = o.phase || 0;
+  const pt = (u, s) => { const th = TAU * turns * u + ph + s * PI, off = Math.sin(th) * amp; return [x0 + dx * u + nx * off, y0 + dy * u + ny * off, Math.cos(th)]; };
+  // rungs (base pairs): two-colour halves meeting in the middle, drawn where strands are separated
+  const rungs = Math.max(5, Math.round(turns * 8));
+  for (let r = 0; r < rungs; r++) {
+    const u = (r + 0.5) / rungs, a = pt(u, 0), b = pt(u, 1);
+    if (Math.hypot(a[0] - b[0], a[1] - b[1]) < amp * 0.55) continue;
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    if (o.rungInk) { this.line(a[0], a[1], b[0], b[1], { ink: o.rungInk, w: w * 0.75, wob: 0.12, taper: 'none' }); continue; }
+    const c1 = (r % 2 ? 'P' : 'T'), c2 = (r % 2 ? 'T' : 'P');
+    this.line(a[0], a[1], mid[0], mid[1], { ink: c1, w: w * 1.05, wob: 0.12, taper: 'none' });
+    this.line(mid[0], mid[1], b[0], b[1], { ink: c2, w: w * 1.05, wob: 0.12, taper: 'none' });
+  }
+  for (const front of [false, true]) {
+    for (let s = 0; s < 2; s++) {
+      let run = [];
+      const flush = () => { if (run.length >= 4) this.stroke(run, { ink, w: w * (front ? 1.15 : 0.65), wob: 0.2, tl: 2.5, smooth: true }); run = []; };
+      for (let i = 0; i <= N; i++) {
+        const p = pt(i / N, s), isFront = p[2] > 0;
+        if (isFront === front) run.push(p[0], p[1]); else flush();
+      }
+      flush();
+    }
+  }
+  return this;
+};
+Recorder.prototype.scaleBar = function (x, y, len, label, o = {}) {
+  const ink = o.ink || 'B';
+  this.line(x, y, x + len, y, { ink, w: 1.1, wob: 0.15, taper: 'none' });
+  this.line(x, y - 2, x, y + 2, { ink, w: 0.9, wob: 0.1 }); this.line(x + len, y - 2, x + len, y + 2, { ink, w: 0.9, wob: 0.1 });
+  this.text(label, x + len / 2, y - 3.2, o.size || 5.2, { ink, al: 'c' });
+  return this;
+};
+
+/* The frame every scene gets: knock-out window, hand-ruled border, tag with scene number and DNA colophon */
+function sceneChrome(R, sc, pre) {
+  const w = sc.w, h = sc.h;
+  if (pre) {
+    R.knockRRect(-2, -2, w + 4, h + 4, 12);
+    // faint cream wash so the window reads as a cut-away
+    R.fill(R.rrectPts(0, 0, w, h, 10), { ink: sc.wash === undefined ? 'Y' : sc.wash, t: sc.washT === undefined ? 0.07 : sc.washT, wob: 0.2 });
+    return;
+  }
+  // frame by assessment-style grammar
+  const k = sc.ao || 1;
+  R.rrect(0, 0, w, h, 10, { ink: 'B', w: 1.7, wob: 0.55 });
+  if (k === 2) R.rrect(3, 3, w - 6, h - 6, 8, { ink: 'B', w: 0.7, wob: 0.4, st: 0.9 });
+  if (k >= 3) { for (const [cx, cy, a] of [[0, 0, 0], [w, 0, 90], [w, h, 180], [0, h, 270]]) R.hatch(rectCorner(cx, cy, a, 14), 45, 2.4, { ink: 'P', w: 0.5 }); }
+  // tag
+  const tag = sc.rp ? 'RP' + sc.rp : (sc.tag || sc.num || sc.id);
+  const tw = labelWidth(tag, 7.2) + 24;
+  R.knock(R.rrectPts(8, -7, tw, 15, 4));
+  R.rrect(8, -7, tw, 15, 4, { ink: 'B', w: 1.1, fi: sc.rp ? 'P' : 'T', ft: 0.22, wob: 0.3 });
+  R.text(tag, 12, 4, 7.2, { ink: 'B' });
+  R.helix(8 + tw + 7, 0.5, 8 + tw + 7 + 42, 0.5, { amp: 5.2, turns: 2.4, w: 0.8 });
+}
+function rectCorner(cx, cy, a, s) {
+  const p = [0, 0, s, 0, 0, s].map((v, i) => v);
+  const rot = rad(a), c = Math.cos(rot), sn = Math.sin(rot), out = [];
+  for (let i = 0; i < 6; i += 2) out.push(cx + p[i] * c - p[i + 1] * sn, cy + p[i] * sn + p[i + 1] * c);
+  return out;
+}
+
+/* ===================== 21 LIB GRAPH: axes, curves, annotations (hand-drawn data graphics) ===================== */
+class Graph {
+  constructor(R, x, y, w, h, o = {}) {
+    this.R = R; this.x = x; this.y = y; this.w = w; this.h = h; this.o = o;
+    this.x0 = o.xmin === undefined ? 0 : o.xmin; this.x1 = o.xmax === undefined ? 1 : o.xmax;
+    this.y0 = o.ymin === undefined ? 0 : o.ymin; this.y1 = o.ymax === undefined ? 1 : o.ymax;
+    this.fs = o.fs || 4.6;
+  }
+  X(v) { return this.x + (v - this.x0) / (this.x1 - this.x0) * this.w; }
+  Y(v) { return this.y + this.h - (v - this.y0) / (this.y1 - this.y0) * this.h; }
+  axes(o = {}) {
+    const R = this.R, { x, y, w, h } = this, ink = o.ink || 'B';
+    if (this.o.paper) { // graph-paper wash: assessment (analysis) look
+      const gx = this.o.paper;
+      for (let i = 0; i <= w; i += gx) R.line(x + i, y, x + i, y + h, { ink: 'T', w: 0.28, t: 0.7, wob: 0.1, taper: 'none' });
+      for (let j = 0; j <= h; j += gx) R.line(x, y + j, x + w, y + j, { ink: 'T', w: 0.28, t: 0.7, wob: 0.1, taper: 'none' });
+    }
+    R.arrow([x, y + h, x + w + 3, y + h], { ink, w: 1.05, hs: 3.1, wob: 0.25 });
+    R.arrow([x, y + h, x, y - 3], { ink, w: 1.05, hs: 3.1, wob: 0.25 });
+    if (this.o.xl) R.text(this.o.xl, x + w / 2, y + h + (this.o.xly || 11), this.fs + 0.4, { ink, al: 'c' });
+    if (this.o.yl) R.text(this.o.yl, x - (this.o.ylx || 6), y + h / 2, this.fs + 0.4, { ink, al: 'c', rot: -90 });
+    for (const t of (this.o.xt || [])) {
+      const v = Array.isArray(t) ? t[0] : t, lab = Array.isArray(t) ? t[1] : String(t);
+      R.line(this.X(v), y + h - 1.4, this.X(v), y + h + 1.4, { ink, w: 0.7, wob: 0.05, taper: 'none' });
+      if (lab !== '') R.text(lab, this.X(v), y + h + 6.8, this.fs, { ink, al: 'c' });
+    }
+    for (const t of (this.o.yt || [])) {
+      const v = Array.isArray(t) ? t[0] : t, lab = Array.isArray(t) ? t[1] : String(t);
+      R.line(x - 1.4, this.Y(v), x + 1.4, this.Y(v), { ink, w: 0.7, wob: 0.05, taper: 'none' });
+      if (lab !== '') R.text(lab, x - 3.4, this.Y(v) + this.fs * 0.36, this.fs, { ink, al: 'r' });
+    }
+    return this;
+  }
+  curve(f, o = {}) { // f: function(x)->y or flat array of data points [x,y,...]
+    const n = o.n || 40, pts = [];
+    if (typeof f === 'function') { const a = o.from === undefined ? this.x0 : o.from, b = o.to === undefined ? this.x1 : o.to; for (let i = 0; i <= n; i++) { const xv = a + (b - a) * i / n; const yv = f(xv); if (isFinite(yv)) pts.push(this.X(xv), this.Y(clamp(yv, this.y0, this.y1 * 1.0))); } }
+    else for (let i = 0; i < f.length; i += 2) pts.push(this.X(f[i]), this.Y(f[i + 1]));
+    this.R.stroke(pts, { ink: o.ink || 'P', w: o.w || 1.5, wob: o.wob === undefined ? 0.3 : o.wob, smooth: true, taper: o.taper || 'none' });
+    return this;
+  }
+  poly(pts, o = {}) { // straight data segments with optional point markers
+    const p = []; for (let i = 0; i < pts.length; i += 2) p.push(this.X(pts[i]), this.Y(pts[i + 1]));
+    this.R.stroke(p, { ink: o.ink || 'P', w: o.w || 1.4, smooth: false, wob: 0.2, taper: 'none' });
+    if (o.dots) for (let i = 0; i < p.length; i += 2) this.R.dot(p[i], p[i + 1], o.dr || 1.4, { ink: o.dink || o.ink || 'P' });
+    return this;
+  }
+  area(f, o = {}) { // filled band under f from..to
+    const a = o.from === undefined ? this.x0 : o.from, b = o.to === undefined ? this.x1 : o.to, n = o.n || 30, p = [this.X(a), this.Y(0)];
+    for (let i = 0; i <= n; i++) { const xv = a + (b - a) * i / n; p.push(this.X(xv), this.Y(f(xv))); }
+    p.push(this.X(b), this.Y(0)); this.R.fill(p, { ink: o.ink || 'Y', t: o.t === undefined ? 0.5 : o.t, wob: 0.2 });
+    return this;
+  }
+  dots(pts, o = {}) { for (let i = 0; i < pts.length; i += 2) this.R.dot(this.X(pts[i]), this.Y(pts[i + 1]), o.r || 1.5, { ink: o.ink || 'B' }); return this; }
+  err(xv, yv, e, o = {}) { // error bar
+    const R = this.R, X = this.X(xv), a = this.Y(yv + e), b = this.Y(yv - e);
+    R.line(X, a, X, b, { ink: o.ink || 'B', w: 0.8, wob: 0.08, taper: 'none' }); R.line(X - 1.6, a, X + 1.6, a, { ink: o.ink || 'B', w: 0.8, wob: 0.05, taper: 'none' }); R.line(X - 1.6, b, X + 1.6, b, { ink: o.ink || 'B', w: 0.8, wob: 0.05, taper: 'none' });
+    return this;
+  }
+  hline(v, o = {}) { this.R.line(this.x, this.Y(v), this.x + this.w, this.Y(v), { ink: o.ink || 'B', w: o.w || 0.8, t: o.t, wob: 0.15, taper: 'none' }); if (o.dash) this._dash(this.x, this.Y(v), this.x + this.w, this.Y(v), o); return this; }
+  dashed(x1, y1, x2, y2, o = {}) { this._dash(this.X(x1), this.Y(y1), this.X(x2), this.Y(y2), o); return this; }
+  _dash(ax, ay, bx, by, o = {}) {
+    const L = Math.hypot(bx - ax, by - ay), d = o.d || 3.4, n = Math.max(1, Math.floor(L / (d * 2)));
+    for (let i = 0; i < n; i++) { const u0 = i / n, u1 = u0 + 0.5 / n; this.R.line(ax + (bx - ax) * u0, ay + (by - ay) * u0, ax + (bx - ax) * u1, ay + (by - ay) * u1, { ink: o.ink || 'B', w: o.w || 0.7, wob: 0.08, taper: 'none' }); }
+  }
+  vdrop(xv, yv, o = {}) { this._dash(this.X(xv), this.Y(yv), this.X(xv), this.Y(this.y0), o); return this; }
+  hdrop(xv, yv, o = {}) { this._dash(this.X(xv), this.Y(yv), this.X(this.x0), this.Y(yv), o); return this; }
+  label(str, xv, yv, o = {}) { this.R.text(str, this.X(xv) + (o.dx || 0), this.Y(yv) + (o.dy || 0), o.size || this.fs, { ink: o.ink || 'B', al: o.al || 'l' }); return this; }
+  tangent(xv, yv, slope, len, o = {}) { // slope in data units; draws a straight line through (xv,yv)
+    const sx = this.w / (this.x1 - this.x0), sy = this.h / (this.y1 - this.y0), ang = Math.atan2(-slope * sy, sx), L = len || 40;
+    const cx = this.X(xv), cy = this.Y(yv);
+    this.R.line(cx - Math.cos(ang) * L, cy - Math.sin(ang) * L, cx + Math.cos(ang) * L, cy + Math.sin(ang) * L, { ink: o.ink || 'B', w: o.w || 0.9, wob: 0.12, taper: 'none' });
+    return this;
+  }
+}
+Recorder.prototype.graph = function (x, y, w, h, o) { return new Graph(this, x, y, w, h, o); };
+
+/* simple table with header row: cols=[w...], rows=[[...]] */
+Recorder.prototype.table = function (x, y, colW, rowH, rows, o = {}) {
+  const R = this, W = colW.reduce((a, b) => a + b, 0), H = rows.length * rowH, size = o.size || 4.6;
+  R.fill([x, y, x + W, y, x + W, y + rowH, x, y + rowH], { ink: o.hink || 'T', t: 0.35, wob: 0.15 });
+  R.rect(x, y, W, H, { ink: 'B', w: 0.9, wob: 0.2 });
+  for (let r = 1; r < rows.length; r++) R.line(x, y + r * rowH, x + W, y + r * rowH, { ink: 'B', w: 0.55, wob: 0.1, taper: 'none' });
+  let cx = x; for (let c = 0; c < colW.length - 1; c++) { cx += colW[c]; R.line(cx, y, cx, y + H, { ink: 'B', w: 0.55, wob: 0.1, taper: 'none' }); }
+  rows.forEach((row, r) => { let tx = x; row.forEach((cell, c) => { R.text(String(cell), tx + colW[c] / 2, y + r * rowH + rowH / 2 + size * 0.36, size, { ink: 'B', al: 'c' }); tx += colW[c]; }); });
+  return this;
+};
+
+/* ===================== 22 LIB MOLECULES: sugars, lipids, amino acids, nucleotides, ATP, water ===================== */
+/* Haworth hexose ring. (cx,cy) centre, r = half-width. Draws ring O at back-right, C1 right ... Returns anchor points. */
+Recorder.prototype.hexose = function (cx, cy, r, o = {}) {
+  const R = this, beta = !!o.beta, fs = o.fs || Math.max(3.4, r * 0.3), ink = o.ink || 'B', ring = o.ring === undefined ? 'Y' : o.ring;
+  const P = {
+    O: [cx + 0.55 * r, cy - 0.42 * r], C1: [cx + 1.0 * r, cy + 0.12 * r], C2: [cx + 0.52 * r, cy + 0.62 * r],
+    C3: [cx - 0.52 * r, cy + 0.62 * r], C4: [cx - 1.0 * r, cy + 0.12 * r], C5: [cx - 0.5 * r, cy - 0.42 * r],
+  };
+  const poly = [P.O, P.C1, P.C2, P.C3, P.C4, P.C5];
+  if (ring) R.fill(poly.flat(), { ink: ring, t: o.rt === undefined ? 0.45 : o.rt, wob: 0.2 });
+  // ring bonds; front edge (C2-C3) bold
+  const bond = (a, b, w) => R.line(a[0], a[1], b[0], b[1], { ink, w, wob: 0.18, taper: 'none' });
+  bond(P.C5, P.O, 1.1); bond(P.O, P.C1, 1.1); bond(P.C1, P.C2, 1.2); bond(P.C2, P.C3, 2.2); bond(P.C3, P.C4, 1.2); bond(P.C4, P.C5, 1.1);
+  const sub = (p, dx, dy, lab, al, bold) => {
+    const q = [p[0] + dx * r, p[1] + dy * r];
+    R.line(p[0], p[1], q[0], q[1], { ink, w: 0.8, wob: 0.1, taper: 'none' });
+    if (lab) R.text(lab, q[0] + (al === 'l' ? 0.35 : al === 'r' ? -0.35 : 0) * fs, q[1] + (dy > 0 ? fs * 0.95 : -fs * 0.25), fs, { ink, al: al || 'c' });
+  };
+  R.text('O', P.O[0], P.O[1] - fs * 0.25 + 0.2, fs, { ink, al: 'c' });
+  R.knock([P.O[0] - fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] + fs * 0.2, P.O[0] - fs * 0.5, P.O[1] + fs * 0.2]);
+  R.fill([P.O[0] - fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] + fs * 0.2, P.O[0] - fs * 0.5, P.O[1] + fs * 0.2], { ink: ring || 'Y', t: o.rt === undefined ? 0.45 : o.rt, wob: 0 });
+  R.text('O', P.O[0], P.O[1] + fs * 0.25, fs, { ink, al: 'c' });
+  // substituents (D-glucose): C1 OH down(alpha)/up(beta); C2 OH down; C3 OH up; C4 OH down; C5 CH2OH up
+  if (!o.noSubs) {
+    const c1Down = !beta;
+    if (!o.c1bond) {
+      sub(P.C1, 0.12, c1Down ? 0.5 : -0.5, 'OH', 'c'); sub(P.C1, 0.12, c1Down ? -0.45 : 0.45, o.hs === false ? '' : 'H', 'c');
+    }
+    sub(P.C2, 0.02, 0.5, 'OH', 'c'); if (o.hs !== false) sub(P.C2, 0.02, -0.42, 'H', 'c');
+    sub(P.C3, -0.02, -0.52, 'OH', 'c'); if (o.hs !== false) sub(P.C3, -0.02, 0.45, 'H', 'c');
+    if (!o.c4bond) { sub(P.C4, -0.12, 0.5, 'OH', 'c'); if (o.hs !== false) sub(P.C4, -0.12, -0.45, 'H', 'c'); }
+    // C5: CH2OH up
+    const c6 = [P.C5[0] - 0.05 * r, P.C5[1] - 0.58 * r];
+    R.line(P.C5[0], P.C5[1], c6[0], c6[1], { ink, w: 0.9, wob: 0.1, taper: 'none' });
+    R.text('CH_2OH', c6[0], c6[1] - fs * 0.15, fs, { ink, al: 'c' });
+    if (o.hs !== false) { R.line(P.C5[0], P.C5[1], P.C5[0] + 0.18 * r, P.C5[1] + 0.4 * r, { ink, w: 0.8, wob: 0.1, taper: 'none' }); }
+  }
+  return P;
+};
+/* fructose (furanose) simplified 5-ring */
+Recorder.prototype.fructose = function (cx, cy, r, o = {}) {
+  const R = this, fs = o.fs || Math.max(3.4, r * 0.3), ink = 'B';
+  const P = { O: [cx + 0.0 * r, cy - 0.55 * r], C2: [cx + 0.85 * r, cy - 0.1 * r], C3: [cx + 0.5 * r, cy + 0.55 * r], C4: [cx - 0.5 * r, cy + 0.55 * r], C5: [cx - 0.85 * r, cy - 0.1 * r] };
+  const poly = [P.O, P.C2, P.C3, P.C4, P.C5];
+  R.fill(poly.flat(), { ink: 'Y', t: 0.45, wob: 0.2 });
+  R.poly(poly.flat(), { ink, w: 1.2, wob: 0.2 });
+  R.text('O', P.O[0], P.O[1] + fs * 0.35, fs, { ink, al: 'c' });
+  return P;
+};
+/* galactose differs from glucose at C4 (OH up) */
+/* glucose chain of n rings joined 1-4 (alpha: all same orientation; beta: alternate flipped) */
+
+/* ---- amino acid (general structure) ---- */
+Recorder.prototype.aminoAcid = function (cx, cy, s, o = {}) {
+  const R = this, fs = o.fs || s * 0.34, ink = 'B', rg = o.rlabel || 'R';
+  // central C with NH2 left, COOH right, H down, R up
+  R.text('C', cx, cy + fs * 0.35, fs * 1.1, { ink, al: 'c' });
+  R.line(cx - s * 0.18, cy, cx - s * 0.62, cy, { ink, w: 0.9, taper: 'none', wob: 0.1 });
+  R.line(cx + s * 0.18, cy, cx + s * 0.62, cy, { ink, w: 0.9, taper: 'none', wob: 0.1 });
+  R.line(cx, cy + s * 0.2, cx, cy + s * 0.55, { ink, w: 0.9, taper: 'none', wob: 0.1 });
+  R.line(cx, cy - s * 0.2, cx, cy - s * 0.55, { ink, w: 0.9, taper: 'none', wob: 0.1 });
+  R.fill(roundBox(cx - s * 1.13, cy - fs * 0.85, s * 0.5, fs * 1.7), { ink: 'T', t: 0.4, wob: 0.1 });
+  R.text('H_2N', cx - s * 0.88, cy + fs * 0.35, fs, { ink, al: 'c' });
+  R.fill(roundBox(cx + s * 0.62, cy - fs * 0.85, s * 0.75, fs * 1.7), { ink: 'P', t: 0.4, wob: 0.1 });
+  R.text('COOH', cx + s * 1.0, cy + fs * 0.35, fs, { ink, al: 'c' });
+  R.text('H', cx, cy + s * 0.55 + fs * 1.0, fs, { ink, al: 'c' });
+  R.fill(roundBox(cx - fs * 0.9, cy - s * 0.55 - fs * 1.3, fs * 1.8, fs * 1.3), { ink: 'Y', t: 0.7, wob: 0.1 });
+  R.text(rg, cx, cy - s * 0.55 - fs * 0.25, fs * 1.05, { ink, al: 'c' });
+};
+function roundBox(x, y, w, h) { return [x, y, x + w, y, x + w, y + h, x, y + h]; }
+
+/* ---- nucleotide: phosphate (circle), pentose (pentagon), base (rect) ---- */
+Recorder.prototype.nucleotide = function (x, y, o = {}) {
+  const R = this, s = o.s || 10, base = o.base || 'A', ang = o.rot || 0, ink = 'B';
+  R.push(x, y, rad(ang), 1);
+  const bcol = { A: 'P', T: 'T', U: 'T', G: 'Y', C: 'TY' }[base] || 'T';
+  // phosphate
+  R.circle(-s * 1.15, -s * 0.35, s * 0.42, { ink, w: 1.0, fi: 'Y', ft: 1 }); R.text('P', -s * 1.15, -s * 0.35 + s * 0.22, s * 0.52, { ink, al: 'c' });
+  // pentose
+  const pent = []; for (let k = 0; k < 5; k++) pent.push(Math.cos(-PI / 2 + k * TAU / 5) * s * 0.52, Math.sin(-PI / 2 + k * TAU / 5) * s * 0.52 - s * 0.05);
+  R.poly(pent, { ink, w: 1.1, fi: 'P', ft: 0.22 });
+  R.line(-s * 0.46, -s * 0.2, -s * 0.8, -s * 0.33, { ink, w: 0.9, taper: 'none' });
+  // base
+  const bw = base === 'A' || base === 'G' ? s * 1.15 : s * 0.8;
+  R.line(s * 0.5, 0, s * 0.75, 0, { ink, w: 0.9, taper: 'none' });
+  R.fill(roundBox(s * 0.75, -s * 0.38, bw, s * 0.76), { ink: bcol, t: 0.7, wob: 0.1 }); R.rect(s * 0.75, -s * 0.38, bw, s * 0.76, { ink, w: 0.9, wob: 0.12 });
+  R.text(base, s * 0.75 + bw / 2, s * 0.17, s * 0.62, { ink, al: 'c' });
+  R.pop();
+};
+
+/* ---- ATP molecule symbol: adenine box, ribose pentagon, 3 phosphates ---- */
+Recorder.prototype.atpMol = function (x, y, s, o = {}) {
+  const R = this, ink = 'B', n = o.phos === undefined ? 3 : o.phos;
+  const pent = []; for (let k = 0; k < 5; k++) pent.push(x + Math.cos(-PI / 2 + k * TAU / 5) * s * 0.5, y + Math.sin(-PI / 2 + k * TAU / 5) * s * 0.5);
+  R.fill(roundBox(x - s * 1.8, y - s * 0.4, s * 1.1, s * 0.8), { ink: 'T', t: 0.7, wob: 0.1 }); R.rect(x - s * 1.8, y - s * 0.4, s * 1.1, s * 0.8, { ink, w: 1, wob: 0.1 });
+  R.text('adenine', x - s * 1.25, y + s * 0.15, s * 0.42, { ink, al: 'c' });
+  R.line(x - s * 0.7, y, x - s * 0.45, y, { ink, w: 0.9, taper: 'none' });
+  R.poly(pent, { ink, w: 1.1, fi: 'P', ft: 0.45 }); R.text('ribose', x, y + s * 0.15, s * 0.36, { ink, al: 'c' });
+  for (let i = 0; i < n; i++) {
+    const px = x + s * (0.95 + i * 0.95); R.line(px - s * 0.45, y, px - s * 0.18, y, { ink, w: 0.9, taper: 'none' });
+    R.circle(px, y, s * 0.36, { ink, w: 1.0, fi: 'Y', ft: 1 }); R.text('P', px, y + s * 0.2, s * 0.5, { ink, al: 'c' });
+  }
+};
+
+/* ---- water molecule (bent) with partial charges: returns H positions ---- */
+Recorder.prototype.water = function (x, y, s, rot = 0, o = {}) {
+  const R = this; R.push(x, y, rad(rot), 1);
+  const hx = s * 0.78, hy = s * 0.62;
+  R.line(0, 0, -hx, hy, { ink: 'B', w: 0.9, taper: 'none' }); R.line(0, 0, hx, hy, { ink: 'B', w: 0.9, taper: 'none' });
+  R.circle(0, 0, s * 0.48, { ink: 'B', w: 0.9, fi: 'T', ft: 0.9 }); R.text('O', 0, s * 0.18, s * 0.58, { ink: 'B', al: 'c' });
+  for (const sx of [-1, 1]) { R.circle(sx * hx, hy, s * 0.3, { ink: 'B', w: 0.8, fi: 'T', ft: 0.25 }); R.text('H', sx * hx, hy + s * 0.12, s * 0.38, { ink: 'B', al: 'c' }); }
+  if (o.charges) { R.text('δ−', -s * 0.05, -s * 0.78, s * 0.5, { ink: 'P', al: 'c' }); R.text('δ+', -hx, hy + s * 0.82, s * 0.45, { ink: 'P', al: 'c' }); R.text('δ+', hx, hy + s * 0.82, s * 0.45, { ink: 'P', al: 'c' }); }
+  R.pop();
+};
+Recorder.prototype.dashedLine = function (x1, y1, x2, y2, o = {}) {
+  const L = Math.hypot(x2 - x1, y2 - y1), d = o.d || 2.2, n = Math.max(1, Math.floor(L / (d * 2)));
+  for (let i = 0; i < n; i++) { const u0 = i / n, u1 = u0 + 0.5 / n; this.line(x1 + (x2 - x1) * u0, y1 + (y2 - y1) * u0, x1 + (x2 - x1) * u1, y1 + (y2 - y1) * u1, { ink: o.ink || 'B', w: o.w || 0.8, wob: 0.06, taper: 'none' }); }
+};
+/* ---- fatty-acid zig-zag chain from (x,y) heading along ang(deg) with n carbons; db = indices of C=C ---- */
+Recorder.prototype.zigzag = function (x, y, ang, n, step, o = {}) {
+  const R = this, a = rad(ang), p = [x, y], ink = o.ink || 'B', dbs = o.db || [];
+  const nx = -Math.sin(a), ny = Math.cos(a), pts = [[x, y]];
+  for (let i = 1; i <= n; i++) { const t = i * step, off = (i % 2 ? 1 : -1) * step * 0.28 * (o.kinkAt && o.kinkAt.includes(i) ? 0 : 1); pts.push([x + Math.cos(a) * t + nx * off, y + Math.sin(a) * t + ny * off]); }
+  R.stroke(pts.flat(), { ink, w: o.w || 1.0, smooth: false, wob: 0.15, taper: 'none' });
+  for (const d of dbs) { const a1 = pts[d], b1 = pts[d + 1], mx = (b1[1] - a1[1]), my = -(b1[0] - a1[0]), L = Math.hypot(mx, my) || 1; R.line(a1[0] + mx / L * 1.3, a1[1] + my / L * 1.3, b1[0] + mx / L * 1.3, b1[1] + my / L * 1.3, { ink, w: 0.8, wob: 0.08, taper: 'none' }); }
+  return pts;
+};
+
+/* TEST SCENES (temporary) */
+S({ id: 't1', num: 't1', title: 'mol test', topic: '3.1', slot: [0, 0], card: { text: 'x' },
+  draw(R, sc) {
+    R.hexose(60, 70, 24, { beta: false }); R.text('α-glucose', 60, 118, 7, { al: 'c' });
+    R.hexose(150, 70, 24, { beta: true }); R.text('β-glucose', 150, 118, 7, { al: 'c' });
+    R.aminoAcid(250, 70, 26);
+    R.nucleotide(50, 170, { base: 'A', s: 14 }); R.nucleotide(120, 170, { base: 'G', s: 14 });
+    R.atpMol(190, 150, 12);
+    R.water(250, 185, 11, 0, { charges: true });
+    R.zigzag(20, 215, 0, 14, 10, { db: [5] });
+  } });
+S({ id: 't2', num: 't2', title: 'graph test', topic: '3.1', slot: [1, 0], card: { text: 'x' },
+  draw(R, sc) {
+    const g = R.graph(40, 30, 220, 150, { xmin: 0, xmax: 60, ymin: 0, ymax: 10, xl: 'Temperature / °C', yl: 'Rate', xt: [0, 20, 40, 60], yt: [0, 5, 10], paper: 10 }).axes();
+    g.curve(x => 10 * Math.exp(-Math.pow((x - 38) / 12, 2)) * (x < 38 ? 1 : 1 - (x - 38) / 25), { ink: 'P' });
+    g.tangent(30, 6, 0.5, 40); g.vdrop(38, 10); g.label('optimum', 38, 10.3, { al: 'c' });
+    R.table(40, 195, [40, 40, 40, 40], 10, [['x', 'y', 'z', 'w'], [1, 2, 3, 4]]);
+  } });
+
+/* ===================== 99 MAIN ===================== */
+(function boot() {
+  initPlates(); layoutSheet(); resize();
+  const fv = fitView(); cam.x = fv.x; cam.y = fv.y; cam.z = fv.z;
+  Card.setEnabled(true);
+  press.begin();
+  window.AQA = { cam, press, tour, TILES, JOBS, STAGE, SCENES, LAYERS, get k() { return currentK; }, flyTo, viewFor, sceneRect, DLC, MISSING_GLYPHS,
+    recordAll(v = 0) { const t0 = performance.now(), rep = []; let tot = 0; for (const L of LAYERS) { const a = performance.now(); const dl = recordLayer(L, v, false); rep.push([L.id, dl.count, dl.bytes(), Math.round(performance.now() - a)]); tot += dl.bytes(); } return { ms: Math.round(performance.now() - t0), bytes: tot, missing: [...MISSING_GLYPHS], rep }; } };
+  requestAnimationFrame(frame);
+})();
+
+</script></body></html>

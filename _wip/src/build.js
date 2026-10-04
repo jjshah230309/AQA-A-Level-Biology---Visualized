@@ -1,0 +1,11 @@
+const fs=require('fs'),path=require('path');
+const dir=__dirname;
+const files=fs.readdirSync(dir).filter(f=>/^\d\d-.*\.js$/.test(f)).sort();
+let js=files.map(f=>fs.readFileSync(path.join(dir,f),'utf8')).join('\n');
+let head=fs.readFileSync(path.join(dir,'00-head.html'),'utf8');
+let trace=fs.existsSync(path.join(dir,'trace.txt'))?fs.readFileSync(path.join(dir,'trace.txt'),'utf8'):'<!-- AQA A-level Biology topic by topic -->';
+head=head.replace('<!--TRACE-->',trace);
+const out=head+"'use strict';\n"+js+"\n"+fs.readFileSync(path.join(dir,'99-tail.html'),'utf8');
+const dest=process.argv[2]||path.join(dir,'..','index.html');
+fs.writeFileSync(dest,out);
+console.log('built',dest,out.length,'bytes; files:',files.length);
