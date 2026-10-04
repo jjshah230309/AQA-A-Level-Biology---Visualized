@@ -16,7 +16,6 @@ Recorder.prototype.hexose = function (cx, cy, r, o = {}) {
     R.line(p[0], p[1], q[0], q[1], { ink, w: 0.8, wob: 0.1, taper: 'none' });
     if (lab) R.text(lab, q[0] + (al === 'l' ? 0.35 : al === 'r' ? -0.35 : 0) * fs, q[1] + (dy > 0 ? fs * 0.95 : -fs * 0.25), fs, { ink, al: al || 'c' });
   };
-  R.text('O', P.O[0], P.O[1] - fs * 0.25 + 0.2, fs, { ink, al: 'c' });
   R.knock([P.O[0] - fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] + fs * 0.2, P.O[0] - fs * 0.5, P.O[1] + fs * 0.2]);
   R.fill([P.O[0] - fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] - fs * 0.9, P.O[0] + fs * 0.5, P.O[1] + fs * 0.2, P.O[0] - fs * 0.5, P.O[1] + fs * 0.2], { ink: ring || 'Y', t: o.rt === undefined ? 0.45 : o.rt, wob: 0 });
   R.text('O', P.O[0], P.O[1] + fs * 0.25, fs, { ink, al: 'c' });
@@ -88,18 +87,27 @@ Recorder.prototype.nucleotide = function (x, y, o = {}) {
   R.pop();
 };
 
-/* ---- ATP molecule symbol: adenine box, ribose pentagon, 3 phosphates ---- */
+/* ---- ATP molecule symbol: adenine box, ribose pentagon, n phosphates; (x,y) = left end centre line ---- */
 Recorder.prototype.atpMol = function (x, y, s, o = {}) {
-  const R = this, ink = 'B', n = o.phos === undefined ? 3 : o.phos;
-  const pent = []; for (let k = 0; k < 5; k++) pent.push(x + Math.cos(-PI / 2 + k * TAU / 5) * s * 0.5, y + Math.sin(-PI / 2 + k * TAU / 5) * s * 0.5);
-  R.fill(roundBox(x - s * 1.8, y - s * 0.4, s * 1.1, s * 0.8), { ink: 'T', t: 0.7, wob: 0.1 }); R.rect(x - s * 1.8, y - s * 0.4, s * 1.1, s * 0.8, { ink, w: 1, wob: 0.1 });
-  R.text('adenine', x - s * 1.25, y + s * 0.15, s * 0.42, { ink, al: 'c' });
-  R.line(x - s * 0.7, y, x - s * 0.45, y, { ink, w: 0.9, taper: 'none' });
-  R.poly(pent, { ink, w: 1.1, fi: 'P', ft: 0.45 }); R.text('ribose', x, y + s * 0.15, s * 0.36, { ink, al: 'c' });
+  const R = this, ink = 'B', n = o.phos === undefined ? 3 : o.phos, fs = Math.max(3.6, s * 0.27);
+  const bw = s * 1.5, bh = s * 1.1, px = x + bw + s * 0.3 + s * 0.62;
+  R.fill(roundBox(x, y - bh / 2, bw, bh), { ink: 'T', t: 0.7, wob: 0.1 }); R.rect(x, y - bh / 2, bw, bh, { ink, w: 1.1, wob: 0.12 });
+  R.line(x + bw, y, x + bw + s * 0.3, y, { ink, w: 1, taper: 'none' });
+  R.poly(polyPts(px, y, s * 0.62, 5), { ink, w: 1.2, fi: 'P', ft: 0.45 });
+  if (o.labels !== false) { R.text('adenine', x + bw / 2, y - bh / 2 - 3, fs, { al: 'c' }); R.text('ribose', px + 2, y - s * 0.62 - 3, fs, { al: 'c' }); }
+  let cx = px + s * 0.62;
   for (let i = 0; i < n; i++) {
-    const px = x + s * (0.95 + i * 0.95); R.line(px - s * 0.45, y, px - s * 0.18, y, { ink, w: 0.9, taper: 'none' });
-    R.circle(px, y, s * 0.36, { ink, w: 1.0, fi: 'Y', ft: 1 }); R.text('P', px, y + s * 0.2, s * 0.5, { ink, al: 'c' });
+    R.line(cx, y, cx + s * 0.34, y, { ink, w: 1, taper: 'none' }); cx += s * 0.34 + s * 0.45;
+    R.circle(cx, y, s * 0.45, { ink, w: 1.1, fi: 'Y', ft: 1 }); R.text('P', cx, y + s * 0.17, s * 0.5, { ink, al: 'c' }); cx += s * 0.45;
   }
+  if (o.labels !== false) {
+    const x0 = px + s * 0.62 + s * 0.34 - s * 0.4, x1 = cx + 1;
+    R.stroke([x0, y - s * 0.78, x0, y - s * 0.95, x1, y - s * 0.95, x1, y - s * 0.78], { ink, w: 0.8, smooth: false, taper: 'none' });
+    R.text(n === 3 ? '3 phosphate groups' : n + ' phosphate', (x0 + x1) / 2, y - s * 0.95 - 3, fs, { al: 'c' });
+    R.stroke([x, y + bh / 2 + 3, x, y + bh / 2 + 5, px + s * 0.62, y + bh / 2 + 5, px + s * 0.62, y + bh / 2 + 3], { ink, w: 0.8, smooth: false, taper: 'none' });
+    R.text('adenosine', (x + px + s * 0.62) / 2, y + bh / 2 + 5 + fs + 1, fs, { al: 'c' });
+  }
+  return { end: cx, px };
 };
 
 /* ---- water molecule (bent) with partial charges: returns H positions ---- */
@@ -124,4 +132,52 @@ Recorder.prototype.zigzag = function (x, y, ang, n, step, o = {}) {
   R.stroke(pts.flat(), { ink, w: o.w || 1.0, smooth: false, wob: 0.15, taper: 'none' });
   for (const d of dbs) { const a1 = pts[d], b1 = pts[d + 1], mx = (b1[1] - a1[1]), my = -(b1[0] - a1[0]), L = Math.hypot(mx, my) || 1; R.line(a1[0] + mx / L * 1.3, a1[1] + my / L * 1.3, b1[0] + mx / L * 1.3, b1[1] + my / L * 1.3, { ink, w: 0.8, wob: 0.08, taper: 'none' }); }
   return pts;
+};
+
+/* fatty-acid chain (skeletal): turtle zig-zag from (x,y) heading `ang` deg; n bonds of length `step`.
+   o.db = index of bond that is C=C (cis: chain bends after it). Returns vertex list. */
+Recorder.prototype.fa = function (x, y, ang, n, step, o = {}) {
+  const R = this, ink = o.ink || 'B', pts = [[x, y]];
+  let h = rad(ang), px = x, py = y;
+  for (let i = 1; i <= n; i++) {
+    const dir = (i % 2 ? 1 : -1) * rad(30) * (o.flip ? -1 : 1);
+    if (o.db !== undefined && i === o.db + 2) h += rad(o.bend === undefined ? 62 : o.bend) * (o.flip ? -1 : 1);
+    px += Math.cos(h + dir) * step; py += Math.sin(h + dir) * step; pts.push([px, py]);
+  }
+  R.stroke(pts.flat(), { ink, w: o.w || 1.05, smooth: false, wob: 0.14, taper: 'none' });
+  if (o.db !== undefined) {
+    const a = pts[o.db], b = pts[o.db + 1], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy), nx = -dy / L * 1.5, ny = dx / L * 1.5;
+    R.line(a[0] + nx, a[1] + ny, b[0] + nx, b[1] + ny, { ink, w: 0.9, wob: 0.08, taper: 'none' });
+  }
+  return pts;
+};
+
+/* polypeptide backbone N-Ca-C(=O)-N-... with R groups; n residues; peptide bonds highlighted. returns centres of peptide bonds */
+Recorder.prototype.peptide = function (x, y, n, step, o = {}) {
+  const R = this, fs = o.fs || 4.6, ink = 'B', rs = o.rs || ['R₁', 'R₂', 'R₃', 'R₄'], bonds = [];
+  const atoms = [];
+  for (let i = 0; i < n; i++) { atoms.push({ t: 'N', i }); atoms.push({ t: 'C', i }); atoms.push({ t: 'K', i }); } // N, Calpha, C(=O)
+  const pos = atoms.map((a, k) => [x + k * step, y + (k % 2 ? -1 : 1) * step * 0.26]);
+  for (let k = 0; k < atoms.length - 1; k++) R.line(pos[k][0], pos[k][1], pos[k + 1][0], pos[k + 1][1], { ink, w: 1.1, taper: 'none', wob: 0.12 });
+  atoms.forEach((a, k) => {
+    const [px, py] = pos[k], up = k % 2 ? -1 : 1;
+    if (a.t === 'N') { R.knock(polyPts(px, py, fs * 0.8, 8)); R.text('N', px, py + fs * 0.36, fs, { al: 'c' }); R.line(px, py + up * fs * 0.8, px, py + up * (fs * 0.8 + step * 0.35), { ink, w: 0.9, taper: 'none' }); R.text('H', px, py + up * (fs * 0.8 + step * 0.35 + (up > 0 ? fs * 0.95 : -0.2)), fs * 0.9, { al: 'c' }); }
+    else if (a.t === 'K') {
+      R.line(px, py, px, py - step * 0.5 * (up > 0 ? 1 : 1) * -up * -1, { ink, w: 0.9, taper: 'none' });
+      const oy = py + up * step * 0.5; R.line(px - 0.9, py, px - 0.9, oy, { ink, w: 0.8, taper: 'none' }); R.line(px + 0.9, py, px + 0.9, oy, { ink, w: 0.8, taper: 'none' }); R.text('O', px, oy + (up > 0 ? fs * 0.95 : -0.1), fs, { al: 'c' });
+      if (k < atoms.length - 1) bonds.push([(px + pos[k + 1][0]) / 2, (py + pos[k + 1][1]) / 2]);
+    } else {
+      const ry = py + up * step * 0.55; R.line(px, py, px, ry, { ink, w: 0.95, taper: 'none' });
+      const rb = roundBox(px - fs * 0.95, up > 0 ? ry : ry - fs * 1.35, fs * 1.9, fs * 1.35); R.fill(rb, { ink: o.rc ? o.rc[a.i % o.rc.length] : 'Y', t: 0.7, wob: 0.1 });
+      R.text(rs[a.i % rs.length], px, (up > 0 ? ry + fs * 1.0 : ry - fs * 0.3), fs * 0.95, { al: 'c' });
+      R.line(px - step * 0.28, py, px - step * 0.28, py + up * -fs * 0.0, { ink, w: 0.01 });
+    }
+  });
+  if (o.ends) { // free ends: H on the amino terminus, OH on the carboxyl terminus
+    const f0 = pos[0], fl = pos[pos.length - 1];
+    R.line(f0[0], f0[1], f0[0] - step * 0.45, f0[1] + step * 0.2, { ink, w: 0.9, taper: 'none' }); R.text('H', f0[0] - step * 0.45 - fs * 0.5, f0[1] + step * 0.2 + fs * 0.4, fs, { al: 'c' });
+    const up2 = (atoms.length - 1) % 2 ? -1 : 1; R.line(fl[0], fl[1], fl[0] + step * 0.45, fl[1] - up2 * step * 0.1, { ink, w: 0.9, taper: 'none' }); R.text('OH', fl[0] + step * 0.45 + fs * 0.9, fl[1] - up2 * step * 0.1 + fs * 0.4, fs, { al: 'c' });
+  }
+  if (o.mark !== false) bonds.forEach(b => R.bondMark(b[0], b[1], step * 0.34, { w: 1.3 }));
+  return { pos, bonds };
 };

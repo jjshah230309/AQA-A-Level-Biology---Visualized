@@ -55,7 +55,7 @@ function sceneChrome(R, sc, pre) {
   const tag = sc.rp ? 'RP' + sc.rp : (sc.tag || sc.num || sc.id);
   const tw = labelWidth(tag, 7.2) + 24;
   R.knock(R.rrectPts(8, -7, tw, 15, 4));
-  R.rrect(8, -7, tw, 15, 4, { ink: 'B', w: 1.1, fi: sc.rp ? 'P' : 'T', ft: 0.22, wob: 0.3 });
+  R.rrect(8, -7, tw, 15, 4, { ink: 'B', w: 1.2, fi: sc.rp ? 'P' : 'T', ft: sc.rp ? 0.28 : 0.14, wob: 0.3 });
   R.text(tag, 12, 4, 7.2, { ink: 'B' });
   R.helix(8 + tw + 7, 0.5, 8 + tw + 7 + 42, 0.5, { amp: 5.2, turns: 2.4, w: 0.8 });
 }

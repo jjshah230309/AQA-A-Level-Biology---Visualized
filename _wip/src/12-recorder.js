@@ -287,7 +287,7 @@ class Recorder {
     width -= 1.1 * k;
     let cx = o.al === 'c' ? -width / 2 : o.al === 'r' ? -width : 0;
     const ink = o.ink === undefined ? 'B' : o.ink;
-    const w = o.w === undefined ? Math.max(0.42, size * 0.108) : o.w;
+    const w = o.w === undefined ? Math.max(0.5, size * 0.13 + 0.08) : o.w;
     this.push(x, y, o.rot ? rad(o.rot) : 0, 1);
     const wk = this.wobK; this.wobK *= 0.55;
     for (const t of toks) {
