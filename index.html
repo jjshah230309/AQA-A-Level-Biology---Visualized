@@ -5725,6 +5725,878 @@ S({
   anim(A, sc) { const p = A.ph(8); A.dot(134 - p * 22, 193.6, 0, 'P', 0, 0); A.dot(124 + p * 40, 193.6, 2.4, 'P', 0.9, 1); for (let i = 0; i < 3; i++) A.dot(48 + ((p * 3 + i / 3) % 1) * 4, 124 + ((p * 3 + i / 3) % 1) * 30, 1, 'T', 0.7, 3 + i); },
 });
 
+/* ===================== TOPIC 3.4 Genetic information, variation and relationships between organisms ===================== */
+/* nucleosome-style chromatin: DNA wrapped on histone beads along a path */
+function chromatin(R, pts, nb, o = {}) {
+  const p = catmull(flat(pts), false, 3), n = p.length / 2, S = [0];
+  for (let i = 1; i < n; i++) S.push(S[i - 1] + Math.hypot(p[i * 2] - p[i * 2 - 2], p[i * 2 + 1] - p[i * 2 - 1]));
+  R.stroke(pts, { ink: 'B', w: o.w || 1.1, smooth: true, taper: 'none', wob: 0.3 });
+  for (let k = 0; k < nb; k++) { const s = (k + 0.5) / nb * S[n - 1]; let i = 1; while (i < n - 1 && S[i] < s) i++; const t = (s - S[i - 1]) / ((S[i] - S[i - 1]) || 1), x = lerp(p[i * 2 - 2], p[i * 2], t), y = lerp(p[i * 2 - 1], p[i * 2 + 1], t); R.circle(x, y, o.r || 3.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.75, wob: 0.15 }); R.arc(x, y, (o.r || 3.4) + 0.8, (o.r || 3.4) + 0.8, 0.6, 5.7, { ink: 'T', w: 1.1, taper: 'none' }); }
+}
+/* X-shaped chromosome of two chromatids with centromere */
+function chromosome(R, x, y, len, w, o = {}) {
+  const half = len / 2, rot = o.rot || 0; R.push(x, y, rad(rot), 1);
+  [-1, 1].forEach(sd => { const cx = sd * w * 0.55; R.rrect(cx - w / 2, -half, w, len, w / 2, { ink: 'B', w: 1.1, fi: o.fi || 'B', ft: o.ft === undefined ? 0.55 : o.ft, wob: 0.2 }); });
+  R.circle(0, 0, w * 0.45, { ink: 'B', w: 0.9, fi: 'P', ft: 0.6 });
+  if (o.bands) o.bands.forEach(([bu, bc]) => { R.rect(-w * 1.1, -half + bu * len, w * 2.2, 2.2, { ink: bc || 'P', w: 0, fi: bc || 'P', ft: 0.9 }); });
+  R.pop();
+}
+
+/* ---------- 3.4.1a DNA in prokaryotes, eukaryotes and organelles ---------- */
+S({
+  id: '3.4.1a', num: '3.4.1', sub: 'DNA in prokaryotic cells, in the nucleus of eukaryotic cells, and in mitochondria and chloroplasts', title: 'DNA, genes and chromosomes', topic: '3.4', slot: [0, 0], span: [2, 1], dna: 'bio', ao: 1,
+  covers: ['3.4.1.s1', '3.4.1.s2', '3.4.1.s3'],
+  card: {
+    text: 'In <b>prokaryotic cells</b>, DNA molecules are short, <b>circular</b> and not associated with proteins. In the nucleus of <b>eukaryotic cells</b>, DNA molecules are very long, <b>linear</b> and associated with proteins called <b>histones</b>; a DNA molecule and its associated proteins together form a <b>chromosome</b>. The <b>mitochondria</b> and <b>chloroplasts</b> of eukaryotic cells also contain DNA which, like prokaryotic DNA, is short, circular and not associated with protein.',
+    terms: ['circular DNA', 'linear DNA', 'histone', 'chromosome', 'prokaryote', 'eukaryote', 'mitochondrial DNA', 'chloroplast DNA'],
+    skill: 'MS 0.3: compare structures', eq: null,
+    q: 'Give two ways in which prokaryotic DNA differs from the DNA in a eukaryotic nucleus.', a: 'It is short and circular, and it is not associated with histone proteins; eukaryotic nuclear DNA is long, linear and wound round histones.'
+  },
+  draw(R, sc) {
+    // prokaryote
+    R.text('prokaryotic cell', 96, 14, 4.8, { al: 'c' });
+    R.rrect(24, 30, 144, 76, 38, { ink: 'B', w: 1.6, fi: 'P', ft: 0.1, wob: 0.4 }); R.rrect(21, 27, 150, 82, 41, { ink: 'B', w: 0.8, wob: 0.4 });
+    R.stroke(polyPts(88, 68, 24, 24, 0).concat([]), { ink: 'T', w: 2, closed: true, smooth: true, wob: 0.8, taper: 'none' });
+    R.stroke(polyPts(88, 68, 24, 24, 0.2).map((v, i) => v + (i % 2 ? Math.sin(i) * 2 : Math.cos(i) * 2)), { ink: 'B', w: 1, closed: true, smooth: true, wob: 0.8, taper: 'none' });
+    R.circle(138, 58, 6, { ink: 'B', w: 1.2 }); R.circle(138, 80, 4.4, { ink: 'B', w: 1.2 }); R.circle(52, 70, 5, { ink: 'B', w: 1.2 });
+    leader(R, 'circular DNA', 100, 50, 74, 124, { size: 4.2, al: 'c' }); leader(R, 'plasmid', 138, 80, 148, 124, { size: 4.2, al: 'c' });
+    ['short, circular', 'not associated with protein'].forEach((t, i) => R.text(t, 96, 140 + i * 6.6, 4, { al: 'c', ink: i ? 'P' : 'B' }));
+    R.line(176, 22, 176, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // eukaryote nucleus and chromosome
+    R.text('eukaryotic nucleus', 262, 14, 4.8, { al: 'c' });
+    R.ellipse(262, 70, 72, 46, { ink: 'B', w: 1.6, fi: 'P', ft: 0.08, wob: 0.5 }); R.ellipse(262, 70, 68, 42, { ink: 'B', w: 0.8, wob: 0.4 });
+    for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + 0.3, px = 262 + Math.cos(a) * 70, py = 70 + Math.sin(a) * 44; R.knock(polyPts(px, py, 2.2, 6)); }
+    chromatin(R, [214, 56, 238, 38, 270, 50, 292, 38, 306, 58, 290, 76, 262, 70, 238, 88, 220, 76, 232, 60], 16, { r: 3.4 });
+    chromatin(R, [230, 98, 262, 94, 296, 100], 6, { r: 3 });
+    leader(R, 'linear DNA wound round histones', 270, 50, 262, 126, { size: 4.2, al: 'c' });
+    ['very long, linear', 'associated with histones'].forEach((t, i) => R.text(t, 262, 140 + i * 6.6, 4, { al: 'c', ink: i ? 'P' : 'B' }));
+    R.line(350, 22, 350, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // chromosome
+    R.text('chromosome = DNA + histones', 448, 14, 4.8, { al: 'c' });
+    // DNA -> nucleosomes -> chromatin -> chromosome
+    R.helix(372, 36, 372, 100, { amp: 6, turns: 3, w: 0.9 }); R.text('DNA', 372, 112, 4, { al: 'c' });
+    R.arrow([386, 70, 402, 70], { ink: 'B', w: 0.9, hs: 2.4 });
+    chromatin(R, [412, 50, 420, 70, 412, 90], 4, { r: 3.8 }); R.text('histone', 428, 110, 3.8, { al: 'c', ink: 'P' });
+    R.arrow([440, 70, 458, 70], { ink: 'B', w: 0.9, hs: 2.4 });
+    chromosome(R, 486, 70, 66, 13, { bands: [[0.25, 'P'], [0.45, 'T'], [0.7, 'P']] });
+    leader(R, 'centromere', 486, 70, 548, 70, { size: 4, al: 'l' }); R.text('chromosome', 486, 116, 4, { al: 'c' });
+    ['one DNA molecule and its', 'histones form a chromosome'].forEach((t, i) => R.text(t, 448, 140 + i * 6.6, 4, { al: 'c' }));
+    R.line(8, 156, 656, 156, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // organelle DNA
+    R.text('mitochondria and chloroplasts also contain DNA: short, circular, not associated with protein', 332, 168, 4.4, { al: 'c' });
+    R.mito(120, 206, 76, 40, 0, {}); R.stroke(polyPts(112, 208, 9, 16, 0), { ink: 'T', w: 1.6, closed: true, smooth: true, taper: 'none' }); leader(R, 'DNA loop', 112, 208, 52, 238, { size: 4, al: 'c' });
+    R.chloroplast(330, 206, 84, 42, 0, { grana: 4 }); R.stroke(polyPts(352, 214, 7, 14, 0), { ink: 'T', w: 1.4, closed: true, smooth: true, taper: 'none' }); leader(R, 'DNA loop', 352, 214, 400, 238, { size: 4, al: 'c' });
+    R.text('mitochondrion', 120, 232, 4, { al: 'c' }); R.text('chloroplast', 330, 232, 4, { al: 'c' });
+    R.text('same as the DNA of', 536, 204, 4.2, { al: 'c' }); R.text('prokaryotes', 536, 211, 4.2, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(88 + Math.cos(p * TAU) * 24, 68 + Math.sin(p * TAU) * 24, 1.6, 'T', 0.9, 1); A.dot(486 - 3 + Math.sin(p * TAU) * 1.5, 40 + p * 6, 0.8, 'P', 0.8, 2); },
+});
+
+/* ---------- 3.4.1b Genes, loci, the genetic code, exons and introns ---------- */
+S({
+  id: '3.4.1b', num: '3.4.1', sub: 'Genes and loci; the triplet code and its properties', title: 'DNA, genes and chromosomes', topic: '3.4', slot: [2, 0], dna: 'bio', ao: 1,
+  covers: ['3.4.1.s4', '3.4.1.s5', '3.4.1.s6'],
+  card: {
+    text: 'A <b>gene</b> is a base sequence of DNA that codes for the amino acid sequence of a <b>polypeptide</b> or for a <b>functional RNA</b> (including ribosomal RNA and tRNAs). A gene occupies a fixed position, its <b>locus</b>, on a particular DNA molecule. A sequence of three DNA bases, a <b>triplet</b>, codes for a specific amino acid. The genetic code is <b>universal</b>, <b>non-overlapping</b> and <b>degenerate</b>.',
+    terms: ['gene', 'locus', 'triplet', 'universal', 'non-overlapping', 'degenerate', 'functional RNA'],
+    skill: 'Triplets: 3 bases per amino acid', eq: MATH(mt('bases in gene coding region '), mo('='), mn('3'), mo('×'), mt('amino acids')),
+    eqn: 'e.g. a 150 amino acid polypeptide needs at least 450 bases (plus a stop triplet)',
+    q: 'Why is the genetic code described as degenerate?', a: 'Most amino acids are coded for by more than one triplet.'
+  },
+  draw(R, sc) {
+    R.text('a gene at its locus', 160, 14, 5, { al: 'c' });
+    chromosome(R, 36, 80, 124, 20, { bands: [[0.18, 'P'], [0.34, 'T'], [0.48, 'P'], [0.68, 'T']], ft: 0.35 });
+    R.rect(14, 90, 44, 5, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.8 }); leader(R, 'locus of the gene', 60, 92, 112, 52, { size: 4, al: 'c' });
+    R.line(62, 92, 100, 118, { ink: 'B', w: 0.6, t: 0.7, taper: 'none' }); R.line(62, 92, 100, 74, { ink: 'B', w: 0.01, taper: 'none' });
+    // DNA triplet strip with codons
+    const bases = 'TACGGATTCCTA'.split(''), tri = [0, 3, 6, 9];
+    R.text('the code is read in triplets', 220, 46, 4.2, { al: 'c' });
+    bases.forEach((b, i) => R.baseBox(112 + i * 16, 118, b, { w: 8, h: 8 }));
+    [0, 1, 2, 3].forEach(k => { R.arrow([112 + k * 48 + 20, 134, 112 + k * 48 + 20, 142], { ink: 'B', w: 0.7, hs: 1.8 }); R.rrect(110 + k * 48, 112, 46, 22, 3, { ink: 'P', w: 0.9, wob: 0.1 }); R.circle(112 + k * 48 + 20, 150, 4.6, { ink: 'B', w: 0.8, fi: ['P', 'Y', 'T', 'TY'][k], ft: 0.7 }); });
+    R.text('triplet = 1 amino acid', 208, 168, 4.2, { al: 'c' });
+    // properties
+    R.line(8, 176, 312, 176, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const prop = (x, t1, t2) => { R.text(t1, x, 188, 4.6, { al: 'c', ink: 'P' }); R.text(t2, x, 196, 3.8, { al: 'c' }); };
+    prop(54, 'universal', 'same code in all organisms'); prop(160, 'non-overlapping', 'each base read once'); prop(268, 'degenerate', 'several triplets, one amino acid');
+    // overlapping vs not
+    [0, 1, 2, 3, 4, 5].forEach(i => R.circle(34 + i * 7.4, 214, 2.8, { ink: 'B', w: 0.8, fi: ['T', 'T', 'T', 'Y', 'Y', 'Y'][i], ft: 0.6 })); R.rrect(31, 209.5, 22, 9, 4, { ink: 'P', w: 0.8 }); R.rrect(55, 209.5, 22, 9, 4, { ink: 'P', w: 0.8 }); R.text('123 456', 54, 230, 3.6, { al: 'c' });
+    [0, 1, 2, 3, 4, 5].forEach(i => R.circle(140 + i * 7.4, 214, 2.8, { ink: 'B', w: 0.8, fi: ['T', 'T', 'T', 'Y', 'Y', 'Y'][i], ft: 0.6 })); R.rrect(137, 209.5, 22, 9, 4, { ink: 'P', w: 0.8 }); R.rrect(161, 209.5, 22, 9, 4, { ink: 'P', w: 0.8 }); R.text('not 123 234', 160, 230, 3.6, { al: 'c' });
+    R.text('GAA', 244, 214, 4.4, { al: 'c' }); R.text('GAG', 272, 214, 4.4, { al: 'c' }); R.arrow([244, 218, 258, 228], { ink: 'B', w: 0.8, hs: 2 }); R.arrow([272, 218, 262, 228], { ink: 'B', w: 0.8, hs: 2 }); R.circle(258, 232, 3.6, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.text('same amino acid', 294, 234, 3.4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(116 + (Math.floor(p * 12)) * 16, 122, 1.8, 'P', 0.9, 1); },
+});
+
+/* ---------- 3.4.1c Non-coding DNA, exons and introns ---------- */
+S({
+  id: '3.4.1c', num: '3.4.1', sub: 'Non-coding DNA: multiple repeats, exons and introns', title: 'DNA, genes and chromosomes', topic: '3.4', slot: [3, 0], dna: 'bio', ao: 1,
+  covers: ['3.4.1.s7'],
+  card: {
+    text: 'In eukaryotes much of the nuclear DNA does <b>not code for polypeptides</b>. There are, for example, non-coding <b>multiple repeats</b> of base sequences between genes. Even within a gene only some sequences, called <b>exons</b>, code for amino acid sequences. Within the gene, the exons are separated by one or more non-coding sequences called <b>introns</b>. (Prokaryotic genes have no introns.)',
+    terms: ['non-coding DNA', 'multiple repeats', 'exon', 'intron', 'eukaryote', 'prokaryote'],
+    skill: 'Identify coding regions', eq: null,
+    q: 'What is the difference between an exon and an intron?', a: 'An exon is a sequence of a gene that codes for amino acids; an intron is a non-coding sequence between exons.'
+  },
+  draw(R, sc) {
+    R.text('eukaryotic DNA is mostly non-coding', 160, 14, 4.8, { al: 'c' });
+    // DNA line with genes between repeats
+    const y = 52;
+    R.stroke([10, y, 310, y], { ink: 'B', w: 2.6, taper: 'none', wob: 0.3 });
+    const rep = (x0, n) => { for (let i = 0; i < n; i++) { R.rect(x0 + i * 7, y - 6, 5, 12, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.7, wob: 0.05 }); } };
+    rep(14, 9); rep(212, 5); rep(274, 4);
+    R.knock(R.rrectPts(90, y - 12, 110, 24, 4)); R.rrect(90, y - 12, 110, 24, 4, { ink: 'B', w: 1.3, fi: 'T', ft: 0.2, wob: 0.15 }); R.text('gene', 145, y + 2, 5, { al: 'c' });
+    leader(R, 'non-coding multiple repeats', 40, y + 6, 76, 86, { size: 4, al: 'c' }); leader(R, 'repeats between genes', 238, y + 6, 238, 86, { size: 4, al: 'c' }); R.line(112, y - 12, 112, y - 12, { ink: 'B', w: 0.01, taper: 'none' });
+    // zoom on the gene: exons and introns
+    R.line(90, y + 12, 24, 108, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' }); R.line(200, y + 12, 296, 108, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const gy = 124, ex = [[24, 60, 'exon 1'], [136, 52, 'exon 2'], [236, 60, 'exon 3']], intr = [[84, 52, 'intron'], [188, 48, 'intron']];
+    ex.forEach(([x, w, t]) => { R.rect(x, gy - 10, w, 20, { ink: 'B', w: 1.2, fi: 'T', ft: 0.5, wob: 0.1 }); R.text(t, x + w / 2, gy + 2, 4.4, { al: 'c' }); });
+    intr.forEach(([x, w, t]) => { R.rect(x, gy - 6, w, 12, { ink: 'B', w: 1, fi: 'Y', ft: 0.5, wob: 0.1 }); R.text(t, x + w / 2, gy + 2, 3.9, { al: 'c' }); });
+    R.text('exons code for amino acids', 160, 150, 4.4, { al: 'c', ink: 'T' }); R.text('introns: non-coding sequences within the gene', 160, 158, 4, { al: 'c' });
+    R.line(8, 168, 312, 168, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // transcribed then spliced preview
+    R.text('only exons end up in mature mRNA', 160, 180, 4.4, { al: 'c' });
+    R.stroke([24, 198, 84, 198, 100, 188, 120, 198, 168, 198, 184, 188, 204, 198, 296, 198], { ink: 'Y', w: 2.2, smooth: false, taper: 'none' });
+    R.rect(24, 194, 60, 8, { ink: 'B', w: 0.01, fi: 'T', ft: 0.5 }); R.rect(120, 194, 48, 8, { ink: 'B', w: 0.01, fi: 'T', ft: 0.5 }); R.rect(204, 194, 92, 8, { ink: 'B', w: 0.01, fi: 'T', ft: 0.5 });
+    R.arrow([160, 206, 160, 216], { ink: 'B', w: 0.9, hs: 2.4 }); R.rect(60, 218, 200, 8, { ink: 'B', w: 1, fi: 'T', ft: 0.5 }); R.text('exons joined: mRNA (see 3.4.2)', 160, 235, 3.8, { al: 'c' });
+    R.text('introns removed', 142, 184, 3.6, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(10 + p * 300, 52, 1.5, 'P', 0.9, 1); },
+});
+
+/* ===================== 3.4.2 DNA and protein synthesis ===================== */
+/* tRNA cloverleaf: anticodon at the bottom, amino acid at the 3' stem; s = scale; ang rotates the whole molecule */
+Recorder.prototype.tRNA = function (x, y, s, o = {}) {
+  const R = this; R.push(x, y, rad(o.rot || 0), s);
+  // stem (acceptor) at top, anticodon loop at bottom, D loop left, T loop right
+  const stem = 28, bp = (cx, cy0, cy1, n, w) => { for (let i = 0; i < n; i++) { const yy = cy0 + (cy1 - cy0) * i / Math.max(1, n - 1); R.line(cx - w / 2, yy, cx + w / 2, yy, { ink: 'B', w: 0.7 / s, taper: 'none' }); } };
+  R.stroke([-4, -34, -4, -6, -12, 4, -26, 4, -34, 12, -26, 20, -12, 20, -4, 8, -4, 24, -4, 34], { ink: 'P', w: 2.2 / s, smooth: true, taper: 'none', t: 0.7 });
+  R.stroke([4, -34, 4, -6, 12, 4, 26, 4, 34, 12, 26, 20, 12, 20, 4, 8, 4, 24, 4, 34], { ink: 'P', w: 2.2 / s, smooth: true, taper: 'none', t: 0.7 });
+  R.stroke([-4, -34, -4, -6, -12, 4, -26, 4, -34, 12, -26, 20, -12, 20, -4, 8, -4, 24, -4, 34], { ink: 'B', w: 0.8 / s, smooth: true, taper: 'none' });
+  R.stroke([4, -34, 4, -6, 12, 4, 26, 4, 34, 12, 26, 20, 12, 20, 4, 8, 4, 24, 4, 34], { ink: 'B', w: 0.8 / s, smooth: true, taper: 'none' });
+  R.stroke([-4, 34, -9, 42, -9, 50, 0, 54, 9, 50, 9, 42, 4, 34], { ink: 'P', w: 2.2 / s, smooth: true, taper: 'none', t: 0.7 }); R.stroke([-4, 34, -9, 42, -9, 50, 0, 54, 9, 50, 9, 42, 4, 34], { ink: 'B', w: 0.8 / s, smooth: true, taper: 'none' });
+  bp(0, -30, -10, 5, 8); bp(0, 10, 30, 4, 8);
+  // anticodon
+  [-6, 0, 6].forEach((dx, i) => R.rect(dx - 2.6, 56, 5.2, 5.2, { ink: 'B', w: 0.7 / s, fi: ['T', 'P', 'Y'][i], ft: 0.7, wob: 0.05 }));
+  // amino acid attached at the top
+  if (o.aa !== false) { R.circle(0, -42, 5, { ink: 'B', w: 1 / s, fi: o.aaInk || 'TY', ft: 0.7 }); R.line(0, -37, 0, -34, { ink: 'B', w: 0.9 / s, taper: 'none' }); }
+  R.pop();
+};
+
+/* ---------- 3.4.2a Genome, proteome, mRNA and tRNA structure ---------- */
+S({
+  id: '3.4.2a', num: '3.4.2', sub: 'Genome and proteome; structure of mRNA and tRNA', title: 'DNA and protein synthesis', topic: '3.4', slot: [0, 1], dna: 'bio', ao: 1,
+  covers: ['3.4.2.s1', '3.4.2.s2'],
+  card: {
+    text: 'The <b>genome</b> is the complete set of genes in a cell. The <b>proteome</b> is the full range of proteins that a cell is able to produce. <b>Messenger RNA (mRNA)</b> is a single-stranded, linear polynucleotide made in transcription; each group of three bases is a <b>codon</b>. <b>Transfer RNA (tRNA)</b> is a single polynucleotide strand folded into a clover-leaf shape with hydrogen bonds between paired bases; one end carries a specific <b>amino acid</b>, and a three-base <b>anticodon</b> on the opposite loop is complementary to an mRNA codon.',
+    terms: ['genome', 'proteome', 'mRNA', 'codon', 'tRNA', 'anticodon', 'amino acid attachment site', 'hydrogen bond', 'single-stranded'],
+    skill: 'Complementary base pairing', eq: null,
+    q: 'What is the difference between a codon and an anticodon?', a: 'A codon is three bases on mRNA coding for an amino acid; an anticodon is three complementary bases on tRNA that pairs with the codon.'
+  },
+  draw(R, sc) {
+    // genome / proteome
+    R.text('genome and proteome', 160, 14, 4.8, { al: 'c' });
+    R.circle(66, 50, 26, { ink: 'B', w: 1.3, fi: 'P', ft: 0.08, wob: 0.4 }); R.helix(66, 30, 66, 70, { amp: 7, turns: 2, w: 0.9 });
+    R.text('genome', 66, 88, 4.4, { al: 'c' }); R.text('all the genes in a cell', 66, 95, 3.8, { al: 'c' });
+    R.arrow([96, 50, 130, 50], { ink: 'B', w: 1, hs: 2.6 });
+    for (let i = 0; i < 9; i++) { const x = 150 + (i % 3) * 22, y = 34 + Math.floor(i / 3) * 18; R.poly(i % 3 === 0 ? polyPts(x, y, 6, 6, 0.5) : (i % 3 === 1 ? polyPts(x, y, 6, 5) : polyPts(x, y, 6, 4, 0.8)), { ink: 'B', w: 0.9, fi: ['P', 'T', 'Y'][i % 3], ft: 0.6, wob: 0.15 }); }
+    R.text('proteome', 172, 88, 4.4, { al: 'c' }); R.text('all the proteins a cell', 172, 95, 3.8, { al: 'c' }); R.text('can produce', 172, 101, 3.8, { al: 'c' });
+    R.line(8, 112, 312, 112, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // mRNA strand with codons
+    R.text('mRNA: single-stranded, linear', 80, 124, 4.4, { al: 'c' });
+    const mb = 'AUGGCUUCAGGA'.split('');
+    mb.forEach((b, i) => R.baseBox(12 + i * 13, 134, b, { w: 7, h: 8 }));
+    [0, 1, 2, 3].forEach(k => R.rrect(10 + k * 39, 130, 38, 16, 3, { ink: 'P', w: 0.9, wob: 0.1 })); R.text('codon', 29, 158, 3.9, { al: 'c', ink: 'P' });
+    R.stroke([8, 148, 170, 148], { ink: 'B', w: 0.01, taper: 'none' });
+    R.text('each codon (3 bases) codes for an amino acid', 90, 172, 3.9, { al: 'c' }); R.text('(the genetic code is degenerate, but never ambiguous)', 90, 179, 3.4, { al: 'c' });
+    R.line(200, 120, 200, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // tRNA
+    R.text('tRNA: clover-leaf shape', 254, 124, 4.4, { al: 'c' });
+    R.tRNA(254, 170, 0.8, {});
+    leader(R, 'amino acid attaches here', 254 - 2, 170 - 0.8 * 42, 222, 134, { size: 3.6, al: 'r' });
+    leader(R, 'hydrogen bonds between paired bases', 254 + 0.8 * 0, 170 - 0.8 * 20, 292, 146, { size: 3.4, al: 'c' });
+    leader(R, 'anticodon', 254, 170 + 0.8 * 60, 292, 232, { size: 3.8, al: 'c' });
+    // codon-anticodon pairing mini
+    ['A', 'U', 'G'].forEach((b, i) => R.baseBox(28 + i * 13, 196, b, { w: 7, h: 8 })); ['U', 'A', 'C'].forEach((b, i) => R.baseBox(28 + i * 13, 214, b, { w: 7, h: 8 })); [0, 1, 2].forEach(i => R.line(33 + i * 13, 205, 33 + i * 13, 213, { ink: 'B', w: 0.7, taper: 'none' }));
+    R.text('mRNA codon', 94, 202, 3.8, { al: 'l' }); R.text('tRNA anticodon', 94, 220, 3.8, { al: 'l' });
+    R.text('complementary: A–U, G–C', 80, 236, 3.8, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(12 + p * 156, 138, 1.6, 'P', 0.8, 1); },
+});
+
+/* ---------- 3.4.2b Transcription ---------- */
+S({
+  id: '3.4.2b', num: '3.4.2', sub: 'Transcription: RNA polymerase; pre-mRNA splicing in eukaryotes', title: 'DNA and protein synthesis', topic: '3.4', slot: [1, 1], span: [2, 1], dna: 'bio', ao: 2,
+  covers: ['3.4.2.s3', '3.4.2.s4', '3.4.2.s5'],
+  card: {
+    text: '<b>Transcription</b> is the production of mRNA from DNA. The two DNA strands separate by breaking hydrogen bonds; one strand is the <b>template</b>. <b>RNA polymerase</b> joins RNA nucleotides that pair (A–U, G–C, T–A, C–G) with the exposed template bases, forming mRNA. In <b>prokaryotes</b> transcription results directly in mRNA. In <b>eukaryotes</b> it results in <b>pre-mRNA</b>, which is <b>spliced</b> to remove introns and join exons, forming mRNA; this leaves the nucleus through a nuclear pore to reach a ribosome in the cytoplasm.',
+    terms: ['transcription', 'template strand', 'RNA polymerase', 'complementary base pairing', 'pre-mRNA', 'splicing', 'mRNA', 'nuclear pore'],
+    skill: 'MS 2.5-style sequence conversion', eq: null,
+    q: 'A DNA template strand reads TACGGT. Write the mRNA base sequence.', a: 'AUGCCA (A pairs with U, T with A, C with G, G with C).'
+  },
+  draw(R, sc) {
+    R.text('transcription in the nucleus', 160, 14, 5, { al: 'c' });
+    // template strand row, coding (non-template) strand above, mRNA being built below; RNA polymerase over three positions
+    const tm = 'TACGGTACCGATTC'.split(''), cp = { A: 'T', T: 'A', C: 'G', G: 'C' }, mr = { A: 'U', T: 'A', C: 'G', G: 'C' };
+    const x0 = 20, dx = 19.4, X = i => x0 + i * dx, yA = 58, yB = 96, yC = 124, bw = 8.4;
+    const inPol = i => i >= 6 && i <= 8;
+    // polymerase body first (behind the bases)
+    R.rrect(X(5.55), 22, 3.9 * dx, 128, 14, { ink: 'B', w: 1.4, fi: 'P', ft: 0.2, wob: 0.3 });
+    R.knock(R.rrectPts(X(5.9), 40, 3.2 * dx, 98, 8)); R.rrect(X(5.9), 40, 3.2 * dx, 98, 8, { ink: 'B', w: 0.7, fi: 'T', ft: 0.06, wob: 0.2 });
+    tm.forEach((b, i) => {
+      const x = X(i) - bw / 2, lifted = inPol(i);
+      R.baseBox(x, yB, b, { w: bw, h: 8 });
+      R.baseBox(x, lifted ? yA - 22 : yA, cp[b], { w: bw, h: 8 });
+      if (!lifted) R.line(X(i), yA + 8, X(i), yB, { ink: 'B', w: 0.7, taper: 'none' });
+      else { R.baseBox(x, yC, mr[b], { w: bw, h: 8 }); R.line(X(i), yB + 8, X(i), yC, { ink: 'B', w: 0.7, taper: 'none' }); }
+    });
+    // backbones
+    R.line(X(0) - 8, yB + 11, X(13) + 8, yB + 11, { ink: 'B', w: 1.6, taper: 'none' });
+    R.line(X(0) - 8, yA - 3, X(5) + 4, yA - 3, { ink: 'B', w: 1.6, taper: 'none' }); R.line(X(9) - 4, yA - 3, X(13) + 8, yA - 3, { ink: 'B', w: 1.6, taper: 'none' });
+    R.stroke([X(5) + 4, yA - 3, X(5.9), yA - 14, X(6) - 4, yA - 25], { ink: 'B', w: 1.6, smooth: true, taper: 'none' }); R.line(X(6) - 4, yA - 25, X(8) + 4, yA - 25, { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([X(8) + 4, yA - 25, X(8.9), yA - 14, X(9) - 4, yA - 3], { ink: 'B', w: 1.6, smooth: true, taper: 'none' });
+    // mRNA exits to the lower left
+    R.line(X(6) - 5, yC + 11, X(8) + 5, yC + 11, { ink: 'P', w: 1.8, taper: 'none' });
+    R.stroke([X(6) - 5, yC + 11, X(5) - 8, yC + 11, X(4) - 4, yC + 22], { ink: 'P', w: 1.8, smooth: true, taper: 'none' });
+    'AUGCCA'.split('').forEach((b, i) => { const k = 5 - i; R.baseBox(X(5.2) - k * 14 - 6, yC + 24 + k * 5, b, { w: 7.4, h: 8 }); });
+    R.stroke([X(5.2) - 5 * 14 - 8, yC + 28 + 25, X(5.2) + 8, yC + 24, X(5) + 4, yC + 11], { ink: 'P', w: 1.1, smooth: true, taper: 'none', t: 0.7 });
+    R.text('RNA polymerase', X(7), 160 + 0, 0.01, { al: 'c' }); leader(R, 'RNA polymerase', X(8.4), 36, X(10.5), 34, { size: 4, al: 'l' });
+    R.text('coding strand', X(1.2), 40, 4, { al: 'l' }); R.text('template strand', X(1.2), 124 - 8, 4, { al: 'l' }); R.text('mRNA', X(2.4), 188, 4, { al: 'c', ink: 'P' });
+    R.arrow([X(11), 140, X(13.2), 140], { ink: 'B', w: 1.3, hs: 3 }); R.text('RNA polymerase moves along the gene', X(8.5), 152, 3.9, { al: 'l' });
+    ['hydrogen bonds break: DNA unwinds', 'RNA nucleotides pair with the template strand', 'RNA polymerase joins them: mRNA', 'DNA re-forms behind the enzyme'].forEach((t, i) => R.text(t, 20, 198 + i * 8, 4, { al: 'l', ink: i === 2 ? 'P' : 'B' }));
+    R.line(300, 22, 300, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // eukaryote vs prokaryote product
+        R.text('prokaryotes: mRNA directly', 480, 30, 4.4, { al: 'c' });
+    R.rect(330, 40, 300, 8, { ink: 'B', w: 1, fi: 'T', ft: 0.5 }); R.text('mRNA (no introns)', 480, 60, 3.9, { al: 'c' });
+    R.line(318, 72, 640, 72, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('eukaryotes: pre-mRNA is spliced', 480, 84, 4.4, { al: 'c' });
+    [[330, 60, 'T'], [402, 36, 'Y'], [450, 60, 'T'], [522, 36, 'Y'], [570, 60, 'T']].forEach(([x, w, ink], i) => { R.rect(x, 94, w, 10, { ink: 'B', w: 1, fi: ink, ft: 0.55 }); });
+    R.text('pre-mRNA: exons + introns', 480, 112, 3.9, { al: 'c' });
+    R.stroke([360, 106, 380, 128, 420, 106], { ink: 'P', w: 1.1, smooth: true, taper: 'none' }); R.stroke([480, 106, 500, 128, 540, 106], { ink: 'P', w: 1.1, smooth: true, taper: 'none' });
+    R.text('introns cut out', 480, 140, 3.9, { al: 'c', ink: 'P' });
+    R.arrow([480, 146, 480, 156], { ink: 'B', w: 1, hs: 2.4 });
+    R.rect(360, 160, 60, 10, { ink: 'B', w: 1, fi: 'T', ft: 0.55 }); R.rect(420, 160, 60, 10, { ink: 'B', w: 1, fi: 'T', ft: 0.55 }); R.rect(480, 160, 60, 10, { ink: 'B', w: 1, fi: 'T', ft: 0.55 });
+    R.text('mRNA: exons joined (splicing)', 480, 184, 3.9, { al: 'c' });
+    // nuclear pore and ribosome
+    R.stroke([330, 214, 640, 214], { ink: 'B', w: 1.3, taper: 'none' }); R.knock([470, 210, 490, 210, 490, 218, 470, 218]); R.text('nuclear envelope with pore', 400, 207, 3.6, { al: 'c' });
+    R.arrow([480, 190, 480, 228], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('to a ribosome', 500, 230, 3.8, { al: 'l' }); R.text('nucleus', 336, 200, 3.6, { al: 'l' }); R.text('cytoplasm', 336, 226, 3.6, { al: 'l' });
+    R.ribosome(596, 228, 1.6);
+  },
+  anim(A, sc) { const p = A.ph(7); for (let i = 0; i < 3; i++) A.dot(20 + (6 + i) * 19.4 + ((p * 1) % 1) * 3, 124 + 4, 1.5, 'P', 0.6, i); },
+});
+
+/* ---------- 3.4.2c Translation ---------- */
+S({
+  id: '3.4.2c', num: '3.4.2', sub: 'Translation: ribosomes, tRNA and ATP', title: 'DNA and protein synthesis', topic: '3.4', slot: [3, 1], dna: 'bio', ao: 2,
+  covers: ['3.4.2.s6', '3.4.2.s7', '3.4.2.s8'],
+  card: {
+    text: '<b>Translation</b> is the production of polypeptides from the sequence of codons carried by mRNA. mRNA binds to a <b>ribosome</b>. A tRNA with the complementary <b>anticodon</b> brings a specific amino acid to each codon; the amino acids are joined by <b>peptide bonds</b> (using energy from <b>ATP</b>), and the tRNA is released to collect another amino acid. The ribosome moves along the mRNA to the next codon, building the polypeptide until a stop codon. You can use data about the genetic code to relate base sequence to amino acid sequence; specific codons need not be recalled.',
+    terms: ['translation', 'ribosome', 'mRNA', 'codon', 'tRNA', 'anticodon', 'peptide bond', 'ATP', 'polypeptide'],
+    skill: 'Base sequence → amino acid sequence', eq: null,
+    q: 'What are the roles of tRNA and ATP in translation?', a: 'tRNA carries a specific amino acid and its anticodon pairs with the mRNA codon; ATP provides the energy to join amino acids by peptide bonds (and to attach amino acids to tRNA).'
+  },
+  draw(R, sc) {
+    R.text('translation at the ribosome', 160, 14, 5, { al: 'c' });
+    // mRNA along the bottom of the ribosome
+    const my = 150, cod = ['AUG', 'GCU', 'UCA', 'GGA'], cx0 = 48;
+    cod.forEach((c, k) => c.split('').forEach((b, i) => R.baseBox(cx0 + k * 66 + i * 17 - 5, my, b, { w: 7.4, h: 8 })));
+    R.line(cx0 - 14, my + 12, cx0 + 4 * 66 - 14, my + 12, { ink: 'P', w: 1.8, taper: 'none' });
+    cod.forEach((c, k) => R.rrect(cx0 + k * 66 - 8, my - 3, 56, 18, 3, { ink: 'P', w: 0.7, wob: 0.1 }));
+    R.text('mRNA', 18, my + 6, 4, { al: 'c', ink: 'P' });
+    // ribosome: large subunit above, small below, around codons 2 and 3
+    const rx = cx0 + 66 - 12, rw = 142;
+    R.knock(R.rrectPts(rx, 86, rw, 54, 18)); R.rrect(rx, 86, rw, 54, 18, { ink: 'B', w: 1.4, fi: 'P', ft: 0.25, wob: 0.4 });
+    R.rrect(rx + 4, 138, rw - 8, 24, 10, { ink: 'B', w: 1.2, fi: 'T', ft: 0.25, wob: 0.3 });
+    R.text('ribosome: large subunit', rx + rw - 6, 94, 3.8, { al: 'r' }); R.text('small subunit', rx + rw + 6, 160, 3.7, { al: 'l' });
+    // tRNAs in the P and A sites: anticodons touch codons 2 and 3, amino acids at the top; growing chain leaves above
+    const sP = cx0 + 66 + 12, sA = cx0 + 132 + 12, ty = my - 2 - 0.55 * 58;
+    R.tRNA(sP, ty, 0.55, { aaInk: 'P' }); R.tRNA(sA, ty, 0.55, { aaInk: 'Y' });
+    R.stroke([sP, ty - 0.55 * 42, sP - 14, 60, sP - 40, 52, sP - 62, 40], { ink: 'B', w: 1.6, smooth: true, taper: 'none' });
+    [[sP - 28, 55, 'TY'], [sP - 46, 49, 'T'], [sP - 62, 40, 'P']].forEach(([x, y, ink]) => R.circle(x, y, 4.6, { ink: 'B', w: 0.9, fi: ink, ft: 0.7 }));
+    R.bondMark(sP - 14, 60 + 0, 3.6); R.text('peptide bond', sP - 30, 74, 3.7, { al: 'c', ink: 'P' });
+    R.text('growing polypeptide', sP - 50, 28, 3.8, { al: 'c' });
+    // incoming tRNA arriving at the next codon (outside the ribosome, upper right)
+    R.tRNA(cx0 + 4 * 66 - 20, 58, 0.55, { aaInk: 'T' }); R.arrow([cx0 + 4 * 66 - 34, 112, cx0 + 4 * 66 - 54, 124], { ink: 'B', w: 0.9, hs: 2.2 }); R.text('next tRNA arrives', cx0 + 4 * 66 - 24, 38, 3.7, { al: 'c' });
+    // leaving tRNA
+    R.tRNA(cx0 + 4, 108, 0.45, { aa: false, rot: -28 }); R.text('tRNA released', cx0 - 8, 142 - 0, 0.01, { al: 'c' });
+    // ATP
+    R.circle(sA + 40, 44, 6, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.9 }); R.text('ATP', sA + 40, 46, 4.6, { al: 'c' }); R.arrow([sA + 34, 48, sP + 12, 62], { ink: 'B', w: 0.8, hs: 2 });
+    R.arrow([140, my + 26, 200, my + 26], { ink: 'B', w: 1.2, hs: 3 }); R.text('ribosome moves along mRNA', 170, my + 38, 3.9, { al: 'c' });
+    R.line(8, 200, 312, 200, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    ['each codon is matched by a tRNA whose anticodon is complementary,', 'carrying a specific amino acid', 'amino acids are joined by peptide bonds (energy from ATP)', 'the chain grows until a stop codon'].forEach((t, i) => R.text(t, 160, 211 + i * 7, 3.9, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(240 - p * 20, 44 + p * 8, 1.4, 'Y', 0.9, 1); },
+});
+
+/* ===================== 3.4.3 Genetic diversity: mutation and meiosis ===================== */
+const CHR_P = 'P', CHR_T = 'T';   // maternal (pink) and paternal (teal) chromosomes
+/* a chromosome: single (1 chromatid) or replicated (2 chromatids joined at the centromere). segs = [[from,to,ink]] colour overrides along its length (0..1) */
+function chrX(R, x, y, len, ink, rep, o = {}) {
+  const w = o.w || 5, rot = o.rot || 0; R.push(x, y, rad(rot), 1);
+  const rod = (cx, segs) => { R.rrect(cx - w / 2, -len / 2, w, len, w / 2, { ink: 'B', w: 0.9, fi: ink, ft: o.ft || 0.7, wob: 0.15 }); (segs || []).forEach(([a, b, ik]) => R.rect(cx - w / 2 + 0.4, -len / 2 + a * len, w - 0.8, (b - a) * len, { ink: '', w: 0, fi: ik, ft: o.ft || 0.7, wob: 0.05 })); };
+  if (rep) { rod(-w * 0.62, o.segL); rod(w * 0.62, o.segR); } else rod(0, o.segL);
+  R.circle(0, (o.cen === undefined ? 0 : o.cen) * len, w * 0.55, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.8 });
+  R.pop();
+}
+function cellO(R, x, y, r, o = {}) { R.circle(x, y, r, { ink: 'B', w: o.w || 1.2, fi: o.fi || 'Y', ft: o.ft === undefined ? 0.1 : o.ft, wob: 0.4 }); }
+
+/* ---------- 3.4.3a Gene mutations ---------- */
+S({
+  id: '3.4.3a', num: '3.4.3', sub: 'Gene mutations: base substitution and deletion; mutagenic agents', title: 'Genetic diversity: mutation and meiosis', topic: '3.4', slot: [0, 2], span: [2, 1], dna: 'bio', ao: 2,
+  covers: ['3.4.3.s1', '3.4.3.s2', '3.4.3.s3'],
+  card: {
+    text: 'Gene mutations involve a change in the base sequence of DNA. They can arise <b>spontaneously during DNA replication</b> and include base <b>deletion</b> and base <b>substitution</b>. Because the genetic code is <b>degenerate</b>, not all substitutions change the encoded amino acids (a <b>silent</b> change). A substitution can change one amino acid. A deletion shifts the reading frame (<b>frameshift</b>), changing every triplet after it. <b>Mutagenic agents</b> (e.g. ionising radiation, UV light, some chemicals) increase the rate of gene mutation.',
+    terms: ['gene mutation', 'base substitution', 'base deletion', 'frameshift', 'degenerate code', 'mutagenic agent', 'DNA replication', 'new allele'],
+    skill: 'Relate base sequence to amino acids', eq: null,
+    q: 'Why may a substitution mutation have no effect on the polypeptide?', a: 'The genetic code is degenerate: the new triplet may code for the same amino acid.'
+  },
+  draw(R, sc) {
+    R.text('what happens to the triplets and the polypeptide?', 220, 14, 5, { al: 'c' });
+    const rows = [
+      { lab: 'original sequence', dna: 'TACCTTGGATCA', aa: ['P', 'Y', 'T', 'TY'], note: 'reference polypeptide' },
+      { lab: 'substitution: no change to the polypeptide', dna: 'TACCTCGGATCA', aa: ['P', 'Y', 'T', 'TY'], hi: [5], note: 'degenerate code: same amino acid' },
+      { lab: 'substitution: one amino acid changes', dna: 'TACCTTGGATCT', aa: ['P', 'Y', 'T', 'B'], hi: [11], note: 'a different amino acid' },
+      { lab: 'deletion: frameshift', dna: 'TACTTGGATCA', aa: ['P', 'T', 'TY', '?'], hi: [3], del: true, note: 'every triplet after the deletion changes' },
+    ];
+    rows.forEach((r, ri) => {
+      const y = 36 + ri * 47;
+      R.text(r.lab, 12, y, 4.2, { al: 'l', ink: ri ? 'P' : 'B' });
+      r.dna.split('').forEach((b, i) => R.baseBox(14 + i * 12.6, y + 6, b, { w: 6.8, h: 7.4 }));
+      const nt = Math.ceil(r.dna.length / 3); for (let k = 0; k < nt; k++) R.rrect(12 + k * 37.8, y + 3.4, Math.min(37.8, (r.dna.length - k * 3) * 12.6) - 1.4, 13, 3, { ink: 'B', w: 0.7, wob: 0.1, t: 0.5 });
+      (r.hi || []).forEach(i => R.circle(14 + i * 12.6 + 3.4, y + 10, 6.4, { ink: 'P', w: 1.4, wob: 0.12 }));
+      if (r.del) { R.text('✗', 14 + 3 * 12.6 + 3.4, y + 31, 6, { al: 'c', ink: 'P' }); R.text('deleted base', 14 + 3 * 12.6 + 3.4, y + 38, 3.5, { al: 'c', ink: 'P' }); }
+      r.aa.forEach((a, k) => { const bx = 190 + k * 18, by = y + 26; if (a === '?') { R.text('…', bx, by + 2, 6, { al: 'c' }); return; } R.circle(bx - 120, by, 4.6, { ink: 'B', w: 0.9, fi: a, ft: 0.7 }); if (k) R.line(bx - 120 - 13.4, by, bx - 120 - 4.6, by, { ink: 'B', w: 0.8, taper: 'none' }); });
+      R.text(r.note, 150, y + 28, 3.9, { al: 'l' });
+    });
+    R.line(318, 22, 318, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // causes
+    R.text('where mutations come from', 388, 28, 4.6, { al: 'c' });
+    R.helix(344, 46, 344, 100, { amp: 7, turns: 2.4, w: 0.9 }); R.cross = null;
+    R.text('spontaneous errors', 410, 62, 4.2, { al: 'c' }); R.text('during DNA replication', 410, 69, 4.2, { al: 'c' });
+    R.line(332, 112, 460, 112, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('mutagenic agents increase the rate', 396, 126, 4.2, { al: 'c' });
+    [['UV', 346], ['X-rays', 396], ['chemicals', 448]].forEach(([t, x]) => { for (let i = 0; i < 3; i++) R.stroke([x - 8, 144 + i * 7, x - 3, 140 + i * 7, x + 2, 148 + i * 7, x + 8, 144 + i * 7], { ink: 'Y', w: 1.2, smooth: true, taper: 'none' }); R.text(t, x, 174, 3.9, { al: 'c' }); });
+    R.arrow([396, 184, 396, 200], { ink: 'P', w: 1.2, hs: 3 }); R.text('new allele of the gene', 396, 212, 4.4, { al: 'c', ink: 'P' });
+    R.text('many harmful; some neutral;', 396, 223, 3.8, { al: 'c' }); R.text('a few advantageous', 396, 229, 3.8, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.ring(14 + 5 * 12.6 + 3.4, 36 + 47 + 16, 3 + p * 6, 'P', 0.7, 1 - p); A.dot(346 + Math.sin(p * TAU) * 2, 46 + p * 54, 1.4, 'Y', 0.9, 2); },
+});
+
+/* ---------- 3.4.3b Chromosome mutation: non-disjunction ---------- */
+S({
+  id: '3.4.3b', num: '3.4.3', sub: 'Mutations in chromosome number: non-disjunction during meiosis', title: 'Genetic diversity: mutation and meiosis', topic: '3.4', slot: [2, 2], dna: 'bio', ao: 2,
+  covers: ['3.4.3.s4'],
+  card: {
+    text: 'Mutations in the <b>number of chromosomes</b> can arise spontaneously by <b>non-disjunction</b> during meiosis: a pair of homologous chromosomes (or chromatids) fails to separate. Two of the gametes then have an extra chromosome (n + 1) and two lack one (n − 1). When one of these fuses with a normal gamete, the zygote has 2n + 1 (e.g. three copies of one chromosome) or 2n − 1 chromosomes.',
+    terms: ['non-disjunction', 'meiosis', 'gamete', 'homologous chromosomes', 'chromosome mutation', 'n + 1', 'n − 1'],
+    skill: 'MS 0.1: count chromosomes', eq: null,
+    q: 'What is non-disjunction and what is its effect on the gametes?', a: 'Failure of a pair of homologous chromosomes (or sister chromatids) to separate in meiosis; gametes end up with one extra or one fewer chromosome.'
+  },
+  draw(R, sc) {
+    R.text('non-disjunction in meiosis I', 100, 14, 5, { al: 'c' });
+    const LG = 20, SH = 12; R.push(0, 14, 0, 1);
+    // parent: long pair + short pair, all replicated
+    cellO(R, 40, 60, 30); chrX(R, 29, 54, LG, CHR_P, true, { w: 3.6 }); chrX(R, 45, 54, LG, CHR_T, true, { w: 3.6 }); chrX(R, 31, 78, SH, CHR_P, true, { w: 3.2 }); chrX(R, 47, 78, SH, CHR_T, true, { w: 3.2 });
+    R.text('parent cell 2n = 4', 40, 100, 3.8, { al: 'c' });
+    R.arrow([74, 60, 96, 60], { ink: 'B', w: 1, hs: 2.6 }); R.text('meiosis I', 85, 52, 3.5, { al: 'c' });
+    // after meiosis I: long pair fails to separate
+    cellO(R, 124, 34, 26); chrX(R, 114, 30, LG, CHR_P, true, { w: 3.6 }); chrX(R, 130, 30, LG, CHR_T, true, { w: 3.6 }); chrX(R, 126, 52, SH, CHR_P, true, { w: 3.2 });
+    cellO(R, 124, 92, 18); chrX(R, 124, 92, SH, CHR_T, true, { w: 3.2 });
+    R.text('both long chromosomes in one cell', 124, 122, 3.5, { al: 'c', ink: 'P' });
+    R.arrow([154, 34, 176, 20], { ink: 'B', w: 1, hs: 2.4 }); R.arrow([154, 38, 176, 52], { ink: 'B', w: 1, hs: 2.4 }); R.arrow([146, 92, 176, 92], { ink: 'B', w: 1, hs: 2.4 }); R.text('meiosis II', 162, 106, 3.5, { al: 'c' });
+    // gametes
+    const gam = (y, n3) => { cellO(R, 204, y, 14.5); if (n3) { chrX(R, 196, y - 3, LG - 4, CHR_P, false, { w: 3.2 }); chrX(R, 204, y - 3, LG - 4, CHR_T, false, { w: 3.2 }); chrX(R, 212, y + 1, SH - 2, CHR_P, false, { w: 3 }); } else chrX(R, 204, y, SH - 2, CHR_T, false, { w: 3 }); };
+    gam(18, true); gam(50, true); gam(92, false); gam(122, false);
+    R.text('n + 1', 232, 22, 3.9, { al: 'l', ink: 'P' }); R.text('(3 chromosomes)', 232, 29, 3.4, { al: 'l' }); R.text('n + 1', 232, 54, 3.9, { al: 'l', ink: 'P' });
+    R.text('n − 1', 232, 96, 3.9, { al: 'l', ink: 'P' }); R.text('(1 chromosome)', 232, 103, 3.4, { al: 'l' }); R.text('n − 1', 232, 126, 3.9, { al: 'l', ink: 'P' });
+    R.text('gametes', 204, -8, 3.5, { al: 'c' });
+    R.pop();
+    R.line(8, 150, 312, 150, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // fertilisation with a normal gamete (yellow = other parent): n + (n+1) and n + (n-1)
+    R.text('fertilisation with a normal gamete (n = 2)', 160, 161, 4.2, { al: 'c' }); R.text('yellow = chromosomes from the normal gamete', 160, 168, 3.5, { al: 'c' });
+    const zyg = (cx, nl, ns, lab) => { cellO(R, cx, 198, 26, { fi: 'P', ft: 0.08 }); for (let i = 0; i < nl; i++) chrX(R, cx - 6 * (nl - 1) + i * 12, 192, LG - 2, i === nl - 1 ? 'Y' : (i ? CHR_T : CHR_P), false, { w: 3.4 }); for (let i = 0; i < ns; i++) chrX(R, cx - 6 * (ns - 1) + i * 12, 211, SH, i === ns - 1 ? 'Y' : (i ? CHR_T : CHR_P), false, { w: 3.2 }); R.text(lab, cx, 235, 4.4, { al: 'c', ink: 'P' }); };
+    zyg(66, 3, 2, '2n + 1 = 5'); zyg(206, 1, 2, '2n − 1 = 3');
+    R.text('extra copy of', 130, 192, 3.7, { al: 'c' }); R.text('one chromosome', 130, 198, 3.7, { al: 'c' }); R.text('missing one copy', 270, 194, 3.7, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(74 + p * 20, 74, 1.5, 'Y', 0.9, 1); A.dot(154 + p * 22, 50 - p * 16, 1.5, 'Y', 0.9, 2); },
+});
+
+/* ---------- 3.4.3c Meiosis: two nuclear divisions; crossing over; independent segregation ---------- */
+S({
+  id: '3.4.3c', num: '3.4.3', sub: 'Meiosis: two divisions, independent segregation, crossing over', title: 'Genetic diversity: mutation and meiosis', topic: '3.4', slot: [3, 2], dna: 'bio', ao: 1,
+  covers: ['3.4.3.s5', '3.4.3.s6', '3.4.3.s7'],
+  card: {
+    text: '<b>Meiosis</b> produces daughter cells that are genetically different from each other. Two nuclear divisions result, usually, in four <b>haploid</b> cells from one diploid parent cell. In prophase I the homologous chromosomes pair and <b>crossing over</b> between chromatids exchanges alleles (further genetic variation). In metaphase I the pairs line up at random, so <b>independent segregation</b> of homologous chromosomes gives different combinations of maternal and paternal chromosomes in the daughter cells. Meiosis II separates the chromatids.',
+    terms: ['meiosis', 'haploid', 'diploid', 'homologous chromosomes', 'crossing over', 'independent segregation', 'chiasma', 'genetic variation'],
+    skill: 'Complete chromosome diagrams', eq: null,
+    q: 'Explain two ways meiosis produces genetically different gametes.', a: 'Crossing over exchanges alleles between non-sister chromatids of homologous chromosomes; independent segregation of homologous pairs gives random combinations of maternal and paternal chromosomes.'
+  },
+  draw(R, sc) {
+    R.text('meiosis (2n = 4)', 160, 14, 5, { al: 'c' });
+    // prophase I with crossing over
+    cellO(R, 48, 56, 32); 
+    chrX(R, 36, 50, 30, CHR_P, true, { w: 4.4, segR: [[0.55, 1, CHR_T]] }); chrX(R, 50, 50, 30, CHR_T, true, { w: 4.4, segL: [[0.55, 1, CHR_P]] }); chrX(R, 38, 78, 14, CHR_P, true, { w: 3.6 }); chrX(R, 53, 78, 14, CHR_T, true, { w: 3.6 });
+    R.circle(43, 56, 3.4, { ink: 'P', w: 1.1 }); R.text('chiasma', 48, 98, 3.6, { al: 'c', ink: 'P' });
+    R.text('1 prophase I: pairs form;', 48, 108, 3.6, { al: 'c' }); R.text('crossing over', 48, 114, 3.6, { al: 'c' });
+    R.arrow([84, 56, 108, 56], { ink: 'B', w: 1, hs: 2.4 });
+    // metaphase I: pairs on the equator, two arrangements (shown as one)
+    cellO(R, 140, 56, 32); R.line(140, 28, 140, 84, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    chrX(R, 124, 50, 28, CHR_P, true, { w: 4, segR: [[0.55, 1, CHR_T]] }); chrX(R, 156, 50, 28, CHR_T, true, { w: 4, segL: [[0.55, 1, CHR_P]] }); chrX(R, 126, 74, 13, CHR_T, true, { w: 3.4 }); chrX(R, 154, 74, 13, CHR_P, true, { w: 3.4 });
+    R.text('2 metaphase I: pairs line up', 140, 100, 3.6, { al: 'c' }); R.text('at random: independent', 140, 106, 3.6, { al: 'c' }); R.text('segregation', 140, 112, 3.6, { al: 'c' });
+    R.arrow([176, 56, 200, 56], { ink: 'B', w: 1, hs: 2.4 });
+    // after meiosis I: two haploid cells (chromosomes still of two chromatids)
+    cellO(R, 232, 26, 20); chrX(R, 226, 24, 20, CHR_P, true, { w: 3.6, segR: [[0.55, 1, CHR_T]] }); chrX(R, 238, 28, 11, CHR_T, true, { w: 3 });
+    cellO(R, 232, 80, 20); chrX(R, 226, 78, 20, CHR_T, true, { w: 3.6, segL: [[0.55, 1, CHR_P]] }); chrX(R, 238, 82, 11, CHR_P, true, { w: 3 });
+    R.text('3 end of meiosis I:', 284, 46, 3.5, { al: 'c' }); R.text('2 haploid cells', 284, 52, 3.5, { al: 'c' });
+    R.line(8, 124, 312, 124, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // meiosis II -> four cells
+    R.text('4 meiosis II: chromatids separate', 160, 136, 4.2, { al: 'c' });
+    R.arrow([234, 106, 234, 128], { ink: 'B', w: 0.8, hs: 2 });
+    const g4 = [[44, CHR_P, CHR_P, 'P', 'T'], [112, CHR_P, CHR_T, 'T', 'T'], [180, CHR_T, CHR_P, 'P', 'P'], [248, CHR_T, CHR_T, 'T', 'P']];
+    g4.forEach(([x, a, b], k) => {
+      cellO(R, x, 182, 28);
+      const lg = [[CHR_P, [[0.55, 1, CHR_T]]], [CHR_P, []], [CHR_T, []], [CHR_T, [[0.55, 1, CHR_P]]]][k], sh = [CHR_T, CHR_T, CHR_P, CHR_P][k];
+      chrX(R, x - 7, 180, 24, lg[0], false, { w: 4, segL: lg[1] }); chrX(R, x + 8, 184, 12, sh, false, { w: 3.4 });
+    });
+    R.text('4 haploid cells', 160, 226, 4.4, { al: 'c' }); R.text('genetically different from each other', 160, 234, 3.9, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(84 + p * 24, 56, 1.4, 'Y', 0.9, 1); A.dot(176 + p * 24, 56, 1.4, 'Y', 0.9, 2); },
+});
+
+/* ---------- 3.4.3d Meiosis outcomes: 2^n combinations; mitosis vs meiosis; random fertilisation ---------- */
+S({
+  id: '3.4.3d', num: '3.4.3', sub: 'Mitosis and meiosis compared; combinations of chromosomes: 2ⁿ; random fertilisation', title: 'Genetic diversity: mutation and meiosis', topic: '3.4', slot: [0, 3], span: [2, 1], dna: 'bio', ao: 3,
+  covers: ['3.4.3.s8', '3.4.3.s9', '3.4.3.s10', '3.4.3.s11'],
+  card: {
+    text: '<b>Mitosis</b>: one nuclear division, two diploid cells genetically identical to the parent and to each other (growth, repair, asexual reproduction). <b>Meiosis</b>: two nuclear divisions, usually four haploid cells that are genetically different from each other (gamete production; crossing over and independent segregation). Without crossing over, the number of possible chromosome combinations in gametes from one individual is <b>2ⁿ</b> where n is the number of homologous pairs; with <b>random fertilisation</b> of two gametes the number of possible combinations is (2ⁿ)². Meiosis is recognised in unfamiliar life cycles where haploid cells are formed from diploid ones. Random fertilisation further increases genetic variation within a species.',
+    terms: ['mitosis', 'meiosis', 'haploid', 'diploid', 'genetically identical', 'genetically different', '2^n', 'random fertilisation', 'life cycle'],
+    skill: 'MS 0.5: 2ⁿ and (2ⁿ)²', eq: MATH(mt('combinations in gametes '), mo('='), msup(mn('2'), mi('n')), mt('      after random fertilisation '), mo('='), msup(mpar(msup(mn('2'), mi('n'))), mn('2'))),
+    eqn: 'Humans: n = 23, so 2²³ = 8 388 608 gametes; (2²³)² ≈ 7.0 × 10¹³',
+    q: 'A species has 2n = 6. How many different chromosome combinations are possible in the gametes from one individual (without crossing over)?', a: '2³ = 8 (n = 3 homologous pairs).'
+  },
+  draw(R, sc) {
+    // mitosis vs meiosis
+    R.text('mitosis', 90, 14, 5, { al: 'c' }); R.text('meiosis', 270, 14, 5, { al: 'c' });
+    cellO(R, 90, 52, 24); chrX(R, 82, 50, 22, CHR_P, true, { w: 3.6 }); chrX(R, 96, 50, 22, CHR_T, true, { w: 3.6 });
+    R.arrow([90, 78, 90, 96], { ink: 'B', w: 1, hs: 2.6 });
+    cellO(R, 62, 118, 17); chrX(R, 58, 116, 18, CHR_P, false, { w: 3.2 }); chrX(R, 68, 116, 18, CHR_T, false, { w: 3.2 });
+    cellO(R, 118, 118, 17); chrX(R, 114, 116, 18, CHR_P, false, { w: 3.2 }); chrX(R, 124, 116, 18, CHR_T, false, { w: 3.2 });
+    ['1 division', '2 cells, diploid', 'genetically identical', 'growth, repair'].forEach((t, i) => R.text(t, 90, 148 + i * 7, 3.9, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+    R.line(180, 22, 180, 176, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    cellO(R, 270, 52, 24); chrX(R, 262, 50, 22, CHR_P, true, { w: 3.6, segR: [[0.55, 1, CHR_T]] }); chrX(R, 276, 50, 22, CHR_T, true, { w: 3.6, segL: [[0.55, 1, CHR_P]] });
+    R.arrow([270, 78, 270, 92], { ink: 'B', w: 1, hs: 2.6 });
+    [[238, CHR_P], [260, CHR_P], [282, CHR_T], [304, CHR_T]].forEach(([x, ink], i) => { cellO(R, x, 118, 10.5); chrX(R, x, 117, 14, ink, false, { w: 3, segL: i === 0 ? [[0.55, 1, CHR_T]] : (i === 3 ? [[0.55, 1, CHR_P]] : []) }); });
+    ['2 divisions', '4 cells, haploid', 'genetically different', 'gametes'].forEach((t, i) => R.text(t, 270, 148 + i * 7, 3.9, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+    R.line(8, 184, 332, 184, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // 2^n table
+    R.text('possible combinations of chromosomes', 170, 192, 4.4, { al: 'c' });
+    R.table(24, 198, [38, 60, 100, 100], 9, [['pairs, n', '2^n', 'in one individual’s gametes', 'after random fertilisation'], ['2', '4', '4 types of gamete', '4^2 = 16'], ['3', '8', '8 types of gamete', '8^2 = 64'], ['23', '8 388 608', 'about 8.4 million', 'about 7 × 10^{13}']], { size: 3.9, hink: 'Y' });
+    R.line(340, 22, 340, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // independent segregation illustration for n = 3 -> 8
+    R.text('n = 3: independent segregation gives 2^3 = 8', 498, 14, 4.6, { al: 'c' });
+    const cols = [[CHR_P, CHR_T]];
+    for (let k = 0; k < 8; k++) {
+      const cx = 372 + (k % 4) * 66, cy = 60 + Math.floor(k / 4) * 54;
+      cellO(R, cx, cy, 21);
+      [0, 1, 2].forEach(j => { const pick = (k >> (2 - j)) & 1; chrX(R, cx - 10 + j * 10, cy + (j % 2 ? 2 : -1), [20, 15, 11][j], pick ? CHR_T : CHR_P, false, { w: 3.4 }); });
+    }
+    R.text('8 different gametes from one individual', 498, 170, 4.2, { al: 'c' });
+    R.line(352, 182, 644, 182, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('random fertilisation', 498, 196, 4.6, { al: 'c' });
+    cellO(R, 396, 216, 15); chrX(R, 392, 216, 16, CHR_P, false, { w: 3 }); chrX(R, 400, 216, 16, CHR_T, false, { w: 3 }); R.text('+', 424, 220, 8, { al: 'c' }); cellO(R, 452, 216, 15); chrX(R, 448, 216, 16, CHR_T, false, { w: 3 }); chrX(R, 456, 216, 16, CHR_P, false, { w: 3 });
+    R.arrow([472, 216, 492, 216], { ink: 'B', w: 1, hs: 2.4 }); cellO(R, 516, 216, 15, { fi: 'P', ft: 0.08 }); [-6, 0, 6].forEach((dx, i) => chrX(R, 516 + dx * 1.2, 215, 14, [CHR_P, CHR_T, CHR_P][i], false, { w: 2.8 })); R.text('zygote', 516, 238, 3.6, { al: 'c' });
+    wrapText('any male gamete may fuse with any female gamete: more variation', 96, 3.8).forEach((t, i) => R.text(t, 544, 208 + i * 6.2, 3.8, { al: 'l', ink: i > 1 ? 'P' : 'B' }));
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(90, 78 + p * 18, 1.5, 'Y', 0.9, 1); A.dot(270, 78 + p * 14, 1.5, 'Y', 0.9, 2); },
+});
+
+/* ===================== 3.4.4 Genetic diversity and adaptation; RP6 ===================== */
+/* rod bacterium in plan view for populations: resistant (dark, filled) or susceptible (pale) */
+function bugs(R, x, y, ang, res, s = 1) { R.push(x, y, rad(ang), s); R.rrect(-6, -2.8, 12, 5.6, 2.8, { ink: 'B', w: 0.9, fi: res ? 'B' : 'Y', ft: res ? 0.65 : 0.45, wob: 0.1 }); R.pop(); }
+
+/* ---------- 3.4.4a Natural selection: antibiotic resistance ---------- */
+S({
+  id: '3.4.4a', num: '3.4.4', sub: 'Genetic diversity, natural selection and antibiotic resistance', title: 'Genetic diversity and adaptation', topic: '3.4', slot: [2, 3], span: [2, 1], dna: 'bio', ao: 2,
+  covers: ['3.4.4.s1', '3.4.4.s2', '3.4.4.s3', '3.4.4.s4'],
+  card: {
+    text: '<b>Genetic diversity</b> is the number of different alleles of genes in a population; it enables <b>natural selection</b>. <b>Random mutation</b> can result in new alleles. Many mutations are harmful but, in certain environments, a new allele might benefit its possessor, leading to increased <b>reproductive success</b>. The advantageous allele is inherited by members of the next generation, so over many generations the new allele increases in frequency in the population. Example: a random mutation gives a bacterium <b>antibiotic resistance</b>; when antibiotics are used, resistant bacteria survive and reproduce, passing on the allele (<b>directional selection</b>).',
+    terms: ['genetic diversity', 'allele', 'random mutation', 'natural selection', 'reproductive success', 'allele frequency', 'antibiotic resistance', 'directional selection'],
+    skill: 'MS 2.5: logarithmic scale for bacteria', eq: MATH(mt('log'), msub(mrow(), mn('10')), mt('(number of bacteria)'), mt('  e.g. 10'), msup(mrow(), mn('6')), mt(' → 6')),
+    q: 'Explain how a population of bacteria becomes resistant to an antibiotic.', a: 'A random mutation gives some bacteria a resistance allele; in the presence of the antibiotic only they survive and reproduce, passing on the allele, so its frequency rises over generations.'
+  },
+  draw(R, sc) {
+    R.text('antibiotic resistance evolves by natural selection', 332, 14, 5, { al: 'c' });
+    const dish = (cx, cy, r, state) => { R.circle(cx, cy, r, { ink: 'B', w: 1.3, fi: 'Y', ft: 0.08, wob: 0.4 }); R.circle(cx, cy, r - 3, { ink: 'B', w: 0.5, wob: 0.3 }); };
+    const stages = [
+      { x: 70, t: '1 population with variation', n: 22, res: 0, note: 'no resistance allele present at first' },
+      { x: 192, t: '2 random mutation', n: 22, res: 1, note: 'one bacterium has a new allele' },
+      { x: 314, t: '3 antibiotic used', n: 8, res: 1, note: 'susceptible bacteria killed' },
+      { x: 436, t: '4 survivors reproduce', n: 20, res: 8, note: 'allele passed on to offspring' },
+      { x: 558, t: '5 later generations', n: 26, res: 22, note: 'allele frequency has increased' }
+    ];
+    stages.forEach((st, si) => {
+      dish(st.x, 78, 46);
+      R.text(st.t, st.x, 14 + 14, 4.2, { al: 'c' });
+      const rng = mulberry32(777 + si * 31), pts = [];
+      for (let i = 0; i < st.n; i++) { const a = rng() * TAU, d = Math.sqrt(rng()) * 38; pts.push([st.x + Math.cos(a) * d, 78 + Math.sin(a) * d, rng() * 180]); }
+      pts.forEach(([x, y, an], i) => { const res = i < st.res; if (si === 2 && !res) { R.push(x, y, rad(an), 0.9); R.rrect(-6, -2.8, 12, 5.6, 2.8, { ink: 'B', w: 0.6, wob: 0.1, st: 0.4 }); R.pop(); R.text('✗', x, y + 2, 5, { al: 'c', ink: 'P' }); } else bugs(R, x, y, an, res); });
+      R.text(st.note, st.x, 134, 3.7, { al: 'c' });
+      if (si < 4) R.arrow([st.x + 50, 78, st.x + 72, 78], { ink: 'B', w: 1, hs: 2.4 });
+    });
+    R.line(8, 146, 656, 146, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // key
+    bugs(R, 20, 160, 0, true, 1); R.text('resistant (new allele)', 30, 162, 3.8, { al: 'l' }); bugs(R, 140, 160, 0, false, 1); R.text('susceptible', 150, 162, 3.8, { al: 'l' });
+    // causal chain
+    R.text('chain of reasoning', 332, 176, 4.6, { al: 'c' });
+    const chain = ['random mutation: new allele', 'allele benefits the bacterium in antibiotic', 'more survive and reproduce', 'allele inherited by next generation', 'allele frequency increases'];
+    chain.forEach((t, i) => { const x = 14 + i * 128, w = 114; R.rrect(x, 184, w, 22, 5, { ink: 'B', w: 1, fi: i % 2 ? 'Y' : 'P', ft: 0.15, wob: 0.2 }); wrapText(t, w - 10, 3.9).forEach((ln, k, arr) => R.text(ln, x + w / 2, 193.4 + k * 5.2 - (arr.length - 1) * 2.6, 3.9, { al: 'c' })); if (i < 4) R.arrow([x + w + 1, 195, x + 127, 195], { ink: 'P', w: 1, hs: 2.4 }); });
+    R.text('directional selection: one extreme (resistant) is favoured and increases', 332, 222, 4.2, { al: 'c', ink: 'P' });
+    R.text('genetic diversity (many alleles) is what allows selection to occur', 332, 231, 3.9, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); for (let i = 0; i < 4; i++) A.dot(436 + Math.cos(p * TAU + i * 1.7) * 30, 78 + Math.sin(p * TAU * 0.7 + i * 2.1) * 26, 1.4, 'B', 0.7, i); },
+});
+
+/* ---------- 3.4.4b Types of selection, adaptation ---------- */
+S({
+  id: '3.4.4b', num: '3.4.4', sub: 'Directional and stabilising selection; anatomical, physiological and behavioural adaptation', title: 'Genetic diversity and adaptation', topic: '3.4', slot: [0, 4], span: [2, 1], dna: 'bio', ao: 3,
+  covers: ['3.4.4.s5', '3.4.4.s6', '3.4.4.s7'],
+  card: {
+    text: '<b>Directional selection</b>, exemplified by antibiotic resistance in bacteria, favours one extreme of a characteristic, shifting the mean. <b>Stabilising selection</b>, exemplified by human birth weights, favours the intermediate and acts against both extremes, narrowing the range with the mean unchanged. Natural selection results in species better adapted to their environment. <b>Adaptations</b> may be <b>anatomical</b> (structure), <b>physiological</b> (function) or <b>behavioural</b>. Students should use unfamiliar information to explain how selection produces change in a population, interpret data showing its effect, and appreciate that adaptation and selection are major factors in evolution.',
+    terms: ['directional selection', 'stabilising selection', 'normal distribution', 'adaptation', 'anatomical', 'physiological', 'behavioural', 'evolution'],
+    skill: 'Interpret distribution curves', eq: null,
+    q: 'Human birth weight is an example of which type of selection, and why?', a: 'Stabilising: very small and very large babies have lower survival, so the intermediate weights are favoured and the range narrows.'
+  },
+  draw(R, sc) {
+    const gauss = (m, sd) => x => 10 * Math.exp(-0.5 * Math.pow((x - m) / sd, 2));
+    const panel = (x0, title, before, after, moved, note) => {
+      const g = R.graph(x0 + 22, 38, 130, 76, { xmin: 0, xmax: 10, ymin: 0, ymax: 11, xl: 'characteristic', yl: 'number of individuals', xt: [], yt: [], fs: 3.7, xly: 9, ylx: 5 }).axes();
+      R.text(title, x0 + 90, 28, 4.8, { al: 'c' });
+      g.curve(gauss(...before), { ink: 'B', w: 1.2, t: 0.8 }); g.curve(gauss(...after), { ink: 'P', w: 1.7 });
+      g.dashed(before[0], 0, before[0], 10.5, { ink: 'B', w: 0.5 }); if (moved) g.dashed(after[0], 0, after[0], 10.5, { ink: 'P', w: 0.5 });
+      note.forEach((t, i) => R.text(t, x0 + 90, 138 + i * 6.4, 3.9, { al: 'c', ink: i === 0 ? 'B' : 'B' }));
+      return g;
+    };
+    R.text('selection acts on variation in a population', 332, 14, 5, { al: 'c' });
+    const g1 = panel(6, 'directional selection', [4.6, 1.5], [6.2, 1.5], true, ['one extreme is favoured', 'the mean shifts', 'e.g. antibiotic resistance']);
+    R.arrow([g1.X(4.8), g1.Y(9.6), g1.X(6.0), g1.Y(9.6)], { ink: 'P', w: 1, hs: 2.4 });
+    R.text('before', g1.X(2.6), g1.Y(5.4), 3.7, { al: 'r' }); R.text('after', g1.X(7.8), g1.Y(7.4), 3.7, { al: 'l', ink: 'P' });
+    const g2 = panel(222, 'stabilising selection', [5, 2.1], [5, 1.2], false, ['intermediate favoured', 'range narrows, mean unchanged', 'e.g. human birth weight']);
+    R.text('before', g2.X(1.4), g2.Y(5), 3.7, { al: 'r' }); R.text('after', g2.X(5.9), g2.Y(9.4), 3.7, { al: 'l', ink: 'P' });
+    cross(R, g2.X(1.2), g2.Y(2.4), 2.4); cross(R, g2.X(8.8), g2.Y(2.4), 2.4);
+    // birth-weight data panel
+    R.line(438, 22, 438, 168, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    const g3 = R.graph(470, 38, 150, 76, { xmin: 1, xmax: 6, ymin: 0, ymax: 100, xl: 'birth mass / kg', yl: 'deaths (%)', xt: [[1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], yt: [[0, '0'], [50, '50'], [100, '100']], fs: 3.7, xly: 12, ylx: 12 }).axes();
+    R.text('human birth weight (illustrative)', 548, 28, 4.4, { al: 'c' });
+    g3.curve(x => 8 + 90 * Math.exp(-Math.pow((x - 3.4) / 0.62, 2)) * 0 + 12 + 74 * Math.pow((x - 3.4) / 2.2, 2), { ink: 'P', w: 1.5, from: 1.3, to: 5.9 });
+    R.text('death rate is lowest', 548, 140, 3.9, { al: 'c' }); R.text('at intermediate masses', 548, 146.4, 3.9, { al: 'c' });
+    R.line(8, 168, 656, 168, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // adaptations
+    R.text('selection → adaptation', 332, 180, 4.6, { al: 'c' });
+    const ad = [['anatomical', 'structure, e.g. a thick', 'waxy cuticle or long legs', 'T'], ['physiological', 'function, e.g. producing', 'antibiotic-resistant enzymes', 'P'], ['behavioural', 'actions, e.g. courtship', 'displays or migration', 'Y']];
+    ad.forEach(([a, b, c, ink], i) => { const x = 20 + i * 218; R.rrect(x, 188, 202, 44, 8, { ink: 'B', w: 1, fi: ink, ft: 0.15, wob: 0.3 }); R.text(a, x + 101, 202, 5, { al: 'c' }); R.text(b, x + 101, 214, 3.9, { al: 'c' }); R.text(c, x + 101, 221, 3.9, { al: 'c' }); });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(28 + (4.6 + p * 1.6) / 10 * 130, 114 - 10 * Math.exp(-0.5 * Math.pow((p * 1.6 * 0.6) / 1.5, 2)) * 7.2, 2, 'P', 0.9, 1); },
+});
+
+/* ---------- RP6: aseptic technique and antimicrobial substances ---------- */
+rpScene({
+  id: 'RP6', num: '3.4.4', rp: 6, title: 'Genetic diversity and adaptation', sub: 'Required practical 6: aseptic techniques to investigate the effect of antimicrobial substances on microbial growth', topic: '3.4', slot: [2, 4],
+  covers: ['RP6'], at: ['c', 'i'], ms: ['MS 0.2', 'MS 1.2', 'MS 0.3', 'MS 4.1'], ps: ['PS 2.3', 'PS 4.1'],
+  card: {
+    text: 'Use <b>aseptic techniques</b> to investigate the effect of antimicrobial substances on microbial growth. In the AQA handbook’s example a bacterial lawn (e.g. <i>E. coli</i> K12) is spread on nutrient agar, filter-paper discs soaked in different antimicrobial substances are placed on it, and the plate is incubated (at or below 25 °C in schools, lid taped but not sealed). Clear <b>zones of inhibition</b> appear around effective substances: measure the diameter, calculate the area (πr²) and compare. A fully quantitative variant uses serial dilutions of a broth culture. Schools may use other methods and organisms.',
+    terms: ['aseptic technique', 'bacterial lawn', 'zone of inhibition', 'antimicrobial', 'agar plate', 'serial dilution', 'incubation', 'sterile'],
+    skill: 'MS 4.1: area of a circle; MS 0.3', eq: MATH(mt('area of zone '), mo('='), mi('π'), msup(mi('r'), mn('2'))),
+    eqn: 'e.g. diameter 14 mm → r = 7 mm → area = 3.14 × 7² ≈ 154 mm²',
+    q: 'Why is the lid of the Petri dish taped but not sealed completely, and why is incubation kept at 25 °C or below?', a: 'Some air must get in to prevent anaerobic pathogens growing; a lower temperature reduces the growth of harmful human pathogens.'
+  },
+  apparatus(R, b) {
+    R.text('lawn culture + discs → incubate → measure zones', 92, 21, 4.2, { al: 'c' });
+    // bunsen and aseptic steps
+    R.rect(14, 104, 20, 3, { ink: 'B', w: 1, fi: 'Y', ft: 0.6 }); R.rect(18, 76, 12, 28, { ink: 'B', w: 1, fi: 'B', ft: 0.2 }); R.fill([20, 74, 28, 74, 24, 58], { ink: 'P', t: 0.9, wob: 0.1 }); R.fill([22, 72, 26, 72, 24, 62], { ink: 'Y', t: 0.9, wob: 0.1 });
+    R.text('flame', 22, 118, 3.6, { al: 'c' });
+    R.tube(42, 62, 10, 44, { level: 0.5, ink: 'Y', t: 0.35 }); R.text('broth', 52, 118, 3.6, { al: 'c' }); R.text('culture', 52, 123.5, 3.6, { al: 'c' });
+    R.arrow([54, 90, 72, 90], { ink: 'B', w: 1, hs: 2.4 });
+    // petri dish (top view) with lawn and discs and zones of inhibition
+    const cx = 114, cy = 80, r = 38;
+    R.circle(cx, cy, r, { ink: 'B', w: 1.4, fi: 'Y', ft: 0.18, wob: 0.3 }); R.circle(cx, cy, r - 2.6, { ink: 'B', w: 0.5, wob: 0.3 });
+    const discs = [[-14, -12, 11], [14, -12, 0], [-14, 14, 7], [14, 14, 14]];
+    discs.forEach(([dx, dy, zr], i) => { if (zr) R.circle(cx + dx, cy + dy, zr, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.0, wob: 0.15, st: 0.8 }); R.knock(polyPts(cx + dx, cy + dy, zr, 20)); R.circle(cx + dx, cy + dy, 3.6, { ink: 'B', w: 0.9, fi: 'B', ft: 0.2 }); });
+    R.fill(polyPts(cx, cy, r - 3, 24), { ink: 'Y', t: 0.0, wob: 0.1 });
+    [[1, 0], [2, 11], [3, 7], [4, 14]].forEach(([n], i) => {});
+    ['A', 'B', 'C', 'D'].forEach((t, i) => R.text(t, cx + discs[i][0], cy + discs[i][1] + 1.4, 3.4, { al: 'c' }));
+    // measure zone diameter with ruler
+    R.line(cx + 14 - 14, cy + 14 + 22, cx + 14 + 14, cy + 14 + 22, { ink: 'P', w: 1.4, taper: 'none' }); R.line(cx, cy + 34, cx, cy + 40, { ink: 'P', w: 0.8, taper: 'none' });
+    R.text('zone of inhibition: no bacteria grow', 114, 130, 3.8, { al: 'c' }); R.text('lid taped, not sealed; ≤ 25 °C', 114, 137, 3.8, { al: 'c' });
+    leader(R, 'filter-paper disc', cx - 14, cy - 12, 160, 36, { size: 3.8, al: 'c' }); leader(R, 'bacterial lawn', cx + 28, cy - 10, 168, 54, { size: 3.8, al: 'c' });
+  },
+  results(R, b) {
+    const g = R.graph(b.x + 20, b.y + 10, 94, 78, { xmin: 0, xmax: 5, ymin: 0, ymax: 30, xl: '', yl: 'zone diameter / mm', xt: [], yt: [[0, '0'], [10, '10'], [20, '20'], [30, '30']], fs: 3.7, xly: 10, ylx: 12 }).axes();
+    [['A', 22, 11], ['B', 0, 0], ['C', 14, 7], ['D', 28, 14]].forEach(([n, , ], i) => {});
+    const d = [22, 0, 14, 28]; const lab = ['A', 'B', 'C', 'D'];
+    d.forEach((h, i) => { const x = g.X(i + 0.8); R.fill([x, g.Y(h), x + 12, g.Y(h), x + 12, g.Y(0), x, g.Y(0)], { ink: 'P', t: 0.7, wob: 0.15 }); R.rect(x, g.Y(h), 12, g.Y(0) - g.Y(h), { ink: 'B', w: 0.8, wob: 0.1 }); R.text(lab[i], x + 6, g.Y(0) + 6, 4, { al: 'c' }); });
+    R.text('antimicrobial substance A–D (B: no zone, no effect)', b.x + 66, b.y + 100, 3.6, { al: 'c' });
+  },
+  vars: { iv: 'antimicrobial substance', dv: 'area of zone of inhibition', ctl: ['same bacterium and lawn', 'agar depth and disc size', 'incubation time and temperature'] },
+  calc: ['diameter 14 mm, r = 7 mm', 'area = π r² = 3.14 × 7²', '≈ 154 mm²', 'bigger area = more effective'],
+  risks: [['bio', 'microbes: aseptic technique'], ['flame', 'Bunsen flame, hot loop'], ['goggles', 'tape lid; never reopen']],
+  limits: ['uneven lawn', 'substances diffuse at different rates', 'zone edges hard to measure'],
+  interp: 'larger clear zone = a more effective antimicrobial (diffusion also matters)',
+  anim(A, sc) { const p = A.ph(6); A.ring(114 + 14, 80 + 14, 4 + p * 10, 'P', 0.8, 1 - p); A.dot(47 + Math.sin(p * TAU) * 1, 76 - p * 6, 1, 'Y', 0.8, 1); },
+});
+
+/* ===================== 3.4.5 Species and taxonomy ===================== */
+/* generic quadruped silhouette (for horse / donkey / mule style comparisons) */
+function beast(R, x, y, s, o = {}) {
+  R.push(x, y, 0, s);
+  R.ellipse(0, 0, 14, 7.2, { ink: 'B', w: 1.1 / s, fi: o.fi || 'P', ft: o.ft || 0.3, wob: 0.3 });
+  R.ellipse(13, -9, 5.4, 4, { ink: 'B', w: 1 / s, fi: o.fi || 'P', ft: o.ft || 0.3, rot: -30, wob: 0.2 }); R.line(10, -5, 6, -2, { ink: 'B', w: 4 / s, t: 0.6, taper: 'none' });
+  R.ellipse(10.2, -13.4, 1.4, 2.6, { ink: 'B', w: 0.8 / s, fi: o.fi || 'P', ft: 0.6, rot: (o.ear || 0) });
+  [-8, -3, 4, 9].forEach(dx => R.line(dx, 5, dx, 15, { ink: 'B', w: 1.4 / s, taper: 'end' }));
+  R.stroke([-14, -2, -18, 2, -17, 10], { ink: 'B', w: 1 / s, smooth: true, taper: 'end' });
+  R.pop();
+}
+
+/* ---------- 3.4.5a What is a species; courtship ---------- */
+S({
+  id: '3.4.5a', num: '3.4.5', sub: 'Species: fertile offspring; courtship and species recognition', title: 'Species and taxonomy', topic: '3.4', slot: [3, 4], dna: 'bio', ao: 1,
+  covers: ['3.4.5.s1', '3.4.5.s2'],
+  card: {
+    text: 'Two organisms belong to the same <b>species</b> if they are able to produce <b>fertile offspring</b>. <b>Courtship behaviour</b> is a necessary precursor to successful mating: it allows <b>species recognition</b> (so energy and gametes are not wasted on a mate of another species), identifies a mate that is able to breed (receptive, fit) and may synchronise mating. Courtship is often elaborate and specific to a species.',
+    terms: ['species', 'fertile offspring', 'courtship', 'species recognition', 'hybrid', 'mating', 'behaviour'],
+    skill: 'Apply a definition', eq: null,
+    q: 'A horse and a donkey produce a mule that cannot breed. Are horses and donkeys the same species?', a: 'No: their offspring are infertile, so they fail the definition of the same species.'
+  },
+  draw(R, sc) {
+    R.text('what makes a species?', 160, 14, 5, { al: 'c' });
+    // horse + horse -> fertile foal;  horse + donkey -> infertile mule
+    beast(R, 44, 60, 1.1, { fi: 'P' }); R.text('+', 76, 64, 8, { al: 'c' }); beast(R, 108, 60, 1.1, { fi: 'P' }); R.arrow([128, 60, 150, 60], { ink: 'B', w: 1, hs: 2.4 }); beast(R, 178, 66, 0.8, { fi: 'P' }); R.text('✓', 208, 54, 8, { al: 'c', ink: 'T' });
+    R.text('horse', 44, 86, 3.6, { al: 'c' }); R.text('horse', 108, 86, 3.6, { al: 'c' }); R.text('foal', 178, 86, 3.6, { al: 'c' });
+    R.text('same species: fertile offspring', 120, 100, 4, { al: 'c' });
+    beast(R, 44, 122, 1.1, { fi: 'P' }); R.text('+', 76, 126, 8, { al: 'c' }); beast(R, 108, 122, 1.1, { fi: 'T', ear: 20 }); R.arrow([128, 122, 150, 122], { ink: 'B', w: 1, hs: 2.4 }); beast(R, 178, 128, 0.8, { fi: 'TY' }); R.text('✗', 208, 116, 8, { al: 'c', ink: 'P' });
+    R.text('horse', 44, 148, 3.6, { al: 'c' }); R.text('donkey', 108, 148, 3.6, { al: 'c' }); R.text('mule', 178, 148, 3.6, { al: 'c' });
+    R.text('different species: the offspring is infertile', 120, 158, 4, { al: 'c' });
+    R.line(232, 22, 232, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('definition', 272, 28, 4.4, { al: 'c' });
+    ['two organisms are the', 'same species if they can', 'produce fertile offspring'].forEach((t, i) => R.text(t, 272, 42 + i * 7, 3.9, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+    R.line(8, 166, 232, 166, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // courtship: male displays, female responds
+    R.text('courtship behaviour', 120, 178, 4.6, { al: 'c' });
+    const bird = (x, y, fl, male) => { R.push(x, y, 0, fl); R.ellipse(0, 0, 13, 7.4, { ink: 'B', w: 1.1, fi: male ? 'Y' : 'T', ft: male ? 0.45 : 0.2, wob: 0.3 }); R.circle(13, -6, 4.6, { ink: 'B', w: 1, fi: male ? 'Y' : 'T', ft: male ? 0.45 : 0.2 }); R.poly([17, -6.4, 23, -5, 17, -4], { ink: 'B', w: 0.9, fi: 'P', ft: 0.8 }); R.dot(14.4, -7, 0.8, { ink: 'B' }); R.line(-3, 7, -3, 14, { ink: 'B', w: 1, taper: 'end' }); R.line(3, 7, 3, 14, { ink: 'B', w: 1, taper: 'end' }); if (male) { for (let i = -3; i <= 3; i++) R.stroke([-10, -2, -20 + Math.abs(i) * 0.5, -10 + i * 7, -26 + Math.abs(i), -14 + i * 9], { ink: i % 2 ? 'P' : 'T', w: 2.4, smooth: true, taper: 'end', t: 0.8 }); R.stroke([12, -10, 15, -17, 11, -19], { ink: 'P', w: 1.3, smooth: true, taper: 'end' }); } else R.stroke([-12, 0, -20, 2, -24, 4], { ink: 'B', w: 1.4, taper: 'end' }); R.pop(); };
+    bird(52, 206, 1, true); bird(168, 214, 1, false);
+    R.arrow([82, 198, 140, 204], { ink: 'P', w: 1, hs: 2.4 }); R.text('display', 112, 196, 3.7, { al: 'c', ink: 'P' });
+    R.arrow([148, 224, 96, 224], { ink: 'T', w: 1, hs: 2.4 }); R.text('response', 122, 233, 3.7, { al: 'c', ink: 'T' });
+    // roles
+    R.text('courtship allows:', 272, 100, 4.4, { al: 'c' });
+    ['species recognition', 'a fit, receptive mate', 'mating at the same time'].forEach((t, i) => { R.circle(244, 114 + i * 11, 1.6, { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); R.text(t, 249, 115.4 + i * 11, 3.8, { al: 'l' }); });
+    R.text('so gametes and energy are', 272, 170, 3.8, { al: 'c' }); R.text('not wasted on the wrong', 272, 176.5, 3.8, { al: 'c' }); R.text('species', 272, 183, 3.8, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); A.dot(96 + Math.sin(p * TAU) * 6, 203 + Math.cos(p * TAU) * 2, 1.4, 'P', 0.9, 1); A.dot(8 + Math.sin(p * TAU * 2) * 6, 200, 1.2, 'P', 0.8, 2); },
+});
+
+/* ---------- 3.4.5b Phylogenetic classification and binomial ---------- */
+S({
+  id: '3.4.5b', num: '3.4.5', sub: 'Phylogenetic classification: taxa, hierarchy and binomial naming; evidence from immunology and sequencing', title: 'Species and taxonomy', topic: '3.4', slot: [0, 5], span: [2, 1], dna: 'bio', ao: 2,
+  covers: ['3.4.5.s3', '3.4.5.s4', '3.4.5.s5', '3.4.5.s6'],
+  card: {
+    text: 'A <b>phylogenetic</b> classification system arranges species into groups based on their <b>evolutionary origins and relationships</b>. It uses a <b>hierarchy</b> in which smaller groups are placed within larger groups, with no overlap between groups; each group is a <b>taxon</b> (plural taxa). One hierarchy comprises the taxa <b>domain, kingdom, phylum, class, order, family, genus and species</b>. Each species is universally identified by a <b>binomial</b> of its genus and species names, e.g. <i>Homo sapiens</i>. Advances in <b>immunology</b> and <b>genome sequencing</b> help to clarify evolutionary relationships. (Recall of different taxonomic systems is not required.)',
+    terms: ['phylogenetic', 'hierarchy', 'taxon', 'domain', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'binomial'],
+    skill: 'Interpret a phylogenetic tree', eq: null,
+    q: 'Why does the hierarchy have no overlap between groups?', a: 'Each smaller group (taxon) is placed entirely within one larger group, reflecting shared evolutionary origin, so a species belongs to only one taxon at each level.'
+  },
+  draw(R, sc) {
+    R.text('classification hierarchy', 90, 14, 5, { al: 'c' });
+    const taxa = ['domain', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species'], ex = ['Eukarya', 'Animalia', 'Chordata', 'Mammalia', 'Primates', 'Hominidae', 'Homo', 'sapiens'];
+    taxa.forEach((t, i) => { const w = 150 - i * 12, x = 90 - w / 2, y = 26 + i * 25; R.rrect(x, y, w, 21, 5, { ink: 'B', w: 1, fi: i % 2 ? 'Y' : 'T', ft: 0.1, wob: 0.25 }); R.text(t, 90, y + 8.4, 4, { al: 'c' }); R.text(ex[i], 90, y + 16.6, 3.9, { al: 'c' }); });
+    R.text('smaller groups lie entirely within larger groups', 90, 232, 3.6, { al: 'c' });
+    R.line(188, 22, 188, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // binomial
+    R.text('binomial: genus + species', 266, 28, 4.6, { al: 'c' });
+    R.text('Homo sapiens', 266, 52, 7.4, { al: 'c' });
+    R.line(238, 58, 252, 58, { ink: 'P', w: 1, taper: 'none' }); R.line(262, 58, 296, 58, { ink: 'T', w: 1, taper: 'none' });
+    R.text('genus (capital)', 245, 66, 3.7, { al: 'c', ink: 'P' }); R.text('species (lower case)', 288, 72, 3.7, { al: 'c', ink: 'T' });
+    R.text('written in italics, or underlined', 266, 86, 3.7, { al: 'c' });
+    R.text('the same name is used worldwide', 266, 94, 3.7, { al: 'c' });
+    R.line(198, 104, 566, 104, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // phylogenetic tree
+    R.text('phylogenetic tree: relationships from shared ancestors', 380, 116, 4.4, { al: 'c' });
+    const tr = (x0, y0) => {
+      const sp = ['species A', 'species B', 'species C', 'species D'], ys = [136, 160, 184, 208];
+      R.line(x0, y0, x0, y0, { ink: 'B', w: 0.01, taper: 'none' });
+      R.stroke([204, 172, 232, 172], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([232, 148, 232, 196], { ink: 'B', w: 1.6, taper: 'none' });
+      R.stroke([232, 148, 264, 148], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([264, 136, 264, 160], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([264, 136, 330, 136], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([264, 160, 330, 160], { ink: 'B', w: 1.6, taper: 'none' });
+      R.stroke([232, 196, 270, 196], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([270, 184, 270, 208], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([270, 184, 330, 184], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([270, 208, 330, 208], { ink: 'B', w: 1.6, taper: 'none' });
+      sp.forEach((s2, i) => { R.circle(334, ys[i], 3, { ink: 'B', w: 0.9, fi: ['P', 'T', 'Y', 'TY'][i], ft: 0.7 }); R.text(s2, 340, ys[i] + 1.4, 3.9, { al: 'l' }); });
+      R.circle(232, 148, 2.4, { ink: 'P', w: 1 }); R.circle(264, 148, 2.4, { ink: 'P', w: 1 }); R.circle(270, 196, 2.4, { ink: 'P', w: 1 });
+      R.text('common ancestor', 206, 190, 3.6, { al: 'l' }); R.arrow([218, 184, 230, 175], { ink: 'P', w: 0.7, hs: 1.8 });
+    };
+    tr(0, 0);
+    R.text('A and B share a more recent common', 420, 144, 3.7, { al: 'l' }); R.text('ancestor: more closely related', 420, 150, 3.7, { al: 'l' });
+    // right: evidence
+    R.line(566, 22, 566, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('evidence', 612, 28, 4.6, { al: 'c' });
+    R.helix(594, 40, 594, 86, { amp: 6, turns: 2, w: 0.9 }); R.text('DNA base', 626, 54, 3.7, { al: 'l' }); R.text('sequences', 626, 60, 3.7, { al: 'l' });
+    R.antibody(592, 126, -PI / 2, 'tri', { s: 0.6 }); R.text('proteins and', 626, 108, 3.7, { al: 'l' }); R.text('immunology', 626, 114, 3.7, { al: 'l' });
+    ['more similar', 'sequences or', 'antibody binding', '= more closely', 'related'].forEach((t, i) => R.text(t, 612, 152 + i * 7, 3.8, { al: 'c', ink: i > 2 ? 'P' : 'B' }));
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(204 + p * 28, 172, 1.4, 'P', 0.9, 1); },
+});
+
+/* ===================== 3.4.6 Biodiversity within a community; 3.4.7 Investigating diversity ===================== */
+function flowerSp(R, x, y, ink, s = 1) { R.push(x, y, 0, s); R.line(0, 0, 0, 9, { ink: 'T', w: 1.1, taper: 'end' }); for (let i = 0; i < 5; i++) { const a = i * TAU / 5 - PI / 2; R.circle(Math.cos(a) * 3.2, Math.sin(a) * 3.2, 2.5, { ink: 'B', w: 0.7, fi: ink, ft: ink === 'B' ? 0.55 : 0.8, wob: 0.1 }); } R.circle(0, 0, 1.6, { ink: 'B', w: 0.6, fi: 'Y', ft: 0.9 }); R.pop(); }
+
+/* ---------- 3.4.6a Species richness and index of diversity ---------- */
+S({
+  id: '3.4.6a', num: '3.4.6', sub: 'Biodiversity in a community: species richness and index of diversity', title: 'Biodiversity within a community', topic: '3.4', slot: [2, 5], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.4.6.s1', '3.4.6.s2', '3.4.6.s3', '3.4.6.s4'],
+  card: {
+    text: 'Biodiversity can relate to a range of habitats, from a small local habitat to the whole Earth. <b>Species richness</b> is the number of different species in a community. An <b>index of diversity</b> describes the relationship between the number of species and the number of individuals in each species, so a community dominated by one species has a low index. Calculate it using <b>d = N(N − 1) ÷ Σn(n − 1)</b> where N = total number of organisms of all species and n = total number of organisms of each species. A higher value means a more diverse community.',
+    terms: ['biodiversity', 'habitat', 'community', 'species richness', 'index of diversity', 'N', 'n', 'sum (Σ)'],
+    skill: 'MS 2.3 / 1.5: index of diversity', eq: MATH(mi('d'), mo('='), mfrac(mi('N') + mpar(mi('N') + mo('−') + mn('1')), mo('∑') + mi('n') + mpar(mi('n') + mo('−') + mn('1')))),
+    eqn: 'Field: 3 red, 5 white, 3 blue. N = 11; d = 11 × 10 ÷ (3×2 + 5×4 + 3×2) = 110 ÷ 32 = 3.44',
+    q: 'A habitat has 20 organisms of one species only. What is its index of diversity?', a: 'd = 20 × 19 ÷ (20 × 19) = 1: the lowest possible value, as there is no diversity.'
+  },
+  draw(R, sc) {
+    R.text('measuring biodiversity', 332, 14, 5, { al: 'c' });
+    // field with 3 species
+    R.rrect(14, 28, 160, 98, 6, { ink: 'B', w: 1.2, fi: 'T', ft: 0.12, wob: 0.4 });
+    const rng = mulberry32(31), flowers = [['P', 3], ['Y', 5], ['B', 3]];
+    flowers.forEach(([ink, n], si) => { for (let i = 0; i < n; i++) flowerSp(R, 30 + rng() * 128, 40 + rng() * 72, ink, 1.2); });
+    R.text('a field: 11 organisms in 3 species', 94, 138, 4, { al: 'c' });
+    R.text('species richness = 3', 94, 146, 4.2, { al: 'c', ink: 'P' });
+    // key
+    [['P', 'red species'], ['Y', 'white (yellow) species'], ['B', 'blue species']].forEach(([ink, t], i) => { flowerSp(R, 24, 162 + i * 14, ink, 0.9); R.text(t, 34, 165 + i * 14, 3.8, { al: 'l' }); });
+    R.line(190, 22, 190, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // calculation table
+    R.text('index of diversity d = N(N − 1) ÷ Σ n(n − 1)', 330, 28, 5, { al: 'c' });
+    R.table(206, 36, [46, 46, 46, 56], 12, [['species', 'n', 'n − 1', 'n(n − 1)'], ['red', '3', '2', '6'], ['white', '5', '4', '20'], ['blue', '3', '2', '6'], ['total', 'N = 11', '', 'Σ = 32']], { size: 4.2, hink: 'Y' });
+    R.text('d = 11 × 10 ÷ 32 = 110 ÷ 32 = 3.44', 330, 112, 5, { al: 'c', ink: 'P' });
+    R.line(198, 122, 466, 122, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // same species richness, different evenness
+    R.text('same species richness (3), different index', 332, 134, 4.4, { al: 'c' });
+    const pop = (x, counts, d) => { let k = 0; counts.forEach((c, si) => { for (let i = 0; i < c; i++) { R.circle(x + (k % 8) * 7.4, 150 + Math.floor(k / 8) * 8, 2.8, { ink: 'B', w: 0.7, fi: ['P', 'Y', 'B'][si], ft: 0.7, wob: 0.1 }); k++; } }); R.text(d, x + 26, 190, 4.2, { al: 'c' }); };
+    pop(220, [4, 4, 4], 'even: d = 3.7'); pop(332, [10, 1, 1], 'one dominant: d = 1.5');
+    R.text('(12 × 11 ÷ 36 = 3.7 and 12 × 11 ÷ 90 = 1.5)', 332, 202, 3.4, { al: 'c' });
+    R.text('a higher index = more diverse', 332, 214, 4.2, { al: 'c' }); R.text('all one species: d = 1', 332, 222, 4, { al: 'c' });
+    R.line(480, 22, 480, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // scales
+    R.text('biodiversity at all scales', 568, 28, 4.6, { al: 'c' });
+    R.circle(532, 112, 14, { ink: 'B', w: 1, fi: 'T', ft: 0.2 }); R.circle(532, 112, 28, { ink: 'B', w: 1, fi: 'Y', ft: 0.1 }); R.circle(532, 112, 44, { ink: 'B', w: 1, fi: 'P', ft: 0.06 });
+    R.text('local', 532, 114, 3.6, { al: 'c' }); R.text('region', 532, 94, 3.6, { al: 'c' }); R.text('Earth', 532, 78, 3.6, { al: 'c' });
+    ['local habitat to', 'the whole Earth'].forEach((t, i) => R.text(t, 590, 108 + i * 7, 3.9, { al: 'l' }));
+    ['higher index of diversity', 'may indicate a stable,', 'healthy community'].forEach((t, i) => R.text(t, 568, 180 + i * 7, 3.9, { al: 'c' }));
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(94 + Math.cos(p * TAU) * 40, 80 + Math.sin(p * TAU * 1.3) * 20, 1.3, 'Y', 0.7, 1); },
+});
+
+/* ---------- 3.4.6b Farming and conservation ---------- */
+S({
+  id: '3.4.6b', num: '3.4.6', sub: 'Farming techniques reduce biodiversity; the balance between conservation and farming', title: 'Biodiversity within a community', topic: '3.4', slot: [0, 6], dna: 'mark', ao: 3,
+  covers: ['3.4.6.s5'],
+  card: {
+    text: 'Farming techniques reduce biodiversity: <b>monoculture</b> (growing one crop), removing hedgerows and woodland to make bigger fields, draining wetlands, using <b>herbicides and pesticides</b> to kill weeds and pests, and <b>fertilisers</b> that cause eutrophication. There is a balance to be struck between <b>conservation</b> and <b>farming</b>, which provides food for people: e.g. maintaining hedgerows and field margins, reduced pesticide use, rotating crops, and leaving some land uncultivated.',
+    terms: ['biodiversity', 'monoculture', 'hedgerow', 'herbicide', 'pesticide', 'fertiliser', 'conservation', 'balance'],
+    skill: 'Evaluate competing needs', eq: null,
+    q: 'Give two ways in which a farming technique reduces biodiversity.', a: 'Removing hedgerows destroys habitats; herbicides and pesticides kill species other than the crop and their food supply.'
+  },
+  draw(R, sc) {
+    R.text('farming and biodiversity', 160, 14, 5, { al: 'c' });
+    // two fields
+    const field = (x, y, w, h, mono) => {
+      R.rect(x, y, w, h, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.12, wob: 0.4 });
+      for (let i = 0; i < 6; i++) R.line(x + 6, y + 8 + i * (h - 14) / 5, x + w - 6, y + 8 + i * (h - 14) / 5, { ink: 'T', w: 2.2, t: 0.5, taper: 'none' });
+      if (!mono) { R.stroke([x - 2, y + h + 3, x + w + 2, y + h + 3], { ink: 'T', w: 6, t: 0.7, taper: 'none', solid: false }); for (let i = 0; i < 10; i++) R.circle(x + 6 + i * (w - 12) / 9, y + h + 3 + (i % 2 ? 1.5 : -1.5), 2.8, { ink: 'B', w: 0.8, fi: 'TY', ft: 0.7, wob: 0.2 }); }
+    };
+    field(14, 30, 130, 52, true); R.text('large monoculture field, no hedgerow', 79, 100, 3.9, { al: 'c' });
+    field(172, 30, 130, 52, false); R.text('smaller fields, hedgerow kept', 237, 100, 3.9, { al: 'c' });
+    [['monoculture', 14], ['herbicides, pesticides', 14], ['hedgerows removed', 14]].forEach(() => {});
+    R.line(8, 110, 312, 110, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('techniques that reduce biodiversity', 80, 122, 4.2, { al: 'c', ink: 'P' }); R.text('conservation measures', 244, 122, 4.2, { al: 'c', ink: 'T' });
+    ['one crop only (monoculture)', 'hedgerows and woodland removed', 'herbicides remove weeds and the food', 'of insects; pesticides kill non-pests', 'fertilisers cause eutrophication', 'wetlands drained'].forEach((t, i) => R.text(t, 14, 134 + i * 8, 3.9, { al: 'l' }));
+    ['keep or restore hedgerows', 'leave field margins uncultivated', 'rotate crops', 'reduce chemical use', 'protect wetlands and woodland'].forEach((t, i) => R.text(t, 176, 134 + i * 8, 3.9, { al: 'l' }));
+    R.line(166, 112, 166, 182, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.line(8, 192, 312, 192, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // balance
+    R.text('a balance: food for people and a diverse environment', 160, 204, 4.4, { al: 'c' });
+    R.line(160, 212, 160, 226, { ink: 'B', w: 1.3, taper: 'none' }); R.line(150, 226, 170, 226, { ink: 'B', w: 1.3, taper: 'none' }); R.line(120, 214, 200, 212, { ink: 'B', w: 1.3, taper: 'none' });
+    R.stroke([114, 220, 120, 228, 138, 228, 144, 220], { ink: 'B', w: 1, smooth: true, taper: 'none' }); R.stroke([176, 218, 182, 226, 198, 226, 204, 218], { ink: 'B', w: 1, smooth: true, taper: 'none' });
+    R.text('farming', 129, 236, 3.8, { al: 'c' }); R.text('conservation', 190, 236, 3.8, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); for (let i = 0; i < 3; i++) A.dot(176 + ((p + i / 3) % 1) * 122, 86, 1.1, 'Y', 0.7, i); },
+});
+
+/* ---------- 3.4.7a Investigating diversity: DNA, mRNA and protein comparisons ---------- */
+S({
+  id: '3.4.7a', num: '3.4.7', sub: 'Investigating diversity: observable characteristics, DNA, mRNA and amino acid sequences', title: 'Investigating diversity', topic: '3.4', slot: [1, 6], span: [2, 1], dna: 'bio', ao: 3,
+  covers: ['3.4.7.s1', '3.4.7.s2', '3.4.7.s3'],
+  card: {
+    text: 'Genetic diversity within or between species can be compared using: the frequency of measurable or observable <b>characteristics</b>; the <b>base sequence of DNA</b>; the <b>base sequence of mRNA</b>; and the <b>amino acid sequence</b> of the proteins encoded by DNA and mRNA. Students interpret data on similarities and differences in base or amino acid sequences to suggest relationships within and between species: more differences suggest a more distant relationship. <b>Gene technology</b> has changed the methods: inferring DNA differences from observable characteristics has been replaced by direct investigation of DNA sequences. (Knowledge of the gene technologies themselves is not tested.)',
+    terms: ['observable characteristics', 'DNA base sequence', 'mRNA base sequence', 'amino acid sequence', 'similarities', 'differences', 'relationship', 'gene technology'],
+    skill: 'MS 0.3: percentage similarity', eq: MATH(mt('% similarity '), mo('='), mfrac(mt('matching bases'), mt('total bases compared')), mo('×'), mn('100')),
+    eqn: 'e.g. 18 of 20 bases match = 90 % similar',
+    q: 'Species A and B differ at 2 of 20 amino acid positions; A and C differ at 9 of 20. Which pair is more closely related?', a: 'A and B: fewer differences suggest a more recent common ancestor.'
+  },
+  draw(R, sc) {
+    R.text('comparing sequences to infer relationships', 332, 14, 5, { al: 'c' });
+    // DNA base sequences aligned for 3 species
+    const seqs = [['species A', 'TACGGATTCCAGTCA'], ['species B', 'TACGGATTCGAGTCA'], ['species C', 'TCCGAATTGCTGACA']], X0 = 112, dx = 13.6;
+    R.text('DNA base sequence', 14, 36, 4.4, { al: 'l' });
+    seqs.forEach(([n, sq], r) => { const y = 46 + r * 20; R.text(n, 12, y + 6, 4, { al: 'l' }); sq.split('').forEach((b, i) => R.baseBox(X0 + i * dx, y, b, { w: 7, h: 8 })); });
+    seqs[1][1].split('').forEach((b, i) => { if (b !== seqs[0][1][i]) R.circle(X0 + i * dx + 3.5, 46 + 20 + 4, 6, { ink: 'P', w: 1.3, wob: 0.12 }); });
+    seqs[2][1].split('').forEach((b, i) => { if (b !== seqs[0][1][i]) R.circle(X0 + i * dx + 3.5, 46 + 40 + 4, 6, { ink: 'P', w: 1.3, wob: 0.12 }); });
+    R.text('A and B differ at 1 of 15 bases', 320, 108, 4, { al: 'c' }); R.text('A and C differ at 5 of 15 bases', 320, 116, 4, { al: 'c' });
+    R.text('→ A and B more closely related', 320, 125, 4.2, { al: 'c', ink: 'P' });
+    R.line(8, 134, 656, 134, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // amino acid sequences of the same protein
+    R.text('amino acid sequence of the same protein', 14, 148, 4.4, { al: 'l' });
+    const aa = [['A', ['P', 'Y', 'T', 'TY', 'P', 'Y', 'T', 'P', 'Y', 'T']], ['B', ['P', 'Y', 'T', 'TY', 'P', 'Y', 'T', 'P', 'Y', 'T']], ['C', ['P', 'T', 'T', 'TY', 'Y', 'Y', 'T', 'B', 'Y', 'P']]];
+    aa.forEach(([n, a], r) => { const y = 164 + r * 16; R.text('species ' + n, 12, y + 1.4, 4, { al: 'l' }); a.forEach((ink, i) => { R.circle(X0 + i * 17, y, 5, { ink: 'B', w: 0.8, fi: ink, ft: 0.65 }); if (i) R.line(X0 + (i - 1) * 17 + 5, y, X0 + i * 17 - 5, y, { ink: 'B', w: 0.7, taper: 'none' }); if (r === 2 && ink !== aa[0][1][i]) R.circle(X0 + i * 17, y, 7.6, { ink: 'P', w: 1.2, wob: 0.1 }); }); });
+    R.text('C has 4 differences from A: A and C are more distantly related', 14, 216, 4, { al: 'l', ink: 'P' });
+    R.text('mRNA base sequences can be compared in the same way', 14, 226, 3.9, { al: 'l' });
+    R.line(372, 142, 372, 236, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // gene technology changed the methods
+    R.text('how the methods have changed', 516, 148, 4.5, { al: 'c' });
+    R.rrect(388, 158, 118, 56, 6, { ink: 'B', w: 1, fi: 'Y', ft: 0.12, wob: 0.25 }); R.text('before', 447, 168, 4, { al: 'c' });
+    ['compare observable', 'characteristics, e.g.', 'beak shape, colour:', 'infer DNA differences'].forEach((t, i) => R.text(t, 447, 177 + i * 7, 3.8, { al: 'c' }));
+    R.arrow([508, 186, 524, 186], { ink: 'P', w: 1.2, hs: 3 });
+    R.rrect(530, 158, 118, 56, 6, { ink: 'B', w: 1, fi: 'T', ft: 0.12, wob: 0.25 }); R.text('now', 589, 168, 4, { al: 'c' });
+    R.helix(550, 172, 550, 206, { amp: 4, turns: 1.4, w: 0.8 });
+    ['direct investigation', 'of DNA base', 'sequences'].forEach((t, i) => R.text(t, 600, 180 + i * 7, 3.8, { al: 'c' }));
+    R.text('(knowledge of the technologies is not tested)', 516, 228, 3.5, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(112 + Math.floor(p * 15) * 13.6 + 3.5, 38, 1.6, 'P', 0.9, 1); },
+});
+
+/* ---------- 3.4.7b Quantitative investigations of variation within a species ---------- */
+S({
+  id: '3.4.7b', num: '3.4.7', sub: 'Quantitative variation within a species: random samples, mean and standard deviation', title: 'Investigating diversity', topic: '3.4', slot: [3, 6], dna: 'mark', ao: 3,
+  covers: ['3.4.7.s4', '3.4.7.s5', '3.4.7.s6'],
+  card: {
+    text: 'Quantitative investigations of variation within a species involve collecting data from <b>random samples</b> (so the sample is representative and unbiased), calculating a <b>mean</b> value, and calculating the <b>standard deviation</b> of that mean, then interpreting mean values and their standard deviations. A larger standard deviation means more spread in the data. Overlap of the ranges (mean ± SD) of two samples suggests the difference between the means may not be significant. (Students are not required to calculate standard deviations in written papers; they may be asked to interpret them.)',
+    terms: ['random sample', 'mean', 'standard deviation', 'variation', 'spread', 'sample size', 'bias', 'error bar'],
+    skill: 'MS 1.2, 1.10: mean ± SD', eq: MATH(mt('mean '), mo('='), mfrac(mo('∑') + mi('x'), mi('n'))),
+    eqn: 'values: 4, 5, 6, 5, 5 → mean = 25 ÷ 5 = 5.0',
+    q: 'Two samples have the same mean but different standard deviations. What does this tell you?', a: 'The sample with the larger SD has more spread: its individuals are more variable around the mean.'
+  },
+  draw(R, sc) {
+    R.text('variation within a species', 160, 14, 5, { al: 'c' });
+    // random sampling grid
+    R.rect(14, 26, 120, 76, { ink: 'B', w: 1.1, fi: 'T', ft: 0.1, wob: 0.3 });
+    for (let i = 1; i < 6; i++) R.line(14 + i * 20, 26, 14 + i * 20, 102, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' }); for (let j = 1; j < 4; j++) R.line(14, 26 + j * 19, 134, 26 + j * 19, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    [[2, 1], [4, 2], [0, 3], [5, 0], [3, 3]].forEach(([c, r]) => R.rect(14 + c * 20 + 3, 26 + r * 19 + 3, 14, 13, { ink: 'P', w: 1.2, fi: 'P', ft: 0.25 }));
+    R.text('random numbers pick the quadrats', 74, 114, 3.8, { al: 'c' });
+    // two distributions
+    R.line(146, 22, 146, 120, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    const g = R.graph(172, 32, 130, 66, { xmin: 0, xmax: 10, ymin: 0, ymax: 11, xl: 'leaf length / mm', yl: 'frequency', xt: [], yt: [], fs: 3.7, xly: 10, ylx: 5 }).axes();
+    g.curve(x => 10 * Math.exp(-0.5 * Math.pow((x - 4.6) / 0.9, 2)), { ink: 'T', w: 1.5 }); g.curve(x => 5.5 * Math.exp(-0.5 * Math.pow((x - 5.4) / 2, 2)), { ink: 'P', w: 1.5 });
+    R.text('small SD', g.X(2.4), g.Y(9), 3.8, { al: 'r', ink: 'T' }); R.text('large SD', g.X(8.2), g.Y(4.2), 3.8, { al: 'l', ink: 'P' });
+    R.line(8, 128, 312, 128, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // mean ± SD bars for two samples
+    R.text('interpreting means and standard deviations', 160, 140, 4.4, { al: 'c' });
+    const g2 = R.graph(40, 150, 120, 72, { xmin: 0, xmax: 3, ymin: 0, ymax: 12, xl: '', yl: 'mean leaf length / mm', xt: [], yt: [[0, '0'], [4, '4'], [8, '8'], [12, '12']], fs: 3.7, ylx: 12 }).axes();
+    [[1, 7.2, 1.0, 'sample 1'], [2, 8.2, 1.2, 'sample 2']].forEach(([x, y, e, n]) => { R.rect(g2.X(x) - 10, g2.Y(y), 20, g2.Y(0) - g2.Y(y), { ink: 'B', w: 0.9, fi: 'P', ft: 0.5, wob: 0.1 }); g2.err(x, y, e); R.text(n, g2.X(x), g2.Y(0) + 8, 3.8, { al: 'c' }); });
+    ['ranges (mean ± SD)', 'overlap: the difference', 'may not be significant', '', 'no overlap: more likely', 'a real difference'].forEach((t, i) => { if (t) R.text(t, 232, 160 + i * 8, 3.9, { al: 'c', ink: i > 3 ? 'T' : 'B' }); });
+    R.text('mean = Σx ÷ n', 232, 214, 4.6, { al: 'c', ink: 'P' }); R.text('SD: spread of the data', 232, 224, 4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(14 + (Math.floor(p * 5)) * 20 + 10, 26 + ((Math.floor(p * 7)) % 4) * 19 + 10, 1.8, 'P', 0.9, 1); },
+});
+
 /* ===================== 99 MAIN ===================== */
 (function boot() {
   initPlates(); layoutSheet(); resize();
