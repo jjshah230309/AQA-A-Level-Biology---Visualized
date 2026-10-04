@@ -31,7 +31,7 @@ function rpScene(d) {
       R.line(104, 152, 104, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C2 calculation
       R.text('calculation', 110, 160, 4.4, { al: 'l' }); R.text('\u03A3', 148, 160, 5.4, { al: 'l', ink: 'P' });
-      let cy = 172; d.calc.forEach(t => { wrapText(t, 92, 5).forEach(ln => { R.text(ln, 110, cy, 5, { al: 'l' }); cy += 9; }); });
+      let cy = 171; d.calc.forEach(t => { wrapText(t, 92, 4.6).forEach(ln => { R.text(ln, 110, cy, 4.6, { al: 'l' }); cy += 8; }); cy += 1; });
       R.line(204, 152, 204, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C3 risks
       R.text('risk', 232, 160, 4.4, { al: 'c' });
@@ -39,7 +39,7 @@ function rpScene(d) {
       R.line(262, 152, 262, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C4 limitations
       Icons.warn(R, 272, 160, 4.4); R.text('limits', 281, 162, 4.4, { al: 'l' });
-      let ly = 173; d.limits.slice(0, 4).forEach(t => { const ls = wrapText(t, 44, 3.9); R.dot(266, ly - 1.2, 0.7, { ink: 'P' }); ls.forEach((ln, i) => R.text(ln, 269, ly + i * 4.8, 3.9, { al: 'l' })); ly += 5.4 + ls.length * 4.8; });
+      let ly = 173; d.limits.slice(0, 5).forEach(t => { const ls = wrapText(t, 44, 3.9); if (ly + (ls.length - 1) * 4.8 > 212) return; R.dot(266, ly - 1.2, 0.7, { ink: 'P' }); ls.forEach((ln, i) => R.text(ln, 269, ly + i * 4.8, 3.9, { al: 'l' })); ly += 4 + ls.length * 4.8; });
       Icons.errbar(R, 276, 224, 4.2); Icons.repeat(R, 294, 224, 3.8);
     },
     anim: d.anim,

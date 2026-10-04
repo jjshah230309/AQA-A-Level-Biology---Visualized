@@ -11,16 +11,16 @@ rpScene({
   },
   apparatus(R, b) {
     R.text('trypsin + pH 7 buffer, then milk powder (casein)', 92, 21, 4.6, { al: 'c' });
-    [20, 30, 40, 50, 60].forEach((T, i) => {
-      const x = 10 + i * 29, tx = x + 8.5;
-      R.waterBath(x, 68, 25, 54, { heat: i > 2 });
+    [25, 40, 50, 60].forEach((T, i) => {
+      const x = 12 + i * 36, tx = x + 8.5;
+      R.waterBath(x, 68, 28, 54, { heat: i > 1 });
       R.tube(tx, 34, 8, 78, { ink: 'T', t: 0.1, level: 0.6 });
-      R.stipple([tx - 3.5, 66, tx + 3.5, 66, tx + 3.5, 104, tx - 3.5, 104], 60 - i * 10, 0.45, { ink: 'Y', t: 1 });
+      R.stipple([tx - 3.5, 66, tx + 3.5, 66, tx + 3.5, 104, tx - 3.5, 104], [30, 10, 18, 40][i], 0.45, { ink: 'Y', t: 1 });
       R.text('\u2717', tx, 100, 4.6, { al: 'c', ink: 'P' });
-      R.text(String(T) + '\u00B0C', x + 12.5, 136, 4.8, { al: 'c' });
+      R.text(String(T) + '\u00B0C', x + 14, 136, 4.8, { al: 'c' });
     });
-    R.stopwatch(160, 78, 8.5, { ang: -0.9 }); R.text('time until', 160, 97, 3.9, { al: 'c' }); R.text('X is visible', 160, 102.5, 3.9, { al: 'c' });
-    R.arrow([40, 27, 40, 35], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.stopwatch(172, 122, 7, { ang: -0.9 }); R.text('time', 172, 136.4, 3.7, { al: 'c' });
+    R.arrow([30, 27, 30, 35], { ink: 'B', w: 0.9, hs: 2.4 });
   },
   results(R, b) {
     const g = R.graph(b.x + 16, b.y + 6, 98, 78, { xmin: 10, xmax: 70, ymin: 0, ymax: 16, xl: 'temperature / \u00B0C', yl: 'rate 1/t (\u00D710^{\u22123} s^{\u22121})', xt: [20, 40, 60], yt: [0, 8, 16], fs: 3.9, xly: 13, ylx: 8, paper: 7 }).axes();

@@ -214,6 +214,7 @@ const GLYPHS = (() => {
   def('?', 4.2, 'c0.4,1.4 1,0.3 2,0 3.2,0.3 3.8,1.3 3.4,2.5 2.4,3.4 2.1,4.4 2.1,5', '2.1,6.5 2.1,7');
   def('!', 1.8, '0.9,0 0.9,4.8', '0.9,6.5 0.9,7');
   def('·', 1.8, '0.9,3.5 0.9,3.9');
+  def('≠', 4.6, '0.6,2.8 4,2.8', '0.6,4.9 4,4.9', '3.4,1.4 1.4,6.4');
   def('±', 4.6, '0.6,3 4,3', '2.3,1.2 2.3,4.8', '0.6,6.6 4,6.6');
   def('≈', 4.6, 'c0.4,3 1.2,2.3 2.3,3 3.4,3.7 4.2,3', 'c0.4,5.4 1.2,4.7 2.3,5.4 3.4,6.1 4.2,5.4');
   def('~', 4.6, 'c0.2,4.2 0.9,2.8 2.2,3.2 3.4,4.6 4.4,3.8');
@@ -902,6 +903,15 @@ function S(def) {
   if (SCENE_BY_ID[def.id]) throw new Error('duplicate scene ' + def.id);
   SCENES.push(def); SCENE_BY_ID[def.id] = def; return def;
 }
+function checkSlots() {
+  const occ = Object.create(null), clash = [];
+  for (const sc of SCENES) {
+    const sp = sc.span || [1, 1];
+    if (sc.slot[0] + sp[0] > 4) clash.push(sc.id + ' wider than the block');
+    for (let i = 0; i < sp[0]; i++) for (let j = 0; j < sp[1]; j++) { const k = sc.topic + ':' + (sc.slot[0] + i) + ',' + (sc.slot[1] + j); if (occ[k]) clash.push(sc.id + ' overlaps ' + occ[k] + ' at ' + k); else occ[k] = sc.id; }
+  }
+  return clash;
+}
 function computeBlocks() {
   for (const t of TOPICS) { t.rows = 1; }
   for (const sc of SCENES) { const t = TOPIC_BY_ID[sc.topic], sp = sc.span || [1, 1]; t.rows = Math.max(t.rows, sc.slot[1] + sp[1]); }
@@ -916,6 +926,7 @@ const BACKDROPS = Object.create(null), PATHS = [];
 let FURNITURE_DRAW = null, PATH_DRAW = null;
 function layoutSheet() {
   LAYERS.length = 0;
+  { const c = checkSlots(); if (c.length) console.error('SLOT CLASHES', c); }
   computeBlocks();
   for (const t of TOPICS) {
     const bd = BACKDROPS[t.id];
@@ -2036,7 +2047,7 @@ function rpScene(d) {
       R.line(104, 152, 104, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C2 calculation
       R.text('calculation', 110, 160, 4.4, { al: 'l' }); R.text('\u03A3', 148, 160, 5.4, { al: 'l', ink: 'P' });
-      let cy = 172; d.calc.forEach(t => { wrapText(t, 92, 5).forEach(ln => { R.text(ln, 110, cy, 5, { al: 'l' }); cy += 9; }); });
+      let cy = 171; d.calc.forEach(t => { wrapText(t, 92, 4.6).forEach(ln => { R.text(ln, 110, cy, 4.6, { al: 'l' }); cy += 8; }); cy += 1; });
       R.line(204, 152, 204, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C3 risks
       R.text('risk', 232, 160, 4.4, { al: 'c' });
@@ -2044,7 +2055,7 @@ function rpScene(d) {
       R.line(262, 152, 262, 230, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
       // C4 limitations
       Icons.warn(R, 272, 160, 4.4); R.text('limits', 281, 162, 4.4, { al: 'l' });
-      let ly = 173; d.limits.slice(0, 4).forEach(t => { const ls = wrapText(t, 44, 3.9); R.dot(266, ly - 1.2, 0.7, { ink: 'P' }); ls.forEach((ln, i) => R.text(ln, 269, ly + i * 4.8, 3.9, { al: 'l' })); ly += 5.4 + ls.length * 4.8; });
+      let ly = 173; d.limits.slice(0, 5).forEach(t => { const ls = wrapText(t, 44, 3.9); if (ly + (ls.length - 1) * 4.8 > 212) return; R.dot(266, ly - 1.2, 0.7, { ink: 'P' }); ls.forEach((ln, i) => R.text(ln, 269, ly + i * 4.8, 3.9, { al: 'l' })); ly += 4 + ls.length * 4.8; });
       Icons.errbar(R, 276, 224, 4.2); Icons.repeat(R, 294, 224, 3.8);
     },
     anim: d.anim,
@@ -2771,16 +2782,16 @@ rpScene({
   },
   apparatus(R, b) {
     R.text('trypsin + pH 7 buffer, then milk powder (casein)', 92, 21, 4.6, { al: 'c' });
-    [20, 30, 40, 50, 60].forEach((T, i) => {
-      const x = 10 + i * 29, tx = x + 8.5;
-      R.waterBath(x, 68, 25, 54, { heat: i > 2 });
+    [25, 40, 50, 60].forEach((T, i) => {
+      const x = 12 + i * 36, tx = x + 8.5;
+      R.waterBath(x, 68, 28, 54, { heat: i > 1 });
       R.tube(tx, 34, 8, 78, { ink: 'T', t: 0.1, level: 0.6 });
-      R.stipple([tx - 3.5, 66, tx + 3.5, 66, tx + 3.5, 104, tx - 3.5, 104], 60 - i * 10, 0.45, { ink: 'Y', t: 1 });
+      R.stipple([tx - 3.5, 66, tx + 3.5, 66, tx + 3.5, 104, tx - 3.5, 104], [30, 10, 18, 40][i], 0.45, { ink: 'Y', t: 1 });
       R.text('\u2717', tx, 100, 4.6, { al: 'c', ink: 'P' });
-      R.text(String(T) + '\u00B0C', x + 12.5, 136, 4.8, { al: 'c' });
+      R.text(String(T) + '\u00B0C', x + 14, 136, 4.8, { al: 'c' });
     });
-    R.stopwatch(160, 78, 8.5, { ang: -0.9 }); R.text('time until', 160, 97, 3.9, { al: 'c' }); R.text('X is visible', 160, 102.5, 3.9, { al: 'c' });
-    R.arrow([40, 27, 40, 35], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.stopwatch(172, 122, 7, { ang: -0.9 }); R.text('time', 172, 136.4, 3.7, { al: 'c' });
+    R.arrow([30, 27, 30, 35], { ink: 'B', w: 0.9, hs: 2.4 });
   },
   results(R, b) {
     const g = R.graph(b.x + 16, b.y + 6, 98, 78, { xmin: 10, xmax: 70, ymin: 0, ymax: 16, xl: 'temperature / \u00B0C', yl: 'rate 1/t (\u00D710^{\u22123} s^{\u22121})', xt: [20, 40, 60], yt: [0, 8, 16], fs: 3.9, xly: 13, ylx: 8, paper: 7 }).axes();
@@ -4445,13 +4456,1282 @@ S({
   },
 });
 
+/* ===================== TOPIC 3.3 Organisms exchange substances with their environment ===================== */
+/* isometric cube, front-left corner (x,y) is the bottom-left of the front face */
+function isoCube(R, x, y, s, o = {}) {
+  const dx = s * 0.5, dy = -s * 0.4;
+  R.fill([x, y, x + s, y, x + s, y - s, x, y - s], { ink: 'Y', t: 0.4, wob: 0.1 });
+  R.fill([x, y - s, x + dx, y - s + dy, x + s + dx, y - s + dy, x + s, y - s], { ink: 'Y', t: 0.18, wob: 0.1 });
+  R.fill([x + s, y, x + s + dx, y + dy, x + s + dx, y - s + dy, x + s, y - s], { ink: 'Y', t: 0.62, wob: 0.1 });
+  R.poly([x, y, x + s, y, x + s, y - s, x, y - s], { ink: 'B', w: 1.1, wob: 0.15 });
+  R.poly([x, y - s, x + dx, y - s + dy, x + s + dx, y - s + dy, x + s, y - s], { ink: 'B', w: 1.1, wob: 0.15 });
+  R.poly([x + s, y, x + s + dx, y + dy, x + s + dx, y - s + dy, x + s, y - s], { ink: 'B', w: 1.1, wob: 0.15 });
+}
+/* simple mammal silhouette facing right; kind: mouse | cat | human-ish | elephant */
+function mammal(R, x, y, s, kind) {
+  R.push(x, y, 0, s);
+  const body = { mouse: [0, 0, 7, 3.5], cat: [0, 0, 11, 5.4], horse: [0, 0, 14, 6.4], elephant: [0, 0, 17, 9] }[kind];
+  R.ellipse(body[0], body[1], body[2], body[3], { ink: 'B', w: 1.2 / s, fi: 'P', ft: 0.28, wob: 0.3 });
+  R.circle(body[2] * 0.85, -body[3] * 0.5, body[3] * 0.62, { ink: 'B', w: 1.1 / s, fi: 'P', ft: 0.28, wob: 0.2 });
+  if (kind === 'elephant') { R.stroke([body[2] * 1.2, -body[3] * 0.35, body[2] * 1.4, body[3] * 0.4, body[2] * 1.3, body[3] * 0.9], { ink: 'B', w: 2.2 / s, smooth: true, taper: 'end' }); R.ellipse(body[2] * 0.62, -body[3] * 0.5, 4, 5.4, { ink: 'B', w: 1 / s, fi: 'P', ft: 0.4, wob: 0.2 }); }
+  else R.ellipse(body[2] * 0.7, -body[3] * 0.95, body[3] * 0.28, body[3] * 0.4, { ink: 'B', w: 0.9 / s, fi: 'P', ft: 0.4 });
+  [-0.6, -0.2, 0.3, 0.7].forEach(f => R.line(f * body[2], body[3] * 0.7, f * body[2], body[3] * (kind === 'mouse' ? 1.3 : 1.7), { ink: 'B', w: (kind === 'elephant' ? 2.6 : 1.2) / s, taper: 'none' }));
+  if (kind !== 'elephant') R.stroke([-body[2], -body[3] * 0.1, -body[2] * 1.4, -body[3] * 0.6, -body[2] * 1.7, -body[3] * 0.2], { ink: 'B', w: 0.8 / s, smooth: true, taper: 'end' });
+  R.pop();
+}
+
+/* ---------- 3.3.1 Surface area to volume ratio ---------- */
+S({
+  id: '3.3.1', num: '3.3.1', sub: 'Surface area to volume ratio', title: 'Surface area to volume ratio', topic: '3.3', slot: [0, 0], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.1.s1', '3.3.1.s2', '3.3.1.s3'],
+  card: {
+    text: 'As an organism or structure gets larger, its <b>surface area to volume ratio</b> gets smaller: volume (which needs supplying) grows faster than surface area (through which exchange happens). Small organisms can exchange by diffusion across the body surface. Larger organisms are adapted by changes to <b>body shape</b> (e.g. flattening) and by the development of <b>exchange surfaces</b> and <b>mass transport systems</b>. A small mammal has a large surface area to volume ratio, loses heat quickly and so has a higher <b>metabolic rate</b> per gram than a large one.',
+    terms: ['surface area to volume ratio', 'exchange surface', 'diffusion', 'metabolic rate', 'body shape', 'mass transport'],
+    skill: 'MS 4.1: surface area : volume', eq: MATH(mt('cube: SA : V '), mo('='), mfrac(mn('6'), mi('a'))),
+    eqn: 'Cube of side a: surface area = 6a², volume = a³, so SA:V = 6 ÷ a',
+    q: 'Why does a mouse need a much higher metabolic rate per gram than an elephant?', a: 'The mouse has a larger surface area to volume ratio, so it loses heat much faster and must release more energy per gram to stay warm.'
+  },
+  draw(R, sc) {
+    R.text('as size increases, SA:V decreases', 112, 15, 5.2, { al: 'c' });
+    isoCube(R, 16, 104, 15); isoCube(R, 48, 104, 30); isoCube(R, 108, 104, 60);
+    [['1 cm', 26], ['2 cm', 70], ['4 cm', 148]].forEach(([t, x]) => R.text(t, x, 116, 4.2, { al: 'c' }));
+    R.table(18, 126, [38, 46, 46, 50], 12, [['side', 'SA / cm^2', 'V / cm^3', 'SA : V'], ['1 cm', '6', '1', '6 : 1'], ['2 cm', '24', '8', '3 : 1'], ['4 cm', '96', '64', '1.5 : 1']], { size: 4.2 });
+    R.text('SA = 6a^2   V = a^3   SA:V = 6 ÷ a', 112, 190, 4.8, { al: 'c' });
+    R.arrow([18, 210, 200, 210], { ink: 'P', w: 1.2, hs: 3 }); R.text('size increases', 110, 206, 4.2, { al: 'c' }); R.text('ratio decreases', 110, 224, 4.2, { al: 'c', ink: 'P' });
+    R.line(230, 22, 230, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // organisms
+    R.text('larger organisms need exchange surfaces and transport systems', 336, 15, 5.2, { al: 'c' });
+    const ox = [256, 306, 356, 406];
+    // single-celled
+    R.stroke([ox[0] - 10, 78, ox[0] - 4, 66, ox[0] + 8, 68, ox[0] + 12, 80, ox[0] + 4, 90, ox[0] - 8, 88], { ink: 'B', w: 1.2, smooth: true, closed: true, taper: 'none', wob: 0.5 }); R.circle(ox[0], 78, 3, { ink: 'B', w: 0.8, fi: 'B', ft: 0.35 });
+    [[-18, 70], [-18, 86]].forEach(([dx, dy]) => R.arrow([ox[0] + dx - 4, 78 + (dy - 78), ox[0] + dx + 8, 78 + (dy - 78) * 0.6], { ink: 'T', w: 0.8, hs: 2 }));
+    R.text('single cell', ox[0], 106, 4, { al: 'c' }); R.text('diffusion', ox[0], 112, 3.8, { al: 'c' }); R.text('across surface', ox[0], 118, 3.8, { al: 'c' });
+    // flatworm: flat body
+    R.rrect(ox[1] - 22, 74, 44, 7, 3.5, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.3, wob: 0.3 }); R.circle(ox[1] - 16, 77.5, 1.2, { ink: 'B', w: 0.7, fi: 'B', ft: 1 });
+    R.text('flat body', ox[1], 106, 4, { al: 'c' }); R.text('keeps SA:V', ox[1], 112, 3.8, { al: 'c' }); R.text('large', ox[1], 118, 3.8, { al: 'c' });
+    // insect
+    R.ellipse(ox[2] + 12, 78, 11, 5.4, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.3 }); R.ellipse(ox[2] - 4, 77, 5.4, 4, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.3 }); R.circle(ox[2] - 14, 76, 3.4, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.3 });
+    [-6, 0, 6].forEach(d => R.line(ox[2] - 4 + d, 80, ox[2] - 6 + d * 1.6, 90, { ink: 'B', w: 0.8, taper: 'none' })); [6, 12, 18].forEach(d => R.dot(ox[2] + d, 81.5, 0.9, { ink: 'P' }));
+    R.text('insect', ox[2], 106, 4, { al: 'c' }); R.text('tracheal system', ox[2], 112, 3.8, { al: 'c' });
+    // fish
+    R.stroke([ox[3] - 18, 78, ox[3] - 6, 68, ox[3] + 10, 70, ox[3] + 18, 78, ox[3] + 10, 86, ox[3] - 6, 88], { ink: 'B', w: 1.1, smooth: true, closed: true, taper: 'none' }); R.fill([ox[3] + 18, 78, ox[3] + 28, 70, ox[3] + 28, 86], { ink: 'Y', t: 0.4, wob: 0.1 }); R.poly([ox[3] + 18, 78, ox[3] + 28, 70, ox[3] + 28, 86], { ink: 'B', w: 1 });
+    R.line(ox[3] - 8, 72, ox[3] - 8, 84, { ink: 'P', w: 1.2, taper: 'none' }); R.dot(ox[3] - 14, 76, 0.9, { ink: 'B' });
+    R.text('fish', ox[3] + 4, 106, 4, { al: 'c' }); R.text('gills', ox[3] + 4, 112, 3.8, { al: 'c' });
+    // mammal
+    mammal(R, 466, 78, 1.9, 'cat');
+    R.text('mammal', 468, 106, 4, { al: 'c' }); R.text('lungs, gut, heart', 468, 112, 3.8, { al: 'c' }); R.text('and blood vessels', 468, 118, 3.8, { al: 'c' });
+    R.arrow([246, 40, 500, 40], { ink: 'P', w: 1.2, hs: 3 }); R.text('body size increases: SA:V decreases', 372, 36, 4.2, { al: 'c', ink: 'P' });
+    // lower text: why
+    R.line(240, 134, 500, 134, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    ['small organism: large SA:V,', 'short diffusion distance:', 'diffusion across the body surface supplies all cells'].forEach((t, i) => R.text(t, 250, 150 + i * 7, 4.2, { al: 'l' }));
+    ['large organism: small SA:V,', 'cells too far from the surface:', 'specialised exchange surfaces', 'and mass transport needed'].forEach((t, i) => R.text(t, 250, 182 + i * 7, 4.2, { al: 'l' }));
+    R.line(510, 22, 510, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // metabolic rate
+    R.text('SA:V and metabolic rate', 584, 15, 5.2, { al: 'c' });
+    const g = R.graph(538, 36, 104, 100, { xmin: 0, xmax: 10, ymin: 0, ymax: 10, xl: 'body mass', yl: 'metabolic rate per gram', xt: [], yt: [], fs: 4.2, xly: 9, ylx: 5 }).axes();
+    g.curve(x => 9.6 / (0.9 + x * 0.6) + 0.2, { ink: 'P', w: 1.6, from: 0.4 });
+    mammal(R, g.X(0.9), g.Y(8.8) - 8, 0.7, 'mouse'); mammal(R, g.X(3.2), g.Y(4.4) - 9, 0.8, 'cat'); mammal(R, g.X(8.4), g.Y(1.9) - 12, 0.6, 'elephant');
+    ['small mammal: large SA:V', '→ loses heat fast', '→ high metabolic rate per gram'].forEach((t, i) => R.text(t, 584, 164 + i * 7, 4.2, { al: 'c' }));
+    ['large mammal: small SA:V', '→ loses heat slowly', '→ lower rate per gram'].forEach((t, i) => R.text(t, 584, 192 + i * 7, 4.2, { al: 'c' }));
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let i = 0; i < 3; i++) A.dot(238 + ((p + i / 3) % 1) * 36, 70 + i * 8, 1.2, 'T', 0.8, i);
+      },
+});
+
+/* ---------- 3.3.2a Gas exchange in a single-celled organism and in the insect tracheal system ---------- */
+S({
+  id: '3.3.2a', num: '3.3.2', sub: 'Gas exchange: body surface of a single-celled organism; insect tracheal system', title: 'Gas exchange', topic: '3.3', slot: [2, 0], span: [2, 1], dna: 'mark', ao: 1,
+  covers: ['3.3.2.s1', '3.3.2.s2'],
+  card: {
+    text: 'A <b>single-celled organism</b> has a large surface area to volume ratio and a short diffusion distance, so oxygen and carbon dioxide diffuse across its body surface. In an <b>insect</b>, air enters through <b>spiracles</b> along the body and passes along branching <b>tracheae</b> to fine, fluid-filled <b>tracheoles</b> that reach the muscle cells. Oxygen diffuses down its concentration gradient to the cells, carbon dioxide diffuses out; abdominal movements can ventilate the system. Spiracles can close to reduce water loss.',
+    terms: ['body surface', 'diffusion', 'spiracle', 'trachea', 'tracheole', 'concentration gradient', 'surface area to volume ratio'],
+    skill: 'Diffusion distance', eq: null,
+    q: 'Why do tracheoles end very close to, or inside, muscle cells?', a: 'To keep the diffusion distance for oxygen very short, since insects have no blood transporting oxygen to cells.'
+  },
+  draw(R, sc) {
+    R.text('single-celled organism', 100, 15, 5.2, { al: 'c' });
+    const cell = [60, 80, 80, 56, 118, 52, 150, 70, 160, 104, 142, 138, 108, 152, 72, 142, 52, 114];
+    R.fill(cell, { ink: 'T', t: 0.14, smooth: true, wob: 0.6 }); R.poly(cell, { ink: 'B', w: 1.6, smooth: true, wob: 0.8 });
+    R.circle(112, 98, 13, { ink: 'B', w: 1, fi: 'B', ft: 0.3, wob: 0.3 }); R.circle(124, 128, 10, { ink: 'B', w: 0.9, fi: 'T', ft: 0.3 }); R.circle(80, 118, 6, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.3 });
+    R.mito(86, 90, 14, 7, 30, { plain: true }); R.mito(136, 80, 14, 7, -20, { plain: true });
+    [[44, 70], [48, 120], [52, 98]].forEach(([x, y]) => R.arrow([x - 12, y, x + 6, y + 4], { ink: 'P', w: 1.1, hs: 2.6 })); R.text('O_2 in', 24, 124, 4.4, { al: 'c', ink: 'P' });
+    [[158, 76], [164, 120]].forEach(([x, y]) => R.arrow([x - 6, y, x + 14, y - 3], { ink: 'T', w: 1.1, hs: 2.6 })); R.text('CO_2 out', 182, 100, 4.4, { al: 'c', ink: 'T' });
+    ['large surface area : volume', 'short diffusion distance', 'no specialised exchange surface needed'].forEach((t, i) => R.text(t, 100, 176 + i * 7, 4.2, { al: 'c' }));
+    R.scaleBar(60, 224, 60, 'about 0.1 mm'); R.text('amoeba', 100, 168, 4.2, { al: 'c' });
+    R.line(200, 22, 200, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // ---- insect
+    R.text('insect: tracheal system', 430, 15, 5.2, { al: 'c' });
+    const bx = 214, by = 96;
+    R.ellipse(bx + 190, by + 8, 70, 26, { ink: 'B', w: 1.5, fi: 'Y', ft: 0.2, wob: 0.5 });           // abdomen
+    R.ellipse(bx + 92, by + 4, 34, 22, { ink: 'B', w: 1.5, fi: 'Y', ft: 0.2, wob: 0.5 });            // thorax
+    R.circle(bx + 40, by, 18, { ink: 'B', w: 1.5, fi: 'Y', ft: 0.2, wob: 0.4 }); R.circle(bx + 34, by - 4, 5, { ink: 'B', w: 1, fi: 'B', ft: 0.6 });
+    [[62, 20], [100, 20], [124, 18]].forEach(([dx, dy]) => R.stroke([bx + dx, by + dy, bx + dx - 12, by + 50, bx + dx - 28, by + 64], { ink: 'B', w: 1.3, smooth: true, taper: 'end' }));
+    for (let k = 0; k < 7; k++) { const sx = bx + 78 + k * 28, sy = by + 28 - Math.abs(k - 3) * 0.3; R.circle(sx, by + 30 - (k > 1 ? 3 : 0), 2.2, { ink: 'B', w: 0.9, fi: 'P', ft: 0.9 }); }
+    // trachea network: main longitudinal trunk plus branches
+    const trunk = [bx + 70, by + 4, bx + 120, by + 2, bx + 180, by + 4, bx + 240, by + 6]; R.stroke(trunk, { ink: 'T', w: 3, t: 0.5, smooth: true, taper: 'none', solid: false }); R.stroke(trunk, { ink: 'B', w: 0.8, smooth: true, taper: 'none' });
+    for (let k = 0; k < 7; k++) { const sx = bx + 78 + k * 28, tp = [sx, by + 30 - (k > 1 ? 3 : 0), sx + 2, by + 18, sx - 1, by + 8, sx, by + 4]; R.stroke(tp, { ink: 'T', w: 2.2, t: 0.5, smooth: true, taper: 'none', solid: false }); R.stroke(tp, { ink: 'B', w: 0.7, smooth: true, taper: 'none' }); for (let q = 0; q < 4; q++) R.line(sx - 2, by + 28 - q * 5 - (k > 1 ? 3 : 0), sx + 2.4, by + 28 - q * 5 - (k > 1 ? 3 : 0), { ink: 'B', w: 0.5, taper: 'none' }); }
+    for (let k = 0; k < 7; k++) { const sx = bx + 78 + k * 28; R.stroke([sx, by + 6, sx - 8, by - 6, sx - 10, by - 14], { ink: 'B', w: 0.6, smooth: true }); R.stroke([sx, by + 6, sx + 8, by - 8, sx + 10, by - 15], { ink: 'B', w: 0.6, smooth: true }); }
+    // labels
+    const lab = (s, tx, ty, x, y, al) => leader(R, s, x, y, tx, ty, { size: 4.4, al });
+    lab('spiracle', 284, 168, bx + 106, by + 30, 'c'); lab('trachea', 330, 40, bx + 120, by + 2, 'c'); lab('tracheoles', 386, 36, bx + 128, by - 12, 'c');
+    // zoom: tracheole end at a muscle cell
+    R.circle(560, 128, 54, { ink: 'B', w: 1.4, fi: 'P', ft: 0.08 });
+    R.line(bx + 204, by + 22, 548, 150, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.rrect(534, 104, 52, 40, 8, { ink: 'B', w: 1.1, fi: 'P', ft: 0.3, wob: 0.3 }); R.text('muscle cell', 560, 128, 4, { al: 'c' });
+    R.stroke([510, 150, 530, 140, 538, 132], { ink: 'T', w: 4, t: 0.4, smooth: true, taper: 'none', solid: false }); R.stroke([510, 150, 530, 140, 538, 132], { ink: 'B', w: 0.8, smooth: true, taper: 'none' });
+    R.text('tracheole', 520, 168, 4.2, { al: 'c' });
+    R.arrow([512, 106, 530, 120], { ink: 'P', w: 1, hs: 2.4 }); R.text('O_2', 514, 100, 4.4, { al: 'c', ink: 'P' });
+    R.arrow([590, 134, 612, 118], { ink: 'T', w: 1, hs: 2.4 }); R.text('CO_2', 622, 116, 4.4, { al: 'c', ink: 'T' });
+    ['air enters through spiracles,', 'diffuses along tracheae and tracheoles', 'to the cells: short diffusion distance'].forEach((t, i) => R.text(t, 430, 188 + i * 7, 4.2, { al: 'c' }));
+    R.scaleBar(540, 212, 50, '50 µm');
+  },
+  anim(A, sc) {
+    const p = A.ph(4); for (let i = 0; i < 4; i++) { const u = (p + i / 4) % 1; A.dot(32 + u * 56, 80 + Math.sin(i * 2) * 16, 1.4, 'P', 0.8, i); }
+    for (let k = 0; k < 7; k += 2) { const u = (p + k / 7) % 1; A.dot(292 + k * 28, 126 - u * 22, 1.4, 'P', 0.9, 10 + k); }
+    A.dot(512 + 26 * p, 148 - 18 * p, 1.4, 'P', 0.9, 30);
+  },
+});
+
+/* ---------- 3.3.2b Fish gills: counter-current principle ---------- */
+S({
+  id: '3.3.2b', num: '3.3.2', sub: 'Gas exchange across the gills of a fish: counter-current principle', title: 'Gas exchange', topic: '3.3', slot: [0, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.2.s3'],
+  card: {
+    text: 'Fish gills have many <b>filaments</b>, each covered with plate-like <b>gill lamellae</b> that give a large surface area; the lamellae are thin, with a rich blood supply. Water flows over the lamellae in one direction and blood flows through them in the <b>opposite direction</b>: the <b>counter-current</b> principle. This keeps a concentration gradient between water and blood along the whole length of the lamella, so much more oxygen diffuses into the blood than if the flows were in the same direction (parallel).',
+    terms: ['gill filament', 'gill lamella', 'counter-current', 'concentration gradient', 'diffusion', 'surface area'],
+    skill: 'Compare gradients (example values)', eq: null,
+    q: 'Why does the counter-current flow absorb more oxygen than parallel flow?', a: 'Blood always meets water with a higher oxygen concentration, so a gradient is maintained along the entire lamella; in parallel flow the two equilibrate part-way and diffusion stops.'
+  },
+  draw(R, sc) {
+    R.text('fish gill: counter-current exchange', 160, 15, 5.2, { al: 'c' });
+    // fish with the operculum cut away to show the gill arches
+    const body = [12, 62, 24, 46, 54, 38, 86, 44, 106, 56, 114, 62, 106, 70, 86, 80, 54, 86, 24, 80];
+    R.fill(body, { ink: 'Y', t: 0.2, smooth: true, wob: 0.5 }); R.poly(body, { ink: 'B', w: 1.5, smooth: true, wob: 0.5 });
+    R.fill([112, 62, 128, 46, 126, 78], { ink: 'Y', t: 0.35, wob: 0.2 }); R.poly([112, 62, 128, 46, 126, 78], { ink: 'B', w: 1.2, wob: 0.2 });
+    R.circle(24, 58, 3.6, { ink: 'B', w: 1, fi: 'B', ft: 0.5 });
+    R.knock(R.rrectPts(38, 44, 22, 34, 8)); R.rrect(38, 44, 22, 34, 8, { ink: 'B', w: 0.9, fi: 'P', ft: 0.12, wob: 0.3 });
+    for (let k = 0; k < 4; k++) { const ax = 42 + k * 5; R.stroke([ax, 47, ax + 3, 61, ax + 1, 75], { ink: 'P', w: 2.6, t: 0.7, smooth: true, taper: 'none', solid: false }); R.stroke([ax, 47, ax + 3, 61, ax + 1, 75], { ink: 'B', w: 0.6, smooth: true, taper: 'none' }); }
+    R.stroke([62, 40, 56, 62, 62, 84], { ink: 'B', w: 1.1, smooth: true, taper: 'none' });
+    R.text('gills (operculum cut away)', 62, 98, 3.9, { al: 'c' });
+    R.line(60, 46, 136, 30, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' }); R.line(52, 76, 136, 92, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // one gill arch with filaments
+    R.stroke([140, 88, 156, 62, 188, 54, 208, 60], { ink: 'P', w: 5, t: 0.7, smooth: true, taper: 'none', solid: false }); R.stroke([140, 88, 156, 62, 188, 54, 208, 60], { ink: 'B', w: 1.2, smooth: true, taper: 'none' });
+    for (let i = 0; i < 9; i++) { const u = i / 8, ax = 144 + u * 62, ay = 84 - Math.sin(u * 2.2 + 0.2) * 30 + u * 2; R.line(ax, ay, ax + 10 + u * 4, ay - 28, { ink: 'B', w: 1, taper: 'none' }); R.line(ax, ay, ax + 10 + u * 4, ay - 28, { ink: 'P', w: 2.6, t: 0.45, taper: 'none', solid: false }); }
+    R.text('gill arch with filaments', 166, 100, 3.8, { al: 'c' });
+    // filament with lamellae
+    R.line(262, 24, 262, 92, { ink: 'B', w: 1.3, taper: 'none' }); R.line(262, 24, 262, 92, { ink: 'P', w: 4.4, t: 0.55, taper: 'none', solid: false });
+    for (let i = 0; i < 8; i++) { const y = 26 + i * 8.2; R.rect(266, y, 22, 2.8, { ink: 'B', w: 0.7, fi: 'P', ft: 0.55, wob: 0.1 }); R.rect(236, y, 22, 2.8, { ink: 'B', w: 0.7, fi: 'P', ft: 0.55, wob: 0.1 }); }
+    R.arrow([226, 22, 262, 22], { ink: 'T', w: 0.9, hs: 2.2 }); R.arrow([290, 66, 306, 66], { ink: 'T', w: 0.9, hs: 2.2 });
+    leader(R, 'filament', 262, 84, 298, 88, { size: 3.9, al: 'c' }); leader(R, 'lamellae', 277, 45, 300, 36, { size: 3.9, al: 'c' });
+    R.text('many thin lamellae:', 258, 101, 3.8, { al: 'c' }); R.text('large surface area', 258, 107, 3.8, { al: 'c' });
+    R.line(8, 110, 312, 110, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // counter-current vs parallel schematics
+    const lam = (y, label, wv, bv, counter) => {
+      R.text(label, 160, y, 4.6, { al: 'c' });
+      R.rrect(44, y + 4, 224, 20, 6, { ink: 'B', w: 1.1, fi: 'P', ft: 0.12 });
+      R.arrow([48, y + 30, 264, y + 30], { ink: 'T', w: 1.1, hs: 3 }); R.text('water', 276, y + 32, 4, { al: 'l', ink: 'T' });
+      if (counter) R.arrow([264, y + 37, 48, y + 37], { ink: 'P', w: 1.1, hs: 3 }); else R.arrow([48, y + 37, 264, y + 37], { ink: 'P', w: 1.1, hs: 3 });
+      R.text('blood', 276, y + 39, 4, { al: 'l', ink: 'P' });
+      wv.forEach((v, i) => R.text(String(v), 62 + i * 46, y + 13, 4.4, { al: 'c', ink: 'T' })); bv.forEach((v, i) => R.text(String(v), 62 + i * 46, y + 22, 4.4, { al: 'c', ink: 'P' }));
+    };
+    lam(120, 'counter-current: flows in opposite directions', [100, 90, 70, 50, 30], [90, 70, 50, 30, 10], true);
+    R.text('a gradient is kept along the whole lamella', 160, 168, 4, { al: 'c' });
+    lam(180, 'parallel flow (for comparison)', [100, 80, 60, 50, 50], [0, 20, 40, 50, 50], false);
+    R.text('equilibrium is reached: diffusion stops', 160, 229, 3.9, { al: 'c' }); R.text('numbers: % O_2 saturation (example values)', 160, 236, 3.6, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(4); for (let i = 0; i < 4; i++) A.dot(50 + ((p + i / 4) % 1) * 212, 150, 1.3, 'T', 0.8, i);
+    for (let i = 0; i < 4; i++) A.dot(262 - ((p + i / 4) % 1) * 212, 157, 1.3, 'P', 0.9, 8 + i);
+  },
+});
+
+/* ---------- 3.3.2c Dicotyledonous leaf ---------- */
+S({
+  id: '3.3.2c', num: '3.3.2', sub: 'Gas exchange in the leaves of dicotyledonous plants: mesophyll and stomata', title: 'Gas exchange', topic: '3.3', slot: [1, 1], dna: 'mark', ao: 1,
+  covers: ['3.3.2.s4'],
+  card: {
+    text: 'In a dicotyledonous leaf, gas exchange occurs through pores called <b>stomata</b>, opened and closed by pairs of <b>guard cells</b>, mostly in the lower epidermis. Carbon dioxide diffuses through the stomata into the air spaces of the <b>spongy mesophyll</b>, dissolves in the film of water on the cell walls and diffuses into the <b>palisade mesophyll</b> cells, where photosynthesis takes place. Oxygen and water vapour diffuse out. The large surface area of the mesophyll cells and the short diffusion distance make exchange efficient.',
+    terms: ['stoma', 'guard cell', 'mesophyll', 'palisade mesophyll', 'spongy mesophyll', 'air space', 'epidermis', 'cuticle'],
+    skill: 'AT d: examine a vertical section', eq: null,
+    q: 'Where in a leaf does most carbon dioxide diffuse into cells?', a: 'Into the palisade (and spongy) mesophyll cells, from the air spaces beneath the stomata.'
+  },
+  draw(R, sc) {
+    R.text('vertical section of a dicot leaf', 120, 15, 5.2, { al: 'c' });
+    const X0 = 14, X1 = 232;
+    // cuticle + upper epidermis
+    R.rect(X0, 28, X1 - X0, 2.6, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.6, wob: 0.15 });
+    for (let i = 0; i < 10; i++) R.rect(X0 + i * 21.8, 31, 21.8, 14, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.08, wob: 0.15 });
+    // palisade mesophyll
+    for (let i = 0; i < 14; i++) { const x = X0 + 1 + i * 15.5; R.rrect(x, 46, 14, 46, 4, { ink: 'B', w: 0.9, fi: 'TY', ft: 0.12, wob: 0.15 }); for (let k = 0; k < 7; k++) R.ellipse(x + 3.5 + (k % 2) * 6, 52 + k * 6.2, 2.2, 1.5, { ink: 'B', w: 0.5, fi: 'TY', ft: 0.9, wob: 0.05 }); }
+    // spongy mesophyll with air spaces
+    const sp = [[24, 102], [46, 108], [70, 100], [92, 110], [150, 104], [172, 110], [196, 102], [218, 108], [34, 124], [58, 128], [82, 122], [160, 126], [184, 124], [206, 128], [100, 132], [140, 134], [120, 136]];
+    sp.forEach(([x, y], i) => { const r = 8 + (i % 3) * 1.4; R.circle(x, y, r, { ink: 'B', w: 0.9, fi: 'TY', ft: 0.1, wob: 0.3 }); for (let k = 0; k < 3; k++) R.ellipse(x - 3 + k * 3, y - 2 + (k % 2) * 4, 1.8, 1.3, { ink: 'B', w: 0.4, fi: 'TY', ft: 0.9, wob: 0.05 }); });
+    R.fill([X0, 94, X1, 94, X1, 144, X0, 144], { ink: 'T', t: 0.05, wob: 0.2 });
+    // vascular bundle
+    R.ellipse(122, 108, 22, 20, { ink: 'B', w: 1.1, fi: 'P', ft: 0.1, wob: 0.3 });
+    [[112, 100], [122, 98], [132, 101]].forEach(([x, y]) => R.circle(x, y, 5.2, { ink: 'B', w: 1.4, fi: 'T', ft: 0.45, wob: 0.15 }));
+    [[112, 116], [120, 118], [128, 116], [136, 114]].forEach(([x, y], i) => R.circle(x, y, i % 2 ? 2.6 : 3.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.6, wob: 0.1 }));
+    // lower epidermis with stomata
+    R.rect(X0, 146, X1 - X0, 14, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.08, wob: 0.15 }); for (let i = 0; i < 10; i++) R.line(X0 + i * 21.8, 146, X0 + i * 21.8, 160, { ink: 'B', w: 0.8, taper: 'none' });
+    R.rect(X0, 160, X1 - X0, 2.6, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.6, wob: 0.15 });
+    const stoma = x => {
+      R.knock([x - 12, 146, x + 12, 146, x + 12, 163, x - 12, 163]);
+      R.poly([x - 1.6, 146, x - 10, 148, x - 11, 154, x - 8, 160, x - 1.6, 160, x - 3.6, 153], { ink: 'B', w: 1.1, fi: 'TY', ft: 0.4, smooth: true }); R.poly([x + 1.6, 146, x + 10, 148, x + 11, 154, x + 8, 160, x + 1.6, 160, x + 3.6, 153], { ink: 'B', w: 1.1, fi: 'TY', ft: 0.4, smooth: true });
+      R.dot(x - 7, 154, 1.1, { ink: 'B' }); R.dot(x + 7, 154, 1.1, { ink: 'B' });
+    };
+    stoma(60); stoma(190);
+    // gas arrows
+    R.arrow([60, 186, 60, 164], { ink: 'P', w: 1.2, hs: 3 }); R.text('CO_2', 36, 184, 4.6, { al: 'c', ink: 'P' });
+    R.arrow([76, 148, 80, 186], { ink: 'T', w: 1.2, hs: 3 }); R.text('O_2, H_2O', 106, 184, 4.2, { al: 'c', ink: 'T' });
+    R.arrow([60, 142, 42, 118], { ink: 'P', w: 0.9, hs: 2.4 }); R.arrow([42, 112, 40, 70], { ink: 'P', w: 0.9, hs: 2.4 });
+    // labels
+    const lab = (t, tx, ty, x, y) => leader(R, t, x, y, tx, ty, { size: 4.2, al: 'l' });
+    lab('waxy cuticle', 246, 28, X1 - 20, 29.4); lab('upper epidermis', 246, 42, X1 - 11, 38); lab('palisade mesophyll', 246, 78, X1 - 18, 78); lab('spongy mesophyll', 246, 100, X1 - 20, 100);
+    lab('air space', 246, 116, 206, 116 - 2); lab('xylem', 246, 134, 134, 102 + 2); lab('phloem', 246, 146, 136, 114); lab('lower epidermis', 246, 164, X1 - 6, 153);
+    lab('guard cells', 246, 178, 200, 156); lab('stoma', 246, 190, 190, 152);
+    lab('chloroplasts', 246, 56, 221, 58);
+    R.scaleBar(14, 214, 67, '50 µm', { size: 4.4 });
+    R.text('thin leaf, large area of mesophyll cell walls', 120, 232, 4.2, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(4); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(60 - u * 14, 186 - u * 70, 1.3, 'P', 0.9, i); A.dot(76 + u * 4, 148 + u * 38, 1.2, 'T', 0.8, 5 + i); }
+  },
+});
+
+/* ---------- 3.3.2d Compromises: terrestrial insects and xerophytes ---------- */
+S({
+  id: '3.3.2d', num: '3.3.2', sub: 'Structural and functional compromises: terrestrial insects and xerophytic plants', title: 'Gas exchange', topic: '3.3', slot: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.2.s5'],
+  card: {
+    text: 'Efficient gas exchange needs a large, thin, permeable, moist surface, but this also loses water by evaporation. Terrestrial organisms therefore show <b>compromises</b>. <b>Insects</b> have a waterproof, waxy cuticle and a small surface area to volume ratio, and their <b>spiracles</b> can close (opening only when oxygen is needed) to limit water loss. <b>Xerophytes</b> (plants of dry habitats) have, e.g., a thick waxy cuticle, rolled leaves, hairs and <b>sunken stomata</b> that trap a humid layer of air, and reduced leaf area, so reducing water loss by diffusion and evaporation.',
+    terms: ['xerophyte', 'spiracle', 'cuticle', 'sunken stomata', 'rolled leaf', 'water loss', 'compromise', 'surface area to volume ratio'],
+    skill: 'Evaluate trade-offs', eq: null,
+    q: 'How does a rolled leaf reduce water loss in marram grass?', a: 'It traps still, humid air around the stomata inside the roll, reducing the water potential gradient so less water vapour diffuses out.'
+  },
+  draw(R, sc) {
+    R.text('the opposing needs: gas exchange and water conservation', 160, 15, 4.8, { al: 'c' });
+    const txt = (t, x, y, w, ink) => wrapText(t, w, 4).forEach((ln, i) => R.text(ln, x, y + i * 5.8, 4, { al: 'c', ink }));
+    txt('large, thin, moist, permeable surface: fast gas exchange, but water evaporates', 52, 34, 88);
+    txt('small area, thick, waterproof surface: little water lost, but slow gas exchange', 268, 34, 88);
+    // balance
+    R.line(160, 52, 160, 78, { ink: 'B', w: 1.3, taper: 'none' }); R.line(148, 78, 172, 78, { ink: 'B', w: 1.3, taper: 'none' }); R.line(118, 52, 202, 50, { ink: 'B', w: 1.4, taper: 'none' });
+    R.stroke([108, 60, 114, 70, 132, 70, 138, 60], { ink: 'B', w: 1.1, smooth: true, taper: 'none' }); R.stroke([182, 58, 188, 68, 206, 68, 212, 58], { ink: 'B', w: 1.1, smooth: true, taper: 'none' });
+    R.line(118, 53, 108, 60, { ink: 'B', w: 0.6, taper: 'none' }); R.line(120, 53, 138, 60, { ink: 'B', w: 0.6, taper: 'none' }); R.line(200, 51, 182, 58, { ink: 'B', w: 0.6, taper: 'none' }); R.line(202, 51, 212, 58, { ink: 'B', w: 0.6, taper: 'none' });
+    R.text('compromise', 160, 90, 4.6, { al: 'c', ink: 'P' });
+    R.line(8, 98, 312, 98, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // insect spiracle open/closed
+    R.text('terrestrial insect', 80, 110, 4.8, { al: 'c' });
+    const spir = (x, open) => {
+      R.rect(x - 24, 130, 16, 24, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.5, wob: 0.15 }); R.rect(x + 8, 130, 16, 24, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.5, wob: 0.15 });
+      R.rect(x - 24, 126, 48, 4, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.9, wob: 0.1 });
+      R.rect(x - 8, 130, 16, 24, { ink: 'B', w: 0.7, fi: open ? 'T' : 'Y', ft: open ? 0.2 : 0.7, wob: 0.1 });
+      if (!open) R.line(x - 8, 132, x + 8, 132, { ink: 'B', w: 2.6, taper: 'none' });
+      R.text(open ? 'spiracle open' : 'spiracle closed', x, 164, 4, { al: 'c' });
+    };
+    spir(40, true); R.arrow([40, 122, 40, 140], { ink: 'T', w: 1, hs: 2.4 }); spir(116, false);
+    R.text('tracheae', 40, 148, 3.6, { al: 'c' });
+    ['waterproof waxy cuticle', 'small SA:V', 'spiracles close to cut water loss'].forEach((t, i) => R.text(t, 80, 184 + i * 6.8, 4.2, { al: 'c' }));
+    R.line(156, 100, 156, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // marram grass rolled leaf
+    R.text('xerophyte (e.g. marram grass)', 234, 110, 4.8, { al: 'c' });
+    const cx = 196, cy = 156, rr = 30;
+    const out2 = []; for (let i = 0; i <= 40; i++) { const a = -PI / 2 + 0.5 + (TAU - 1.0) * i / 40; out2.push(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+    const in2 = []; for (let i = 0; i <= 40; i++) { const a = -PI / 2 + 0.5 + (TAU - 1.0) * i / 40, rg = rr - 6 - (i % 2 ? 3 : 0); in2.push(cx + Math.cos(a) * rg, cy + Math.sin(a) * rg); }
+    R.stroke(out2, { ink: 'Y', w: 5, t: 0.7, smooth: true, taper: 'none', solid: false }); R.stroke(out2, { ink: 'B', w: 1.4, smooth: true, taper: 'none' });
+    R.stroke(in2, { ink: 'B', w: 1.1, smooth: false, taper: 'none' });
+    for (let i = 1; i < 40; i += 2) { const a = -PI / 2 + 0.5 + (TAU - 1.0) * i / 40, rg = rr - 9; R.line(cx + Math.cos(a) * rg, cy + Math.sin(a) * rg, cx + Math.cos(a) * (rg - 7), cy + Math.sin(a) * (rg - 7), { ink: 'B', w: 0.5, taper: 'none' }); }
+    for (let i = 3; i < 40; i += 6) { const a = -PI / 2 + 0.5 + (TAU - 1.0) * i / 40, rg = rr - 13; R.circle(cx + Math.cos(a) * rg, cy + Math.sin(a) * rg, 3, { ink: 'B', w: 0.7, fi: 'T', ft: 0.4 }); }
+    R.fill(polyPts(cx, cy - 2, 12, 8), { ink: 'T', t: 0.14, wob: 0.3 });
+    leader(R, 'thick waxy cuticle', cx - 22, cy + 22, 176, 206, { size: 4, al: 'c' }); leader(R, 'rolled leaf', cx + 6, cy - 28, 250, 126, { size: 4, al: 'l' });
+    leader(R, 'hairs trap moist air', cx + 4, cy - 4, 250, 142, { size: 4, al: 'l' }); leader(R, 'sunken stomata', cx + 24, cy + 6, 250, 158, { size: 4, al: 'l' });
+    ['also: reduced leaf area', '(e.g. spines): lower SA:V'].forEach((t, i) => R.text(t, 270, 184 + i * 6.4, 4, { al: 'c' }));
+    ['each feature cuts the', 'water potential gradient', 'or the area for evaporation'].forEach((t, i) => R.text(t, 234, 210 + i * 6.4, 4, { al: 'c', ink: 'P' }));
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(40 + Math.sin(i * 3) * 3, 124 + u * 28, 1.2, 'T', 0.8, i); }
+    for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(196 + Math.cos(i * 2) * 5, 152 - u * 16, 1, 'T', 0.7 * (1 - u), 4 + i); }
+  },
+});
+
+/* ===================== 3.3.2 (cont.) human gas exchange; 3.3.3 digestion and absorption ===================== */
+/* ---------- 3.3.2e Human gas exchange system: gross structure ---------- */
+S({
+  id: '3.3.2e', num: '3.3.2', sub: 'The human gas exchange system: trachea, bronchi, bronchioles, alveoli, lungs', title: 'Gas exchange', topic: '3.3', slot: [3, 1], dna: 'mark', ao: 1,
+  covers: ['3.3.2.s6'],
+  card: {
+    text: 'The gross structure of the human gas exchange system is limited to the <b>trachea</b>, two <b>bronchi</b>, many branching <b>bronchioles</b> and the <b>alveoli</b>, all within the <b>lungs</b> in the thorax. Air passes down the trachea and bronchi to the bronchioles and ends in clusters of alveoli, surrounded by capillaries, where gas exchange takes place. The lungs are protected by the rib cage and ventilated by the intercostal muscles and the diaphragm.',
+    terms: ['trachea', 'bronchus', 'bronchiole', 'alveolus', 'lung', 'thorax', 'diaphragm', 'ribs'],
+    skill: 'Label a system', eq: null,
+    q: 'Put these in order from the mouth: bronchiole, alveolus, trachea, bronchus.', a: 'Trachea → bronchus → bronchiole → alveolus.'
+  },
+  draw(R, sc) {
+    R.text('human gas exchange system', 160, 15, 5, { al: 'c' });
+    const K = 0.84, TX = -4, TY = 20, W = (x, y) => [TX + K * x, TY + K * y];
+    R.push(TX, TY, 0, K);
+    const torso = [66, 50, 40, 56, 22, 70, 20, 120, 28, 176, 56, 190, 120, 190, 148, 176, 156, 120, 154, 70, 136, 56, 110, 50];
+    R.fill(torso, { ink: 'P', t: 0.05, smooth: true, wob: 0.6 }); R.poly(torso, { ink: 'B', w: 1.2 / K, smooth: true, wob: 0.8 });
+    R.circle(88, 30, 13, { ink: 'B', w: 1.2 / K, fi: 'Y', ft: 0.12 }); R.line(80, 42, 80, 52, { ink: 'B', w: 1 / K, taper: 'none' }); R.line(96, 42, 96, 52, { ink: 'B', w: 1 / K, taper: 'none' });
+    for (let k = 0; k < 5; k++) { R.stroke([30, 86 + k * 14, 40, 80 + k * 14, 56, 84 + k * 14], { ink: 'B', w: 0.8 / K, smooth: true, taper: 'both', t: 0.6 }); R.stroke([146, 86 + k * 14, 136, 80 + k * 14, 120, 84 + k * 14], { ink: 'B', w: 0.8 / K, smooth: true, taper: 'both', t: 0.6 }); }
+    const lungR = [42, 84, 60, 78, 76, 90, 78, 150, 66, 166, 44, 162, 32, 126], lungL = [100, 90, 116, 78, 136, 84, 144, 126, 132, 162, 110, 166, 98, 150];
+    [lungR, lungL].forEach(l => { R.fill(l, { ink: 'P', t: 0.2, smooth: true, wob: 0.4 }); R.poly(l, { ink: 'B', w: 1.2 / K, smooth: true, wob: 0.5 }); });
+    // trachea with cartilage rings
+    R.rect(84, 44, 8, 46, { ink: 'B', w: 1 / K, fi: 'T', ft: 0.3, wob: 0.1 }); for (let k = 0; k < 8; k++) R.line(82.6, 48 + k * 5.4, 93.4, 48 + k * 5.4, { ink: 'B', w: 0.8 / K, taper: 'none' });
+    const brR = [88, 90, 80, 98, 64, 108], brL = [88, 90, 96, 98, 112, 108];
+    [brR, brL].forEach(b => { R.stroke(b, { ink: 'T', w: 5 / K, t: 0.4, smooth: true, taper: 'none', solid: false }); R.stroke(b, { ink: 'B', w: 1 / K, smooth: true, taper: 'none' }); });
+    const branch = (x, y, a, len, d, wd) => {
+      if (d === 0) { R.circle(x, y, 2.4, { ink: 'B', w: 0.5 / K, fi: 'P', ft: 0.5 }); R.circle(x + 2, y + 1.5, 1.8, { ink: 'B', w: 0.4 / K, fi: 'P', ft: 0.5 }); return; }
+      const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len; R.line(x, y, x2, y2, { ink: 'B', w: wd / K, taper: 'none' });
+      branch(x2, y2, a - 0.5, len * 0.72, d - 1, wd * 0.7); branch(x2, y2, a + 0.5, len * 0.72, d - 1, wd * 0.7);
+    };
+    branch(64, 108, 1.95, 22, 3, 1.4); branch(64, 108, 1.2, 14, 2, 1.1); branch(112, 108, 1.2, 22, 3, 1.4); branch(112, 108, 1.95, 14, 2, 1.1);
+    R.stroke([24, 182, 50, 166, 88, 162, 126, 166, 152, 182], { ink: 'Y', w: 5 / K, t: 0.6, smooth: true, taper: 'none', solid: false }); R.stroke([24, 182, 50, 166, 88, 162, 126, 166, 152, 182], { ink: 'B', w: 1.2 / K, smooth: true, taper: 'none' });
+    R.pop();
+    const lab = (t, tx, ty, x, y) => { const q = W(x, y); leader(R, t, q[0], q[1], tx, ty, { size: 4.2, al: 'l' }); };
+    lab('trachea', 134, 36, 90, 62); lab('bronchus', 134, 62, 106, 102); lab('bronchioles', 134, 84, 120, 124); lab('lung', 134, 106, 138, 140);
+    lab('rib', 134, 130, 144, 100); lab('diaphragm', 134, 196, 124, 168);
+    // zoom to alveoli
+    R.circle(242, 134, 62, { ink: 'B', w: 1.4, fi: 'P', ft: 0.06 }); R.line(100, 128, 190, 110, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' }); R.line(104, 140, 194, 170, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.stroke([226, 80, 232, 98, 238, 106], { ink: 'T', w: 6, t: 0.4, smooth: true, taper: 'none', solid: false }); R.stroke([226, 80, 232, 98, 238, 106], { ink: 'B', w: 1, smooth: true, taper: 'none' });
+    [[222, 124], [248, 122], [270, 136], [212, 152], [240, 148], [266, 162], [226, 178], [252, 180]].forEach(([x, y], i) => { R.circle(x, y, 13, { ink: 'B', w: 1.1, fi: 'T', ft: 0.12, wob: 0.3 }); for (let k = 0; k < 9; k++) { const a = k * TAU / 9 + i; R.arc(x + Math.cos(a) * 14, y + Math.sin(a) * 14, 4, 4, a - 1.2, a + 1.2, { ink: 'P', w: 1.1, taper: 'none' }); } });
+    leader(R, 'bronchiole', 228, 86, 262, 62, { size: 4.2, al: 'l' }); leader(R, 'alveoli', 248, 124, 280, 100, { size: 4.2, al: 'l' }); leader(R, 'capillaries', 262 + 8, 162 + 12, 282, 206, { size: 4.2, al: 'l' });
+    R.text('air in and out; gas exchange at the alveoli', 160, 236, 4.2, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(86, 44 + u * 46, 1.2, 'T', 0.7, i); }
+    for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(226 + u * 6, 80 + u * 24, 1.2, 'T', 0.7, 4 + i); }
+  },
+});
+
+/* ---------- 3.3.2f Alveolar epithelium as a gas exchange surface ---------- */
+S({
+  id: '3.3.2f', num: '3.3.2', sub: 'The alveolar epithelium: features of the exchange surface', title: 'Gas exchange', topic: '3.3', slot: [0, 2], dna: 'mark', ao: 2,
+  covers: ['3.3.2.s7'],
+  card: {
+    text: 'The <b>alveolar epithelium</b> is a surface over which gas exchange takes place efficiently. The alveolar wall and capillary wall are each a single, flattened cell thick, giving a very <b>short diffusion distance</b>. There are many alveoli (large <b>surface area</b>). Ventilation brings fresh air and the circulation removes oxygenated blood, so a steep <b>concentration gradient</b> is maintained: oxygen diffuses from alveolar air into red blood cells; carbon dioxide diffuses the other way.',
+    terms: ['alveolar epithelium', 'diffusion distance', 'surface area', 'concentration gradient', 'capillary', 'red blood cell', 'ventilation', 'squamous epithelium'],
+    skill: 'MS 2.2: rate of diffusion ∝ ...', eq: MATH(mt('rate of diffusion '), mo('∝'), mfrac(mt('surface area × concentration difference'), mt('thickness of exchange surface'))),
+    q: 'Give two ways a steep concentration gradient is maintained across the alveolar epithelium.', a: 'Ventilation keeps air in the alveoli rich in oxygen; blood flow in the capillaries constantly removes oxygen and brings carbon dioxide.'
+  },
+  draw(R, sc) {
+    R.text('alveolus and capillary', 100, 15, 5.2, { al: 'c' });
+    // alveolus with flattened epithelial cells; capillary at right
+    const cx = 88, cy = 100, r = 52;
+    R.circle(cx, cy, r, { ink: 'B', w: 0.8, fi: 'T', ft: 0.07, wob: 0.4 });
+    for (let i = 0; i < 18; i++) { const a = i * TAU / 18, a2 = (i + 0.85) * TAU / 18; R.arc(cx, cy, r, r, a, a2, { ink: 'B', w: 1.8, taper: 'none' }); }
+    for (let i = 0; i < 6; i++) { const a = (i * 3 + 1.4) * TAU / 18; R.ellipse(cx + Math.cos(a) * (r + 0.8), cy + Math.sin(a) * (r + 0.8), 4, 1.8, { ink: 'B', w: 0.7, fi: 'B', ft: 0.45, rot: a * 180 / PI + 90 }); }
+    R.text('air', cx, cy + 2, 6, { al: 'c', ink: 'T' }); R.text('O_2 rich', cx, cy + 12, 4.2, { al: 'c' });
+    // capillary running along the right side
+    const cap = []; for (let i = 0; i <= 14; i++) { const a = -1.4 + i * 0.2; cap.push(cx + Math.cos(a) * (r + 12), cy + Math.sin(a) * (r + 12)); }
+    R.stroke(cap, { ink: 'P', w: 12, t: 0.3, smooth: true, taper: 'none', solid: false }); R.stroke(cap, { ink: 'B', w: 1.2, smooth: true, taper: 'none' });
+    R.stroke(cap.map((v, i) => i % 2 ? cy + (v - cy) * 0.89 : cx + (v - cx) * 0.89), { ink: 'B', w: 1.2, smooth: true, taper: 'none' });
+    for (let i = 1; i < 13; i += 2) { const a = -1.4 + i * 0.2; R.push(cx + Math.cos(a) * (r + 12), cy + Math.sin(a) * (r + 12), a + PI / 2, 1); R.ellipse(0, 0, 3.8, 2.2, { ink: 'B', w: 0.9, fi: 'P', ft: 0.85 }); R.pop(); }
+    leader(R, 'alveolar epithelium', cx - 38, cy + 38, 52, 170, { size: 4, al: 'c' }); leader(R, 'capillary', cx + 70, cy + 28, 150, 160, { size: 4, al: 'c' }); leader(R, 'red blood cell', cx + 62, cy - 28, 154, 40, { size: 4, al: 'c' });
+    R.text('many alveoli = large surface area', 100, 186, 4.2, { al: 'c' });
+    ['ventilation keeps O_2 high in the air,', 'blood flow carries O_2 away:', 'steep concentration gradient'].forEach((t, i) => R.text(t, 100, 204 + i * 7, 4.2, { al: 'c' }));
+    R.line(204, 22, 204, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // zoom: exchange barrier
+    R.text('the exchange barrier', 262, 30, 4.8, { al: 'c' });
+    R.rect(220, 44, 84, 30, { ink: 'B', w: 1, fi: 'T', ft: 0.12, wob: 0.2 }); R.text('air in alveolus', 262, 62, 4.4, { al: 'c' });
+    R.rrect(220, 74, 84, 9, 3, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.3, wob: 0.2 }); R.ellipse(256, 78.5, 8, 2.6, { ink: 'B', w: 0.7, fi: 'B', ft: 0.5 });
+    R.rrect(220, 85, 84, 9, 3, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.3, wob: 0.2 }); R.ellipse(282, 89.5, 8, 2.6, { ink: 'B', w: 0.7, fi: 'B', ft: 0.5 });
+    R.rect(220, 96, 84, 40, { ink: 'B', w: 1, fi: 'P', ft: 0.14, wob: 0.2 }); R.ellipse(262, 118, 22, 12, { ink: 'B', w: 1, fi: 'P', ft: 0.85 }); R.text('red blood cell', 262, 120, 4, { al: 'c' });
+    R.arrow([236, 56, 236, 128], { ink: 'P', w: 1.2, hs: 3 }); R.text('O_2', 230, 52, 4.4, { al: 'r', ink: 'P' });
+    R.arrow([296, 128, 296, 56], { ink: 'T', w: 1.2, hs: 3 }); R.text('CO_2', 300, 52, 4.4, { al: 'r', ink: 'T' });
+    leader(R, 'alveolar epithelium: 1 flat cell thick', 232, 78, 262, 150, { size: 3.7, al: 'c' });
+    leader(R, 'capillary endothelium: 1 flat cell thick', 296, 90, 262, 164, { size: 3.7, al: 'c' });
+    R.text('very short diffusion distance', 262, 196, 4.4, { al: 'c', ink: 'P' });
+    ['thin walls + large area +', 'steep gradient = fast diffusion'].forEach((t, i) => R.text(t, 262, 212 + i * 6.6, 4.2, { al: 'c' }));
+  },
+  anim(A, sc) {
+    const p = A.ph(4); for (let i = 0; i < 4; i++) { const u = (p + i / 4) % 1; A.dot(236 + (i % 2) * 8, 56 + u * 70, 1.3, 'P', 0.9, i); A.dot(292 - (i % 2) * 6, 128 - u * 70, 1.3, 'T', 0.8, 5 + i); }
+    for (let i = 0; i < 3; i++) { const a = -1.1 + ((p + i / 3) % 1) * 2.2; A.dot(88 + Math.cos(a) * 62, 100 + Math.sin(a) * 62, 3, 'P', 0.9, 9 + i); }
+  },
+});
+
+/* ---------- 3.3.2g Ventilation: inspiration, expiration, pulmonary ventilation rate ---------- */
+S({
+  id: '3.3.2g', num: '3.3.2', sub: 'Ventilation: diaphragm and antagonistic intercostal muscles; pulmonary ventilation rate', title: 'Gas exchange', topic: '3.3', slot: [1, 2], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.2.s8'],
+  card: {
+    text: '<b>Inspiration</b>: the external intercostal muscles contract, raising the ribs up and out, and the diaphragm contracts and flattens. The volume of the thoracic cavity increases, the pressure falls below atmospheric pressure and air flows in. <b>Expiration</b> (at rest): the external intercostals relax and the ribs fall; the diaphragm relaxes and domes upwards; volume decreases, pressure rises above atmospheric and air flows out. In <b>forced expiration</b> the internal intercostal muscles contract, antagonistic to the external ones, pulling the ribs down and in. <b>Pulmonary ventilation rate</b> = tidal volume × breathing rate.',
+    terms: ['diaphragm', 'external intercostal muscles', 'internal intercostal muscles', 'antagonistic', 'thoracic cavity', 'pressure', 'tidal volume', 'pulmonary ventilation rate'],
+    skill: 'MS 2.2: PVR = tidal volume × breathing rate', eq: MATH(mt('PVR '), mo('='), mt('tidal volume'), mo('×'), mt('breathing rate')),
+    eqn: 'e.g. 0.5 dm³ × 12 min⁻¹ = 6 dm³ min⁻¹',
+    q: 'A person has a tidal volume of 0.45 dm³ and breathes 14 times per minute. What is their PVR?', a: '0.45 × 14 = 6.3 dm³ per minute.'
+  },
+  draw(R, sc) {
+    const panel = (cx, insp) => {
+      R.text(insp ? 'inspiration' : 'expiration', cx, 15, 5.4, { al: 'c' });
+      const fx = insp ? -9 : 0, fy = insp ? -4 : 0;                // front wall moves up and forward on inspiration
+      // spine (back wall) as a column of vertebrae
+      for (let k = 0; k < 6; k++) R.rrect(cx + 58, 46 + k * 18, 11, 14, 3, { ink: 'B', w: 1, fi: 'Y', ft: 0.5, wob: 0.15 });
+      R.text('spine', cx + 64, 160, 3.7, { al: 'c' });
+      // ribs: cross-sections of the front wall (sloping down towards the spine side), with intercostal muscles between
+      for (let k = 0; k < 5; k++) {
+        const bx = cx - 58 + fx - k * (insp ? 0.4 : 0), by = 54 + k * 19 + fy * (1 - k * 0.15);
+        const sl = insp ? 0.15 : 0.55;
+        R.push(bx, by, sl, 1); R.rrect(-7, -3, 14, 6, 3, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.5, wob: 0.15 }); R.pop();
+        // rib continues round to the spine
+        R.stroke([bx + 7, by + 0.4, cx - 20, by + 4 - (insp ? 3 : 0), cx + 30, by + 8 - (insp ? 4 : 0), cx + 58, 53 + k * 18], { ink: 'B', w: 1.5, smooth: true, taper: 'start', t: 0.45 });
+        if (k < 4) { const nx = cx - 58 + fx - (k + 1) * (insp ? 0.4 : 0), ny = 54 + (k + 1) * 19 + fy * (1 - (k + 1) * 0.15); R.line(bx + 1, by + 3, nx + 1, ny - 3, { ink: 'P', w: 2.4, taper: 'none' }); R.line(bx - 3, by + 3, nx - 3, ny - 3, { ink: 'T', w: 1.5, taper: 'none' }); }
+      }
+      R.text('sternum', cx - 60 + fx, 40, 3.6, { al: 'c' });
+      // lungs inside the cage
+      const lh = insp ? 100 : 80, lw = insp ? 40 : 34, lt = 60 + fy;
+      const lung = [cx - lw - 8 + fx * 0.6, lt + 18, cx - 6, lt - 4, cx + lw * 0.8, lt + 6, cx + lw + 6, lt + 40, cx + lw * 0.8, lt + lh * 0.8, cx - 4, lt + lh, cx - lw + 6, lt + lh * 0.9, cx - lw - 10 + fx * 0.6, lt + lh * 0.45];
+      R.knock(lung, { smooth: true }); R.fill(lung, { ink: 'P', t: insp ? 0.12 : 0.3, smooth: true, wob: 0.5 }); R.poly(lung, { ink: 'B', w: 1.2, smooth: true, wob: 0.5 });
+      R.text(insp ? 'lung expands' : 'lung recoils', cx, lt + lh * 0.45 + 2, 3.9, { al: 'c' });
+      R.rect(cx + lw * 0.35 - 2, 30, 4, 34 + fy, { ink: 'B', w: 0.9, fi: 'T', ft: 0.3, wob: 0.1 });
+      // diaphragm
+      const dy = insp ? 156 : 138, dd = insp ? 3 : 16;
+      const dia = [cx - 62 + fx, dy + dd * 0.4, cx - 22, dy - dd * 0.2, cx + 10, dy - dd, cx + 56, dy + 2];
+      R.stroke(dia, { ink: 'Y', w: 5.4, t: 0.7, smooth: true, taper: 'none', solid: false }); R.stroke(dia, { ink: 'B', w: 1.3, smooth: true, taper: 'none' });
+      R.text('diaphragm', cx, dy + 13, 3.8, { al: 'c' });
+      // arrows
+      if (insp) { R.arrow([cx - 78, 70, cx - 84, 54], { ink: 'P', w: 1.2, hs: 2.8 }); R.arrow([cx, dy + 4, cx, dy + 17], { ink: 'P', w: 1.2, hs: 2.8 }); R.arrow([cx + lw * 0.35, 22, cx + lw * 0.35, 34], { ink: 'T', w: 1.2, hs: 2.8 }); }
+      else { R.arrow([cx - 84, 50, cx - 78, 66], { ink: 'P', w: 1.2, hs: 2.8 }); R.arrow([cx, dy - 2, cx, dy - 14], { ink: 'P', w: 1.2, hs: 2.8 }); R.arrow([cx + lw * 0.35, 34, cx + lw * 0.35, 22], { ink: 'T', w: 1.2, hs: 2.8 }); }
+      R.text(insp ? 'air in' : 'air out', cx + lw * 0.35 + 12, 26, 4, { al: 'l', ink: 'T' });
+      const L = insp ? ['external intercostals contract: ribs up and out', 'diaphragm contracts and flattens', 'thoracic volume increases', 'pressure falls below atmospheric'] : ['external intercostals relax: ribs down and in', 'diaphragm relaxes and domes up', 'thoracic volume decreases', 'pressure rises above atmospheric'];
+      L.forEach((t, i) => R.text(t, cx, 186 + i * 7.4, 3.9, { al: 'c' }));
+    };
+    panel(110, true); panel(332, false);
+    R.line(216, 22, 216, 234, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' }); R.line(444, 22, 444, 234, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // key
+    R.line(40, 226, 48, 226, { ink: 'P', w: 2.4, taper: 'none' }); R.text('external intercostal muscle', 52, 228, 3.6, { al: 'l' }); R.line(168, 226, 176, 226, { ink: 'T', w: 1.6, taper: 'none' }); R.text('internal intercostal muscle', 180, 228, 3.6, { al: 'l' });
+    // trace and PVR
+    R.text('pulmonary ventilation rate', 550, 15, 5, { al: 'c' });
+    const g = R.graph(468, 34, 180, 90, { xmin: 0, xmax: 24, ymin: 0, ymax: 3, xl: 'time / s', yl: 'volume / dm^3', xt: [[0, '0'], [10, '10'], [20, '20']], yt: [[0, '0'], [1, '1'], [2, '2'], [3, '3']], fs: 4, xly: 12, ylx: 12 }).axes();
+    const tr = []; for (let i = 0; i <= 120; i++) { const t = i / 120 * 24; tr.push(t, 2.2 - 0.25 * Math.cos(t / 5 * TAU)); }
+    g.curve(tr, { ink: 'P', w: 1.5 });
+    g.dashed(0, 2.45, 7.5, 2.45, { ink: 'B', w: 0.6 }); g.dashed(0, 1.95, 7.5, 1.95, { ink: 'B', w: 0.6 });
+    R.arrow([g.X(5.0), g.Y(1.97), g.X(5.0), g.Y(2.43)], { ink: 'T', w: 1, hs: 2.2, both: true }); R.text('tidal volume', g.X(5.0), g.Y(1.3), 3.8, { al: 'c' });
+    R.line(g.X(5), g.Y(2.95), g.X(10), g.Y(2.95), { ink: 'B', w: 0.8, taper: 'none' }); R.text('one breath = 5 s (12 per minute)', g.X(7.5), g.Y(2.95) - 3, 3.7, { al: 'c' });
+    R.text('PVR = tidal volume × breathing rate', 550, 150, 4.8, { al: 'c' });
+    ['tidal volume 0.5 dm^3', 'breathing rate 12 min^-1', 'PVR = 0.5 × 12 = 6 dm^3 min^-1'].forEach((t, i) => R.text(t, 550, 164 + i * 8, 4.5, { al: 'c' }));
+    R.text('forced expiration: internal intercostals contract', 550, 198, 3.9, { al: 'c' }); R.text('(antagonistic to the external muscles)', 550, 204, 3.9, { al: 'c' });
+    R.text('and abdominal muscles push the diaphragm up', 550, 210, 3.9, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(4); const ins = p < 0.5; const u = (p % 0.5) * 2;
+    A.dot(124, ins ? 24 + u * 18 : 42 - u * 18, 1.4, 'T', 0.9, 1); A.dot(350, ins ? 42 - u * 18 : 24 + u * 18, 1.4, 'T', 0.9, 2);
+  },
+});
+
+/* ---------- 3.3.2h Lung disease: effects on gas exchange and ventilation; risk-factor data ---------- */
+S({
+  id: '3.3.2h', num: '3.3.2', sub: 'Lung disease and risk factors: interpreting data, correlation and causation', title: 'Gas exchange', topic: '3.3', slot: [3, 2], dna: 'mark', ao: 3,
+  covers: ['3.3.2.s9', '3.3.2.s10', '3.3.2.s11', '3.3.2.s12', '3.3.2.s13'],
+  card: {
+    text: 'Lung disease changes gas exchange and ventilation. In <b>fibrosis</b> the alveolar walls thicken with scar tissue, lengthening the diffusion path and making the lungs less elastic, so less air can be moved (reduced <b>FVC</b>). In <b>emphysema</b> alveolar walls break down, reducing surface area and elasticity. In <b>asthma</b> the airways narrow, reducing the <b>FEV₁</b> (air forced out in the first second). Smoking and pollution are risk factors. A <b>correlation</b> between a risk factor and disease does not alone prove <b>causation</b>; evidence such as a mechanism, dose–response and controlled studies led to statutory restrictions.',
+    terms: ['fibrosis', 'emphysema', 'asthma', 'tuberculosis', 'FEV1', 'FVC', 'correlation', 'causation', 'risk factor', 'pollution', 'smoking'],
+    skill: 'MS 1.7: scatter diagram and correlation', eq: null, eqn: 'FEV₁ ÷ FVC: lower than normal in airway narrowing',
+    q: 'A study shows that smokers have more lung cancer. Why does this not prove smoking causes cancer?', a: 'It shows a correlation only; other factors might differ between groups. Causation needs more evidence, e.g. a mechanism and dose–response relationship.'
+  },
+  draw(R, sc) {
+    R.text('lung disease and risk data', 160, 14, 5, { al: 'c' });
+    // three alveolar wall drawings
+    const alv = (x, y, kind, label) => {
+      const w = 90, h = 28;
+      if (kind === 'normal') { for (let i = 0; i < 3; i++) R.circle(x + 15 + i * 30, y + 14, 12, { ink: 'B', w: 1, fi: 'T', ft: 0.12 }); }
+      if (kind === 'fib') { for (let i = 0; i < 3; i++) { R.circle(x + 15 + i * 30, y + 14, 10, { ink: 'B', w: 3.2, fi: 'T', ft: 0.12 }); R.circle(x + 15 + i * 30, y + 14, 12.4, { ink: 'B', w: 1, fi: 'Y', ft: 0.3 }); } }
+      if (kind === 'emph') { R.ellipse(x + 30, y + 14, 22, 12, { ink: 'B', w: 1, fi: 'T', ft: 0.12 }); R.circle(x + 72, y + 12, 11, { ink: 'B', w: 1, fi: 'T', ft: 0.12 }); R.line(x + 50, y + 4, x + 54, y + 24, { ink: 'B', w: 0.5, t: 0.4, taper: 'none' }); }
+      R.text(label, x + 45, y + 36, 4, { al: 'c' });
+    };
+    alv(8, 24, 'normal', 'normal alveoli'); alv(8, 70, 'fib', 'fibrosis: thick walls'); alv(8, 116, 'emph', 'emphysema: walls break down');
+    // spirometer traces: forced expiration
+    R.text('forced expiration', 214, 24, 4.4, { al: 'c' });
+    const g = R.graph(122, 32, 190, 96, { xmin: 0, xmax: 6, ymin: 0, ymax: 5, xl: 'time / s', yl: 'volume exhaled / dm^3', xt: [[0, '0'], [1, '1'], [3, '3'], [6, '6']], yt: [[0, '0'], [2, '2'], [4, '4']], fs: 3.9, xly: 11, ylx: 12 }).axes();
+    g.curve(t => 4.6 * (1 - Math.exp(-t * 1.9)), { ink: 'T', w: 1.5 }); g.curve(t => 2.6 * (1 - Math.exp(-t * 3.2)), { ink: 'Y', w: 1.5 }); g.curve(t => 4.2 * (1 - Math.exp(-t * 0.7)), { ink: 'P', w: 1.5 });
+    g.dashed(1, 0, 1, 4.3, { ink: 'B', w: 0.6 });
+    R.text('normal', g.X(3.4), g.Y(4.9), 3.8, { al: 'l', ink: 'T' }); R.text('fibrosis', g.X(3.6), g.Y(2.2), 3.8, { al: 'l', ink: 'B' }); R.text('asthma / emphysema', g.X(2.6), g.Y(3.1), 3.8, { al: 'l', ink: 'P' });
+    R.text('FEV_1 at 1 s', g.X(1) + 3, g.Y(0.7), 3.7, { al: 'l' }); R.text('FVC = total volume forced out', g.X(5.9), g.Y(3.5), 3.7, { al: 'r' }); R.arrow([g.X(5.5), g.Y(3.35), g.X(5.5), g.Y(4.45)], { ink: 'B', w: 0.7, hs: 2 });
+    R.text('FEV_1 low relative to FVC: narrowed airways', 214, 154, 4, { al: 'c' }); R.text('FVC low: stiff, scarred lungs', 214, 161, 4, { al: 'c' });
+    R.line(8, 168, 312, 168, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // correlation scatter
+    R.text('risk factor data: smoking and lung cancer', 90, 180, 4.4, { al: 'c' });
+    const s2 = R.graph(30, 190, 110, 38, { xmin: 0, xmax: 40, ymin: 0, ymax: 10, xl: 'cigarettes per day', yl: 'cases', xt: [], yt: [], fs: 3.7, xly: 9, ylx: 4 }).axes();
+    [[2, 0.6], [6, 1.2], [10, 2.4], [14, 2.2], [18, 3.8], [22, 4.4], [26, 5.8], [30, 6.2], [34, 8.2], [38, 8.0]].forEach(([x, y]) => R.dot(s2.X(x), s2.Y(y), 1.5, { ink: 'B' }));
+    s2.curve([0, 0, 40, 8.6], { ink: 'P', w: 1 });
+    R.text('positive correlation', 128, 190, 3.8, { al: 'r' });
+    ['correlation ≠ causation: need', 'a mechanism, dose–response,', 'controlled studies', '→ statutory restrictions'].forEach((t, i) => R.text(t, 232, 182 + i * 7, 4, { al: 'c', ink: i === 3 ? 'P' : 'B' }));
+    R.line(172, 172, 172, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+  },
+  anim(A, sc) { const p = A.ph(4); A.dot(122 + p * 190, 128 - 4.6 * (1 - Math.exp(-p * 6 * 1.9)) * 19, 1.2, 'T', 0.9, 1); },
+});
+
+/* gut cartoon helpers */
+function enzArrow(R, x, y, w, label, o = {}) { R.arrow([x, y, x + w, y], { ink: 'P', w: 1.2, hs: 3 }); R.text(label, x + w / 2, y - 3.6, o.size || 4, { al: 'c', ink: 'P' }); }
+function pacman(R, x, y, r, open, ink = 'P') { // enzyme-like blob with a notch
+  const p = [x - r, y - r * 0.7, x - r * 0.2, y - r, x + r * 0.6, y - r * 0.8, x + r, y - r * 0.1, x + r * 0.8, y + r * 0.8, x - r * 0.1, y + r, x - r, y + r * 0.5];
+  R.fill(p, { ink, t: 0.8, smooth: true, wob: 0.1 }); R.poly(p, { ink: 'B', w: 0.9, smooth: true, wob: 0.1 });
+  R.fill([x - r * 0.1, y - r * 0.2, x + r * 0.3, y - r * 0.2, x + r * 0.2, y + r * 0.3, x - r * 0.2, y + r * 0.3], { knock: true });
+  R.poly([x - r * 0.1, y - r * 0.2, x + r * 0.3, y - r * 0.2, x + r * 0.2, y + r * 0.3, x - r * 0.2, y + r * 0.3], { ink: 'B', w: 0.6, wob: 0.05 });
+}
+
+/* ---------- 3.3.3a Digestion ---------- */
+S({
+  id: '3.3.3a', num: '3.3.3', sub: 'Digestion in mammals: carbohydrates, lipids and proteins', title: 'Digestion and absorption', topic: '3.3', slot: [0, 3], span: [2, 1], dna: 'mark', ao: 1,
+  covers: ['3.3.3.s1', '3.3.3.s2', '3.3.3.s3', '3.3.3.s4'],
+  card: {
+    text: 'During <b>digestion</b>, large biological molecules are <b>hydrolysed</b> to smaller molecules that can be absorbed across cell membranes. <b>Carbohydrates</b>: <b>amylases</b> (from the salivary glands and pancreas) hydrolyse starch to maltose; <b>membrane-bound disaccharidases</b> in the ileum epithelium hydrolyse disaccharides to monosaccharides. <b>Lipids</b>: <b>lipase</b> hydrolyses triglycerides into monoglycerides and fatty acids; <b>bile salts</b> emulsify lipids into small droplets, increasing surface area. <b>Proteins</b>: <b>endopeptidases</b> hydrolyse peptide bonds within the polypeptide; <b>exopeptidases</b> remove amino acids from the ends; <b>membrane-bound dipeptidases</b> hydrolyse dipeptides.',
+    terms: ['hydrolysis', 'amylase', 'disaccharidase', 'lipase', 'bile salts', 'emulsification', 'endopeptidase', 'exopeptidase', 'dipeptidase', 'membrane-bound'],
+    skill: 'MS 3.5/RP1-style rate: link to enzymes', eq: null,
+    q: 'Why does the emulsification of lipids by bile salts speed up digestion?', a: 'It breaks large lipid globules into many small droplets, increasing the surface area available to lipase.'
+  },
+  draw(R, sc) {
+    R.text('digestion: hydrolysis of large molecules', 332, 15, 5.2, { al: 'c' });
+    // gut path: mouth/salivary glands -> stomach -> duodenum/pancreas -> ileum
+    R.text('carbohydrates', 66, 36, 4.8, { al: 'c' }); R.text('lipids', 66, 100, 4.8, { al: 'c' }); R.text('proteins', 66, 164, 4.8, { al: 'c' });
+    R.line(8, 88, 656, 88, { ink: 'B', w: 0.4, t: 0.4, taper: 'none' }); R.line(8, 152, 656, 152, { ink: 'B', w: 0.4, t: 0.4, taper: 'none' });
+    // ---- carbohydrates: starch -> maltose -> glucose
+    const sg = (x, y, n) => { for (let i = 0; i < n; i++) R.poly(hexPts(x + i * 9, y, 4.2), { ink: 'B', w: 0.8, fi: 'Y', ft: 0.5 }); R.line(x, y - 0, x + (n - 1) * 9, y, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); };
+    sg(136, 52, 9); R.text('starch', 172, 66, 3.9, { al: 'c' });
+    enzArrow(R, 218, 52, 40, 'amylase'); pacman(R, 238, 38, 5.4); R.text('salivary glands, pancreas', 238, 26, 3.4, { al: 'c' });
+    [0, 1, 2, 3].forEach(i => { sg(268 + i * 22, 52, 2); }); R.text('maltose', 300, 66, 3.9, { al: 'c' });
+    enzArrow(R, 358, 52, 52, 'disaccharidase'); R.text('membrane-bound, ileum', 384, 66, 3.4, { al: 'c' });
+    [0, 1, 2, 3, 4, 5].forEach(i => R.poly(hexPts(426 + i * 14, 52, 4.2), { ink: 'B', w: 0.8, fi: 'Y', ft: 0.5 })); R.text('glucose (monosaccharides)', 460, 66, 3.9, { al: 'c' });
+    // bond mark
+    R.bondMark(145, 52, 2.4); R.bondMark(163, 52, 2.4);
+    // ---- lipids
+    const tri = (x, y) => { R.line(x, y - 8, x, y + 8, { ink: 'B', w: 1.3, taper: 'none' }); [-8, 0, 8].forEach(dy => { R.stroke([x, y + dy, x + 10, y + dy, x + 14, y + dy - 2, x + 18, y + dy + 2, x + 22, y + dy - 2, x + 26, y + dy + 2, x + 30, y + dy], { ink: 'Y', w: 1.4, smooth: false, taper: 'none' }); R.bondMark(x + 5, y + dy, 2); }); };
+    tri(136, 116); R.text('triglyceride', 160, 132, 3.9, { al: 'c' });
+    // emulsification
+    R.circle(222, 112, 11, { ink: 'B', w: 1, fi: 'Y', ft: 0.4 }); R.arrow([236, 112, 252, 112], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('bile salts', 244, 106, 3.6, { al: 'c', ink: 'P' });
+    [[262, 106], [276, 118], [264, 122], [280, 106], [270, 112]].forEach(([x, y]) => R.circle(x, y, 3.4, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.4 }));
+    R.text('large lipid droplet → emulsion of small droplets', 252, 132, 3.7, { al: 'c' });
+    enzArrow(R, 310, 114, 40, 'lipase'); pacman(R, 330, 100, 5.4); R.text('pancreas', 330, 94, 3.4, { al: 'c' });
+    R.line(372, 108, 372, 124, { ink: 'B', w: 1.3, taper: 'none' }); R.stroke([372, 108, 390, 108, 396, 106, 402, 110, 408, 106, 414, 110, 420, 108], { ink: 'Y', w: 1.4, taper: 'none' }); R.text('monoglyceride', 392, 130, 3.7, { al: 'c' });
+    R.text('+', 430, 116, 6, { al: 'c' });
+    [0, 1].forEach(i => { R.stroke([440, 106 + i * 12, 450, 106 + i * 12, 454, 104 + i * 12, 458, 108 + i * 12, 462, 104 + i * 12, 466, 108 + i * 12, 470, 106 + i * 12], { ink: 'Y', w: 1.4, taper: 'none' }); R.circle(437, 106 + i * 12, 2.2, { ink: 'B', w: 0.7, fi: 'P', ft: 0.9 }); }); R.text('fatty acids', 454, 132, 3.7, { al: 'c' });
+    // ---- proteins
+    const pep = (x, y, n, cols) => { for (let i = 0; i < n; i++) { R.circle(x + i * 10, y + (i % 2) * 3, 4, { ink: 'B', w: 0.8, fi: cols[i % cols.length], ft: 0.55 }); if (i) R.line(x + (i - 1) * 10 + 4, y + ((i - 1) % 2) * 3, x + i * 10 - 4, y + (i % 2) * 3, { ink: 'B', w: 0.8, taper: 'none' }); } };
+    pep(136, 182, 10, ['P', 'Y', 'T', 'TY']); R.text('polypeptide', 182, 198, 3.9, { al: 'c' });
+    enzArrow(R, 236, 182, 44, 'endopeptidase'); R.text('breaks bonds within', 258, 196, 3.4, { al: 'c' }); R.text('the chain', 258, 201.5, 3.4, { al: 'c' }); pacman(R, 258, 168, 5.4);
+    pep(298, 176, 4, ['P', 'Y']); pep(354, 176, 3, ['T', 'TY']); pep(400, 176, 3, ['Y', 'P']);
+    enzArrow(R, 444, 182, 44, 'exopeptidase'); R.text('removes amino acids', 466, 196, 3.4, { al: 'c' }); R.text('from the ends', 466, 201.5, 3.4, { al: 'c' }); pacman(R, 466, 168, 5.4);
+    pep(506, 176, 2, ['P']); [0, 1, 2, 3, 4].forEach(i => R.circle(540 + i * 12, 182, 4, { ink: 'B', w: 0.8, fi: ['P', 'Y', 'T', 'TY', 'P'][i], ft: 0.55 }));
+    R.text('dipeptide', 516, 198, 3.7, { al: 'c' }); R.text('amino acids', 566, 198, 3.7, { al: 'c' }); enzArrow(R, 524, 214, 30, 'dipeptidase', { size: 3.6 }); R.text('membrane-bound', 536, 224, 3.4, { al: 'c' });
+    // all hydrolysis: water
+    R.drop(600, 100, 7, {}); R.text('every step is hydrolysis:', 600, 120, 3.8, { al: 'c' }); R.text('water breaks bonds', 600, 126, 3.8, { al: 'c' });
+    R.drop(600, 180, 7, {});
+    R.text('digestion in the lumen', 640, 228, 3.6, { al: 'r' });
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.dot(300 + u * 190, 52, 1.2, 'Y', 0.8, i); }
+  },
+});
+
+/* ---------- 3.3.3b Absorption of the products of digestion ---------- */
+S({
+  id: '3.3.3b', num: '3.3.3', sub: 'Absorption in the ileum: co-transport and micelles', title: 'Digestion and absorption', topic: '3.3', slot: [2, 3], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.3.s5', '3.3.3.s6', '3.3.3.s7'],
+  card: {
+    text: 'The <b>ileum</b> is adapted for absorption: folded wall, <b>villi</b> and <b>microvilli</b> give a very large surface area; thin epithelium; a rich blood supply maintains concentration gradients. Amino acids and monosaccharides are absorbed by <b>co-transport</b>: sodium ions are actively transported out of the epithelial cell, Na⁺ then diffuses in from the lumen through a co-transporter protein bringing the amino acid or monosaccharide with it; these then diffuse into the blood. Lipid digestion products form <b>micelles</b> with bile salts; micelles bring them to the epithelium, where monoglycerides and fatty acids diffuse across the membrane (lipid-soluble). Inside the cell they are reassembled into triglycerides and leave in vesicles via the lymph and blood.',
+    terms: ['ileum', 'villus', 'microvilli', 'co-transport', 'sodium ions', 'amino acid', 'monosaccharide', 'micelle', 'bile salts', 'monoglyceride', 'fatty acid'],
+    skill: 'Link to 3.2.3: co-transport', eq: null,
+    q: 'Why do monoglycerides and fatty acids not need a carrier protein to enter epithelial cells?', a: 'They are lipid-soluble (non-polar), so they diffuse directly through the phospholipid bilayer; micelles keep a high concentration near the membrane.'
+  },
+  draw(R, sc) {
+    R.text('the ileum: villi and microvilli', 90, 15, 5, { al: 'c' });
+    // villi in section
+    for (let v = 0; v < 3; v++) { const x = 38 + v * 56, h = 84; const vil = [x - 12, 160, x - 12, 160 - h * 0.6, x - 10, 160 - h, x, 160 - h - 6, x + 10, 160 - h, x + 12, 160 - h * 0.6, x + 12, 160]; R.fill(vil, { ink: 'Y', t: 0.12, wob: 0.3 }); R.poly(vil, { ink: 'B', w: 1.2, smooth: true, wob: 0.4 }); R.stroke([x - 3, 160, x - 3, 160 - h + 6], { ink: 'P', w: 2, t: 0.7, taper: 'none' }); R.stroke([x + 3, 160, x + 3, 160 - h + 6, x, 160 - h + 2], { ink: 'T', w: 1.8, t: 0.8, taper: 'none' }); }
+    R.rect(8, 160, 164, 6, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.2, wob: 0.2 });
+    leader(R, 'villus', 94, 76, 110, 62, { size: 4.2, al: 'c' }); leader(R, 'blood capillary', 91, 118, 44, 186, { size: 4.2, al: 'c' }); leader(R, 'lacteal', 97, 118, 140, 186, { size: 4.2, al: 'c' });
+    R.text('large surface area:', 92, 208, 4.2, { al: 'c' }); R.text('folds, villi, microvilli', 92, 214.5, 4.2, { al: 'c' }); R.text('thin wall, rich blood supply', 92, 223, 4.2, { al: 'c' });
+    R.line(178, 22, 178, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // epithelial cell with microvilli: co-transport + micelle
+    const cx0 = 196, cx1 = 644;
+    R.fill([cx0, 62, cx1, 62, cx1, 22, cx0, 22], { ink: 'T', t: 0.08, wob: 0.2 }); R.text('lumen of ileum', cx0 + 4, 30, 4.4, { al: 'l' });
+    R.fill([cx0, 206, cx1, 206, cx1, 232, cx0, 232], { ink: 'P', t: 0.14, wob: 0.2 }); R.text('blood capillary', cx0 + 4, 223, 4.4, { al: 'l' });
+    const top = []; for (let i = 0; i < 20; i++) { const x = cx0 + 4 + i * 22.4; top.push(x, 82, x, 68, x + 3, 64, x + 14, 64, x + 18, 68, x + 18, 82); }
+    R.fill([cx0, 82, cx1, 82, cx1, 196, cx0, 196], { ink: 'P', t: 0.08, wob: 0.2 });
+    R.stroke([cx0, 82, ...top, cx1, 82], { ink: 'B', w: 1.2, smooth: false, taper: 'none' });
+    R.stroke([cx0, 82, cx0, 196, cx1, 196, cx1, 82], { ink: 'B', w: 1.2, smooth: false, taper: 'none' });
+    R.text('microvilli', cx1 - 30, 56, 4, { al: 'c' });
+    R.circle(404, 140, 17, { ink: 'B', w: 1, fi: 'B', ft: 0.25 }); R.text('epithelial cell', 404, 168, 4.4, { al: 'c' });
+    const mp = (x, y, w, h, fi) => R.rrect(x, y, w, h, 2, { ink: 'B', w: 1, fi, ft: 0.8, wob: 0.1 });
+    // co-transport
+    mp(232, 76, 18, 12, 'P'); tok(R, 226, 38, 'Na^+', { r: 4.6 }); glucTok(R, 246, 42, 4.2); R.arrow([236, 50, 240, 76], { ink: 'P', w: 1.1, hs: 2.8 });
+    R.text('co-transport:', 270, 40, 4.2, { al: 'l' }); R.text('Na^+ brings glucose or', 270, 46.5, 4.2, { al: 'l' }); R.text('an amino acid with it', 270, 53, 4.2, { al: 'l' });
+    mp(298, 190, 18, 12, 'P'); tok(R, 307, 176, 'Na^+', { r: 4.6 }); R.arrow([307, 182, 307, 210], { ink: 'P', w: 1.1, hs: 2.8 }); R.text('Na^+ pumped out', 332, 176, 4, { al: 'l' }); R.text('(active transport, ATP)', 332, 182, 4, { al: 'l' });
+    glucTok(R, 238, 120, 4.4); glucTok(R, 262, 134, 4.4); glucTok(R, 224, 148, 4.4); R.text('glucose builds up inside', 244, 168, 4, { al: 'c' });
+    mp(556, 190, 18, 12, 'P'); glucTok(R, 565, 176, 4.4); R.arrow([565, 184, 565, 214], { ink: 'P', w: 1.1, hs: 2.8 }); R.text('glucose diffuses into blood', 548, 176, 4, { al: 'r' }); R.text('(facilitated diffusion)', 548, 182, 4, { al: 'r' });
+    // micelle
+    const mc = [500, 42], mr = 17;
+    R.circle(mc[0], mc[1], mr, { ink: 'B', w: 0.8, fi: 'T', ft: 0.15 });
+    for (let i = 0; i < 12; i++) { const a = i * TAU / 12; R.circle(mc[0] + Math.cos(a) * mr, mc[1] + Math.sin(a) * mr, 2.3, { ink: 'B', w: 0.6, fi: 'T', ft: 0.9 }); R.line(mc[0] + Math.cos(a) * (mr - 2), mc[1] + Math.sin(a) * (mr - 2), mc[0] + Math.cos(a) * (mr - 10), mc[1] + Math.sin(a) * (mr - 10), { ink: 'B', w: 0.7, taper: 'none' }); }
+    R.circle(mc[0], mc[1], 4.4, { ink: 'B', w: 0.6, fi: 'Y', ft: 0.6 });
+    R.text('micelle:', 530, 32, 4.2, { al: 'l' }); R.text('bile salts + lipid products', 530, 38.5, 4.2, { al: 'l' });
+    R.arrow([mc[0] - 4, mc[1] + 20, mc[0] - 4, 86], { ink: 'Y', w: 1.5, hs: 3 }); R.text('monoglycerides and fatty acids', 536, 98, 4.2, { al: 'c' }); R.text('diffuse through the membrane', 536, 104.5, 4.2, { al: 'c' });
+    R.circle(500, 130, 6, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.5 }); R.text('reassembled into triglycerides', 520, 122, 4, { al: 'l' });
+    R.arrow([506, 134, 522, 152], { ink: 'B', w: 0.9, hs: 2.4 }); R.circle(528, 158, 5, { ink: 'B', w: 0.9, fi: 'T', ft: 0.2 }); R.circle(528, 158, 2.4, { ink: 'B', w: 0.6, fi: 'Y', ft: 0.5 }); R.text('vesicle → lymph', 538, 160, 4, { al: 'l' });
+  },
+  anim(A, sc) {
+    const p = A.ph(5); A.ion(226 + p * 10, 38 + p * 40, 'Na^+', 'T', 4, 1); A.glucose(246 - p * 6, 42 + p * 40, 4.2, 2);
+    A.dot(496, 66 + p * 24, 1.4, 'Y', 0.9, 3); A.glucose(565, 176 + p * 32, 4.4, 4); A.ion(307, 176 + p * 36, 'Na^+', 'T', 4, 5);
+  },
+});
+
+/* ===================== 3.3.4.1 Mass transport in animals: haemoglobin, circulation, heart, vessels, tissue fluid ===================== */
+/* haemoglobin molecule: four subunits (ribbon blobs) with haem discs; o.ox = 0..4 oxygen molecules bound */
+function hbMol(R, x, y, s, o = {}) {
+  const sub = [[-1, -1, 'P'], [1, -1, 'TY'], [-1, 1, 'TY'], [1, 1, 'P']];
+  sub.forEach(([dx, dy, ink], i) => {
+    const cx = x + dx * 11.5 * s, cy = y + dy * 11.5 * s, p = [];
+    for (let k = 0; k < 20; k++) { const a = k * TAU / 20, rr = 12 * s * (1 + 0.12 * Math.sin(a * 3 + i * 1.7)); p.push(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * 0.92); }
+    R.fill(p, { ink, t: 0.45, smooth: true, wob: 0.3 }); R.poly(p, { ink: 'B', w: 1.1, smooth: true, wob: 0.4 });
+    for (let k = 0; k < 3; k++) R.stroke([cx - 7 * s, cy - 5 * s + k * 4.6 * s, cx - 2 * s, cy - 8 * s + k * 4.6 * s, cx + 3 * s, cy - 4 * s + k * 4.6 * s, cx + 7 * s, cy - 7 * s + k * 4.6 * s], { ink: 'B', w: 0.5, smooth: true, taper: 'none', t: 0.6 });
+    R.rect(cx - 2.6 * s, cy - 2.6 * s, 5.2 * s, 5.2 * s, { ink: 'B', w: 0.9, fi: 'P', ft: 0.9, wob: 0.05 }); R.dot(cx, cy, 0.9 * s, { ink: 'B' });
+    if (o.ox > i) { const ox = cx + dx * 10.4 * s, oy = cy + dy * 10.4 * s; R.circle(ox, oy, 3.3 * s, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.85 }); R.text('O_2', ox, oy + 1.3 * s, 2.7 * s, { al: 'c' }); }
+  });
+  return [x, y];
+}
+
+/* ---------- 3.3.4.1a Haemoglobin: structure and function ---------- */
+S({
+  id: '3.3.4.1a', num: '3.3.4.1', sub: 'Haemoglobin and red blood cells: loading, transport and unloading of oxygen', title: 'Mass transport in animals', topic: '3.3', slot: [0, 4], dna: 'mark', ao: 1,
+  covers: ['3.3.4.1.s1', '3.3.4.1.s2'],
+  card: {
+    text: 'The <b>haemoglobins</b> are a group of chemically similar molecules found in many organisms. Haemoglobin is a protein with a <b>quaternary structure</b>: four polypeptide chains, each with a <b>haem</b> group containing an iron ion that binds one oxygen molecule. In the lungs (high partial pressure of oxygen) haemoglobin <b>loads</b> oxygen to form <b>oxyhaemoglobin</b>; red blood cells transport it; in respiring tissues (low partial pressure) oxyhaemoglobin <b>unloads</b> oxygen. Red blood cells are biconcave (large surface area) and have no nucleus, so room for more haemoglobin.',
+    terms: ['haemoglobin', 'quaternary structure', 'haem group', 'oxyhaemoglobin', 'loading', 'unloading', 'partial pressure of oxygen', 'red blood cell'],
+    skill: 'MS 0.1: units (kPa)', eq: null, eqn: 'Hb + 4O₂ ⇌ HbO₈ (association / dissociation)',
+    q: 'Why does haemoglobin unload oxygen in respiring tissues?', a: 'The partial pressure of oxygen there is low, so haemoglobin has a lower affinity for oxygen and releases it.'
+  },
+  draw(R, sc) {
+    R.text('haemoglobin: 4 chains, 4 haem groups', 160, 15, 4.8, { al: 'c' });
+    hbMol(R, 96, 78, 1.35, { ox: 0 });
+    leader(R, 'polypeptide chain', 80, 54, 40, 34, { size: 4, al: 'c' }); leader(R, 'haem group (Fe^{2+})', 113, 63, 152, 30, { size: 4, al: 'c' });
+    R.text('quaternary structure:', 96, 126, 4.2, { al: 'c' }); R.text('4 polypeptide chains', 96, 132, 4.2, { al: 'c' });
+    R.line(190, 22, 190, 138, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // red blood cell biconcave section
+    R.text('red blood cell', 252, 34, 4.4, { al: 'c' });
+    const rb = []; for (let i = 0; i < 24; i++) { const a = i * TAU / 24; rb.push(252 + Math.cos(a) * 30, 74 + Math.sin(a) * 22); }
+    R.fill(rb, { ink: 'P', t: 0.8, smooth: true, wob: 0.3 }); R.poly(rb, { ink: 'B', w: 1.3, smooth: true, wob: 0.4 });
+    R.ellipse(252, 74, 12, 5.6, { ink: 'B', w: 0.8, fi: 'P', ft: 0.5 });
+    R.text('biconcave, no nucleus:', 252, 108, 3.9, { al: 'c' }); R.text('large surface area,', 252, 114, 3.9, { al: 'c' }); R.text('full of haemoglobin', 252, 120, 3.9, { al: 'c' });
+    R.line(8, 144, 312, 144, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // loading / unloading cycle
+    R.text('loading in lungs', 62, 154, 4.4, { al: 'c' }); R.text('unloading in tissues', 258, 154, 4.4, { al: 'c' });
+    hbMol(R, 34, 192, 0.7, { ox: 0 }); R.arrow([56, 186, 100, 186], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('+ O_2', 78, 182, 4, { al: 'c', ink: 'P' }); hbMol(R, 126, 192, 0.7, { ox: 4 });
+    R.text('haemoglobin', 34, 216, 3.7, { al: 'c' }); R.text('oxyhaemoglobin', 126, 216, 3.7, { al: 'c' });
+    R.text('high p_{O2}: high affinity', 80, 230, 3.9, { al: 'c' });
+    hbMol(R, 200, 192, 0.7, { ox: 4 }); R.arrow([228, 186, 276, 186], { ink: 'T', w: 1.1, hs: 2.6 }); R.text('releases O_2', 252, 182, 4, { al: 'c', ink: 'T' }); hbMol(R, 302, 192, 0.7, { ox: 0 });
+    R.text('low p_{O2}: lower affinity', 252, 230, 3.9, { al: 'c' });
+    R.line(160, 150, 160, 236, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(88 + p * 50, 186, 2.6, 'P', 0.9, 1); A.dot(236 + p * 40, 186, 2.6, 'P', 0.9, 2); },
+});
+
+/* ---------- 3.3.4.1b Oxyhaemoglobin dissociation curve; cooperative binding ---------- */
+S({
+  id: '3.3.4.1b', num: '3.3.4.1', sub: 'The oxyhaemoglobin dissociation curve and cooperative binding of oxygen', title: 'Mass transport in animals', topic: '3.3', slot: [1, 4], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.3.4.1.s3', '3.3.4.1.s4'],
+  card: {
+    text: 'The <b>oxyhaemoglobin dissociation curve</b> plots % saturation of haemoglobin against the partial pressure of oxygen (kPa). It is S-shaped because binding is <b>cooperative</b>: the binding of the first oxygen changes the shape of haemoglobin, making it easier for further oxygens to bind (steep middle). At high pO₂ in the lungs (about 13 kPa) haemoglobin is almost saturated (loading); at the low pO₂ of respiring tissues (about 5 kPa for resting muscle) it unloads a large fraction of its oxygen. A small fall in pO₂ gives a large fall in saturation where the curve is steep.',
+    terms: ['dissociation curve', '% saturation', 'partial pressure of oxygen', 'kPa', 'cooperative binding', 'affinity', 'loading', 'unloading'],
+    skill: 'MS 1.3: read values from a graph', eq: MATH(mt('% unloaded '), mo('='), mt('% saturation in lungs'), mo('−'), mt('% saturation in tissues')),
+    q: 'Why is the curve S-shaped?', a: 'The first oxygen to bind changes haemoglobin’s shape, making it easier for the next ones (cooperativity); at the end the last binding site is hardest to fill, so the curve flattens.'
+  },
+  draw(R, sc) {
+    R.text('oxyhaemoglobin dissociation curve', 192, 15, 5, { al: 'c' });
+    const g = R.graph(34, 32, 256, 170, { xmin: 0, xmax: 14, ymin: 0, ymax: 100, xl: 'partial pressure of oxygen / kPa', yl: '% saturation of haemoglobin', xt: [[0, '0'], [2, '2'], [4, '4'], [6, '6'], [8, '8'], [10, '10'], [12, '12'], [14, '14']], yt: [[0, '0'], [20, '20'], [40, '40'], [60, '60'], [80, '80'], [100, '100']], fs: 4.2, xly: 14, ylx: 15, paper: 8 }).axes();
+    const sat = p => 100 * Math.pow(p, 2.6) / (Math.pow(p, 2.6) + Math.pow(3.6, 2.6));
+    g.curve(sat, { ink: 'P', w: 1.9, n: 70 });
+    g.dashed(13, 0, 13, sat(13), { ink: 'T', w: 0.9 }); g.dashed(0, sat(13), 13, sat(13), { ink: 'T', w: 0.9 });
+    g.dashed(5, 0, 5, sat(5), { ink: 'B', w: 0.9 }); g.dashed(0, sat(5), 5, sat(5), { ink: 'B', w: 0.9 });
+    R.circle(g.X(13), g.Y(sat(13)), 2.2, { ink: 'T', w: 1.1 }); R.circle(g.X(5), g.Y(sat(5)), 2.2, { ink: 'B', w: 1.1 });
+    R.text('lungs: ≈ 13 kPa, about 97 %', g.X(13) - 4, g.Y(sat(13)) + 12, 4, { al: 'r', ink: 'T' }); R.text('resting tissue: ≈ 5 kPa, about 70 %', g.X(5) + 4, g.Y(sat(5)) + 10, 4, { al: 'l' });
+    const u0 = g.X(0) + 6; R.arrow([g.X(13) + 4, g.Y(sat(13)), g.X(13) + 4, g.Y(sat(5))], { ink: 'P', w: 1, hs: 2.6, both: true }); R.text('unloaded', g.X(13) + 8, (g.Y(sat(13)) + g.Y(sat(5))) / 2 + 1, 3.7, { al: 'l', ink: 'P' });
+    R.text('first O_2 hard to load', g.X(0.4), g.Y(14), 3.7, { al: 'l' });
+    R.text('steep: easy to load', g.X(2.9), g.Y(50), 3.7, { al: 'r' });
+    R.text('plateau: almost full', g.X(8), g.Y(88), 3.7, { al: 'l' });
+    R.line(318, 22, 318, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // cooperative binding: Hb with 0,1,2,3,4 O2
+    R.text('cooperative binding', 442, 28, 4.8, { al: 'c' });
+    [0, 1, 3, 4].forEach((n, i) => { const x = 346 + i * 74; hbMol(R, x, 74, 0.82, { ox: n }); });
+        ['first O_2 binds with difficulty', 'and changes the shape', 'of haemoglobin', '→ the next O_2 binds more easily', '→ the last site is the hardest to fill'].forEach((t, i) => R.text(t, 442, 118 + i * 8, 4.2, { al: 'c' }));
+    R.text('0', 346, 52, 4, { al: 'c' }); R.text('1', 420, 52, 4, { al: 'c' }); R.text('3', 494, 52, 4, { al: 'c' }); R.text('4', 568, 52, 4, { al: 'c' }); R.text('O_2 bound', 360, 46, 3.4, { al: 'c' });
+    R.line(332, 172, 556, 172, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    ['steep part of the curve:', 'a small fall in p_{O2} causes a large fall in saturation', '= large release of O_2 to respiring cells'].forEach((t, i) => R.text(t, 442, 188 + i * 8, 4.2, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+  },
+  anim(A, sc) { const p = A.ph(7); const x = p * 13, y = 100 * Math.pow(x, 2.6) / (Math.pow(x, 2.6) + Math.pow(3.6, 2.6)); A.dot(34 + x / 14 * 256, 202 - y * 1.7, 2.4, 'B', 0.9, 1); },
+});
+
+/* ---------- 3.3.4.1c Bohr effect and different haemoglobins ---------- */
+S({
+  id: '3.3.4.1c', num: '3.3.4.1', sub: 'The Bohr effect; haemoglobins adapted to different environments', title: 'Mass transport in animals', topic: '3.3', slot: [3, 4], dna: 'mark', ao: 3,
+  covers: ['3.3.4.1.s5', '3.3.4.1.s6'],
+  card: {
+    text: 'A higher concentration (partial pressure) of <b>carbon dioxide</b> lowers haemoglobin’s affinity for oxygen, so the dissociation curve shifts <b>to the right</b>: at any given pO₂ the haemoglobin is less saturated, releasing more oxygen to actively respiring tissues. This is the <b>Bohr effect</b>. Many animals have <b>different types of haemoglobin</b> adapted to their environment: haemoglobin with a curve to the <b>left</b> (higher affinity) suits low-oxygen habitats, e.g. a lugworm in sand or a fetus; haemoglobin with a curve to the <b>right</b> suits highly active animals or those with a high metabolic rate.',
+    terms: ['Bohr effect', 'carbon dioxide', 'shift to the right', 'affinity', 'lugworm', 'adaptation', 'metabolic rate'],
+    skill: 'Interpret shifted curves', eq: null,
+    q: 'Which way does the curve shift for an animal living in a low-oxygen burrow, and why?', a: 'To the left: its haemoglobin has a higher affinity for oxygen, so it loads oxygen even at low partial pressures.'
+  },
+  draw(R, sc) {
+    R.text('shifting the curve', 160, 14, 5.2, { al: 'c' });
+    const sat = (p, k) => 100 * Math.pow(p, 2.6) / (Math.pow(p, 2.6) + Math.pow(k, 2.6));
+    // Bohr
+    const g = R.graph(34, 28, 168, 92, { xmin: 0, xmax: 14, ymin: 0, ymax: 100, xl: 'p_{O2} / kPa', yl: '% saturation', xt: [[0, '0'], [5, '5'], [10, '10']], yt: [[0, '0'], [50, '50'], [100, '100']], fs: 3.7, xly: 12, ylx: 12, paper: 0 }).axes();
+    g.curve(p => sat(p, 3.6), { ink: 'T', w: 1.4 }); g.curve(p => sat(p, 5.4), { ink: 'P', w: 1.4 });
+    g.dashed(5, 0, 5, sat(5, 3.6), { ink: 'B', w: 0.6 }); g.dashed(0, sat(5, 3.6), 5, sat(5, 3.6), { ink: 'B', w: 0.6 }); g.dashed(0, sat(5, 5.4), 5, sat(5, 5.4), { ink: 'B', w: 0.6 });
+    R.arrow([g.X(6.4), g.Y(22), g.X(8.6), g.Y(22)], { ink: 'B', w: 1, hs: 2.4 });
+    R.text('low CO_2', g.X(3.6), g.Y(96), 3.8, { al: 'r', ink: 'T' }); R.text('high CO_2', g.X(8), g.Y(54), 3.8, { al: 'l', ink: 'P' });
+    R.text('Bohr effect', 262, 40, 4.8, { al: 'c', ink: 'P' });
+    ['more CO_2 from', 'respiring tissue →', 'curve shifts right:', 'less saturated at', 'the same p_{O2},', 'so more O_2 is', 'released'].forEach((t, i) => R.text(t, 262, 52 + i * 7.2, 3.9, { al: 'c' }));
+    R.line(8, 144, 312, 144, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // different haemoglobins
+    const g2 = R.graph(34, 156, 168, 62, { xmin: 0, xmax: 14, ymin: 0, ymax: 100, xl: 'p_{O2} / kPa', yl: '% saturation', xt: [], yt: [], fs: 3.7, xly: 11, ylx: 6, paper: 0 }).axes();
+    g2.curve(p => sat(p, 2.2), { ink: 'T', w: 1.3 }); g2.curve(p => sat(p, 3.6), { ink: 'B', w: 1.3 }); g2.curve(p => sat(p, 5.4), { ink: 'P', w: 1.3 });
+    R.text('human', g2.X(8.8), g2.Y(78), 3.7, { al: 'l', ink: 'B' }); R.arrow([g2.X(4), g2.Y(18), g2.X(1.4), g2.Y(18)], { ink: 'T', w: 0.8, hs: 2 }); R.arrow([g2.X(7), g2.Y(18), g2.X(9.6), g2.Y(18)], { ink: 'P', w: 0.8, hs: 2 });
+    R.text('left:', 214, 160, 4.4, { al: 'l', ink: 'T' }); ['higher affinity: low-O_2', 'habitats, e.g. lugworm', 'in sand, or a fetus'].forEach((t, i) => R.text(t, 214, 167 + i * 5.8, 3.7, { al: 'l' }));
+    R.text('right:', 214, 192, 4.4, { al: 'l', ink: 'P' }); ['lower affinity: very', 'active animals with a', 'high metabolic rate'].forEach((t, i) => R.text(t, 214, 199 + i * 5.8, 3.7, { al: 'l' }));
+    R.text('different animals, different haemoglobins', 160, 238, 3.9, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(6); A.dot(34 + p * 168, 120 - (100 * Math.pow(p * 14, 2.6) / (Math.pow(p * 14, 2.6) + Math.pow(5.4, 2.6))) * 0.92, 2, 'P', 0.9, 1); },
+});
+
+/* ===================== 3.3.4.1 (cont.) circulation, heart, cardiac cycle ===================== */
+const BLOOD_OX = { ink: 'P', ink2: 'Y' };   // oxygenated: pink over yellow = red-orange; deoxygenated: blue over pink = violet
+function oxFill(R, pts, ox, o = {}) { // fill a region with blood colour
+  if (ox) { R.fill(pts, { ink: 'P', t: o.t === undefined ? 0.55 : o.t, wob: o.wob === undefined ? 0.2 : o.wob, smooth: o.smooth }); R.fill(pts, { ink: 'Y', t: o.t2 === undefined ? 0.5 : o.t2, wob: o.wob === undefined ? 0.2 : o.wob, smooth: o.smooth }); }
+  else { R.fill(pts, { ink: 'B', t: o.t === undefined ? 0.4 : o.t, wob: o.wob === undefined ? 0.2 : o.wob, smooth: o.smooth }); R.fill(pts, { ink: 'P', t: o.t2 === undefined ? 0.22 : o.t2, wob: o.wob === undefined ? 0.2 : o.wob, smooth: o.smooth }); }
+}
+function oxStroke(R, pts, ox, w, o = {}) {
+  R.stroke(pts, { ink: 'B', w: w + 1.2, smooth: o.smooth !== false, taper: 'none', wob: 0.15 });
+  R.stroke(pts, { ink: 'B', w, smooth: o.smooth !== false, taper: 'none', wob: 0.15, knock: true });
+  if (ox) { R.stroke(pts, { ink: 'P', w, t: 0.55, smooth: o.smooth !== false, taper: 'none', wob: 0.15 }); R.stroke(pts, { ink: 'Y', w, t: 0.5, smooth: o.smooth !== false, taper: 'none', wob: 0.15 }); }
+  else { R.stroke(pts, { ink: 'B', w, t: 0.4, smooth: o.smooth !== false, taper: 'none', wob: 0.15 }); R.stroke(pts, { ink: 'P', w, t: 0.22, smooth: o.smooth !== false, taper: 'none', wob: 0.15 }); }
+}
+
+/* ---------- 3.3.4.1d General pattern of blood circulation in a mammal ---------- */
+S({
+  id: '3.3.4.1d', num: '3.3.4.1', sub: 'General pattern of blood circulation in a mammal: heart, lungs, kidneys', title: 'Mass transport in animals', topic: '3.3', slot: [0, 5], dna: 'mark', ao: 1,
+  covers: ['3.3.4.1.s7'],
+  card: {
+    text: 'In mammals blood circulates in a <b>double circulation</b>: the right side of the heart pumps deoxygenated blood to the lungs via the <b>pulmonary artery</b>; oxygenated blood returns in the <b>pulmonary veins</b> to the left side, which pumps it round the body via the <b>aorta</b>. Blood returns to the right atrium in the <b>vena cava</b>. The <b>coronary arteries</b> supply the heart muscle itself; the <b>renal arteries</b> take blood to the kidneys and the <b>renal veins</b> carry it away. Names are required only for the coronary arteries and for the vessels entering and leaving the heart, lungs and kidneys.',
+    terms: ['double circulation', 'aorta', 'vena cava', 'pulmonary artery', 'pulmonary vein', 'coronary artery', 'renal artery', 'renal vein'],
+    skill: 'Trace blood flow', eq: null,
+    q: 'Which vessel carries oxygenated blood from the lungs to the heart?', a: 'The pulmonary vein (the only vein carrying oxygenated blood in the body).'
+  },
+  draw(R, sc) {
+    R.text('double circulation', 160, 14, 5.2, { al: 'c' });
+    const tube = (pts, ox, w) => oxStroke(R, pts, ox, w, { smooth: false });
+    // capillary beds
+    const bed = (x, y, w, h, label, ox) => { R.rrect(x, y, w, h, 6, { ink: 'B', w: 1.2, fi: 'P', ft: 0.12, wob: 0.3 }); for (let i = 0; i < 9; i++) R.stroke([x + 8 + i * ((w - 16) / 8), y + 3, x + 8 + i * ((w - 16) / 8) + (i % 2 ? 3 : -3), y + h / 2, x + 8 + i * ((w - 16) / 8), y + h - 3], { ink: 'B', w: 0.6, smooth: true, taper: 'none' }); R.text(label, x + w / 2, y + h / 2 + 1.4, 4.4, { al: 'c' }); };
+    bed(102, 26, 118, 26, 'lungs', 1);
+    bed(62, 196, 70, 24, 'kidneys', 1); bed(168, 196, 100, 24, 'rest of body', 1);
+    // heart: four chambers
+    const hx = 130, hy = 88;
+    const ch = (x, y, w, h, ox, label) => { const p = [x, y, x + w, y, x + w, y + h, x, y + h]; oxFill(R, p, ox); R.poly(p, { ink: 'B', w: 1.3, wob: 0.3 }); R.text(label, x + w / 2, y + h / 2 + 1.5, 4, { al: 'c' }); };
+    ch(hx, hy, 30, 22, false, 'RA'); ch(hx + 30, hy, 30, 22, true, 'LA'); ch(hx, hy + 22, 30, 30, false, 'RV'); ch(hx + 30, hy + 22, 30, 30, true, 'LV');
+    R.poly([hx, hy, hx + 60, hy, hx + 60, hy + 52, hx, hy + 52], { ink: 'B', w: 1.8, wob: 0.3 }); R.line(hx + 30, hy, hx + 30, hy + 52, { ink: 'B', w: 2.4, taper: 'none' });
+    // pulmonary artery (RV -> lungs), pulmonary vein (lungs -> LA)
+    tube([hx + 15, hy + 22, hx + 15, 68, 120, 60, 120, 52], false, 4); tube([hx + 46, 52, hx + 46, hy], true, 4);
+    // vena cava (body -> RA)
+    tube([96, 220, 96, 226, 40, 226, 40, 100, hx, 100], false, 4); tube([164, 220, 164, 226, 96, 226], false, 4);
+    // aorta (LV -> body) with renal artery branch
+    tube([hx + 46, hy + 52, hx + 46, 164, 214, 164, 214, 194], true, 4.4); tube([hx + 46, 164, 96, 164, 96, 196], true, 3.2);
+    // flow arrows
+    const ar = (pts, ink) => R.arrow(pts, { ink: 'B', w: 1, hs: 2.4, smooth: false });
+    // labels
+    const lab = (t, tx, ty, x, y, al) => leader(R, t, x, y, tx, ty, { size: 4, al });
+    lab('pulmonary artery', 80, 70, 122, 62, 'c'); lab('pulmonary vein', 250, 72, hx + 46, 70, 'c');
+    lab('aorta', 262, 124, 214, 178, 'c'); lab('renal artery', 70, 170, 98, 180, 'c'); lab('vena cava', 4, 80, 40, 90, 'l');
+    lab('renal vein', 8, 236, 84, 224, 'l');
+    lab('coronary arteries', 262, 100, hx + 56, hy + 30, 'c');
+    R.stroke([hx + 46, hy + 40, hx + 56, hy + 34, hx + 58, hy + 22], { ink: 'P', w: 1.4, smooth: true, taper: 'end' });
+    // key
+    oxFill(R, [206, 28, 218, 28, 218, 36, 206, 36], true); R.rect(206, 28, 12, 8, { ink: 'B', w: 0.7 }); R.text('oxygenated', 222, 35, 3.8, { al: 'l' });
+    oxFill(R, [206, 40, 218, 40, 218, 48, 206, 48], false); R.rect(206, 40, 12, 8, { ink: 'B', w: 0.7 }); R.text('deoxygenated', 222, 47, 3.8, { al: 'l' });
+  },
+  anim(A, sc) {
+    const p = A.ph(6);
+    const ppath = [145, 110, 145, 68, 120, 60, 120, 52]; for (let i = 0; i < 4; i++) { const q = A.along(ppath, (p + i / 4) % 1); A.rbc(q[0], q[1], 2.2, i, 0.75); }
+    const apath = [176, 140, 176, 164, 214, 164, 214, 194]; for (let i = 0; i < 4; i++) { const q = A.along(apath, (p + i / 4) % 1); A.rbc(q[0], q[1], 2.2, 10 + i, 0.95); }
+    const vpath = [164, 220, 164, 226, 40, 226, 40, 100, 130, 100]; for (let i = 0; i < 6; i++) { const q = A.along(vpath, (p + i / 6) % 1); A.rbc(q[0], q[1], 2.2, 20 + i, 0.7); }
+    const pvpath = [176, 52, 176, 88]; for (let i = 0; i < 2; i++) { const q = A.along(pvpath, (p + i / 2) % 1); A.rbc(q[0], q[1], 2.2, 30 + i, 0.95); }
+  },
+});
+
+/* ---------- 3.3.4.1e Gross structure of the human heart ---------- */
+S({
+  id: '3.3.4.1e', num: '3.3.4.1', sub: 'Gross structure of the human heart', title: 'Mass transport in animals', topic: '3.3', slot: [1, 5], dna: 'mark', ao: 1,
+  covers: ['3.3.4.1.s8'],
+  card: {
+    text: 'The human heart has four chambers: two thin-walled <b>atria</b> receive blood; two <b>ventricles</b> pump it out. The <b>left ventricle</b> has a thicker muscular wall than the right, as it pumps blood at higher pressure round the whole body, while the right pumps only to the lungs. <b>Atrioventricular valves</b> (tricuspid on the right, bicuspid on the left) are held by <b>tendinous cords</b> and prevent backflow into the atria; <b>semilunar valves</b> at the base of the aorta and pulmonary artery prevent backflow into the ventricles. The <b>septum</b> keeps oxygenated and deoxygenated blood separate. The <b>coronary arteries</b> supply the heart muscle.',
+    terms: ['atrium', 'ventricle', 'atrioventricular valve', 'semilunar valve', 'tendinous cords', 'septum', 'aorta', 'vena cava', 'pulmonary artery', 'pulmonary vein', 'coronary artery'],
+    skill: 'AT j: dissection (RP5)', eq: null,
+    q: 'Why is the left ventricle wall thicker than the right?', a: 'It must generate enough pressure to push blood to the whole body, whereas the right ventricle pumps only a short distance to the lungs.'
+  },
+  draw(R, sc) {
+    R.text('the human heart (section, seen from the front)', 160, 14, 4.6, { al: 'c' });
+    const K = 0.9, TX = 22, TY = -4, W = (x, y) => [TX + K * x, TY + K * y];
+    R.push(TX, TY, 0, K);
+    const outer = [60, 100, 78, 92, 108, 96, 122, 104, 134, 98, 168, 92, 196, 100, 204, 128, 206, 170, 196, 206, 164, 232, 130, 248, 100, 236, 70, 200, 58, 150];
+    R.fill(outer, { ink: 'P', t: 0.28, smooth: true, wob: 0.4 });
+    const RA = [66, 106, 80, 100, 106, 102, 114, 110, 114, 148, 70, 148, 64, 128], LA = [162, 104, 182, 98, 198, 108, 200, 130, 198, 148, 162, 148];
+    const RV = [70, 156, 114, 156, 120, 178, 116, 214, 98, 230, 82, 208, 68, 178], LV = [142, 158, 190, 158, 192, 182, 184, 206, 162, 226, 142, 222];
+    [[RA, false], [LA, true], [RV, false], [LV, true]].forEach(([pp, ox]) => { R.knock(pp, { smooth: true }); oxFill(R, pp, ox, { smooth: true }); R.poly(pp, { ink: 'B', w: 1 / K, smooth: true, wob: 0.3 }); });
+    R.poly(outer, { ink: 'B', w: 1.6 / K, smooth: true, wob: 0.5 });
+    // great vessels: pulmonary trunk (front), aorta (behind, arch to the right), vena cava, pulmonary veins
+    const tubeV = (pts, ox, w) => oxStroke(R, pts, ox, w);
+    tubeV([146, 158, 146, 108, 152, 70, 172, 52, 196, 58, 208, 84, 210, 108], true, 14);
+    tubeV([124, 158, 124, 104, 122, 74, 104, 54, 82, 46], false, 12);
+    tubeV([68, 22, 70, 60, 72, 104], false, 13);
+    tubeV([236, 122, 200, 118], true, 8); tubeV([236, 138, 200, 136], true, 8);
+    // AV valves (flaps) with tendinous cords and papillary muscles
+    const flap = (x0, x1, y, depth) => { const m = (x0 + x1) / 2; R.line(x0, y, x1, y, { ink: 'B', w: 1.8, taper: 'none' }); R.stroke([x0, y, x0 + (m - x0) * 0.4, y + depth * 0.7, m, y + depth], { ink: 'B', w: 1.2, smooth: true, taper: 'start' }); R.stroke([x1, y, x1 - (x1 - m) * 0.4, y + depth * 0.7, m, y + depth], { ink: 'B', w: 1.2, smooth: true, taper: 'start' }); return m; };
+    const m1 = flap(70, 114, 150, 20), m2 = flap(142, 190, 150, 22);
+    [[m1, 170, 86, 212], [m1, 170, 104, 210], [m2 - 1, 172, 156, 214], [m2 + 1, 172, 176, 212]].forEach(([x0, y0, x1, y1]) => R.line(x0, y0, x1, y1, { ink: 'B', w: 0.6, taper: 'none' }));
+    R.ellipse(86, 214, 4.4, 6.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.ellipse(104, 212, 4.4, 6.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.ellipse(156, 216, 5, 7, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.ellipse(176, 214, 5, 7, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 });
+    // semilunar valves (pockets) at the bases of the aorta and pulmonary artery
+    R.stroke([140, 140, 146, 150, 152, 140], { ink: 'B', w: 1.2, smooth: true, taper: 'none' }); R.stroke([118, 140, 124, 150, 130, 140], { ink: 'B', w: 1.2, smooth: true, taper: 'none' });
+    // coronary arteries over the surface
+    R.stroke([152, 72, 168, 90, 176, 124, 196, 160, 190, 206], { ink: 'P', w: 1.8 / K, smooth: true, taper: 'end' }); R.stroke([150, 70, 130, 90, 116, 96, 90, 98, 62, 120], { ink: 'P', w: 1.8 / K, smooth: true, taper: 'end', t: 0.9 });
+    R.pop();
+    const lab = (t, tx, ty, x, y, al = 'l') => { const q = W(x, y); leader(R, t, q[0], q[1], tx, ty, { size: 4, al }); };
+    lab('vena cava', 6, 18, 69, 40, 'l'); lab('right atrium', 6, 72, 66, 120, 'l'); lab('tricuspid valve', 6, 120, 82, 150, 'l'); lab('right ventricle', 6, 166, 76, 188, 'l'); lab('papillary muscle', 6, 206, 86, 214, 'l');
+    lab('pulmonary artery', 6, 32, 104, 56, 'l'); lab('semilunar valves', 6, 224, 120, 142, 'l');
+    lab('aorta', 238, 24, 190, 56, 'l'); lab('pulmonary vein', 232, 56, 236, 122, 'l'); lab('left atrium', 246, 90, 190, 124, 'l');
+    lab('bicuspid valve', 244, 108, 190, 150, 'l'); lab('tendinous cords', 244, 130, 160, 176, 'l'); lab('left ventricle', 244, 152, 190, 190, 'l'); R.text('(thick wall)', 244, 158, 3.8, { al: 'l' });
+    lab('septum', 244, 190, 130, 200, 'l'); lab('coronary artery', 244, 214, 196, 160, 'l');
+  },
+  anim(A, sc) {
+    const p = A.ph(2.4); const sys = p > 0.4; const k = sys ? (p - 0.4) / 0.6 : p / 0.4;
+    if (!sys) { A.dot(84, 96 + k * 26, 2.2, 'B', 0.7, 1); A.dot(150, 96 + k * 26, 2.2, 'P', 0.8, 2); } else { A.dot(88, 140 - k * 70, 2.4, 'B', 0.7, 3); A.dot(160, 140 - k * 90, 2.4, 'P', 0.8, 4); }
+  },
+});
+
+/* ---------- 3.3.4.1f The cardiac cycle ---------- */
+S({
+  id: '3.3.4.1f', num: '3.3.4.1', sub: 'The cardiac cycle: pressure, volume and valve movements', title: 'Mass transport in animals', topic: '3.3', slot: [2, 5], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.3.4.1.s9', '3.3.4.1.s10'],
+  card: {
+    text: 'In the <b>cardiac cycle</b> pressure and volume changes in the atria and ventricles open and close valves so blood flows in one direction. <b>Atrial systole</b>: atria contract, pressure rises above the ventricle, AV valves open and top up the ventricle. <b>Ventricular systole</b>: ventricles contract, pressure rises above the atria so the <b>AV valves close</b> (first sound); when ventricular pressure exceeds the artery the <b>semilunar valves open</b> and blood is ejected. <b>Diastole</b>: the ventricle relaxes, pressure falls below the artery, so the <b>semilunar valves close</b> (second sound); the atria fill, and when atrial pressure exceeds ventricular pressure the AV valves open again.',
+    terms: ['cardiac cycle', 'atrial systole', 'ventricular systole', 'diastole', 'atrioventricular valve', 'semilunar valve', 'pressure', 'volume', 'unidirectional flow'],
+    skill: 'MS 2.4 and 1.3: CO = SV × HR; read graphs', eq: MATH(mt('cardiac output '), mo('='), mt('stroke volume'), mo('×'), mt('heart rate')),
+    eqn: 'e.g. 70 cm³ × 72 min⁻¹ = 5040 cm³ min⁻¹ ≈ 5.0 dm³ min⁻¹',
+    q: 'Between which two points on the pressure graph does the semilunar valve open?', a: 'When the left ventricular pressure rises above the aortic pressure, until the ventricular pressure falls back below it.'
+  },
+  draw(R, sc) {
+    R.text('left side of the heart: one cardiac cycle (about 0.8 s)', 332, 14, 4.8, { al: 'c' });
+    // pressure traces
+    const X0 = 44, XW = 380, YT = 28, YH = 108;
+    const tx = t => X0 + t / 0.8 * XW;   // t in s over one cycle
+    const py = v => YT + YH - v / 18 * YH; // kPa
+    R.arrow([X0, YT + YH, X0 + XW + 6, YT + YH], { ink: 'B', w: 1, hs: 3 }); R.arrow([X0, YT + YH, X0, YT - 4], { ink: 'B', w: 1, hs: 3 });
+    R.text('pressure / kPa', 18, YT + YH / 2, 4.2, { al: 'c', rot: -90 });
+    [0, 5, 10, 15].forEach(v => { R.line(X0 - 1.5, py(v), X0 + 1.5, py(v), { ink: 'B', w: 0.6, taper: 'none' }); R.text(String(v), X0 - 4, py(v) + 1.4, 3.6, { al: 'r' }); });
+    // phase shading: atrial systole 0-0.1, ventricular systole 0.1-0.4 (isovolumetric 0.1-0.13, ejection 0.13-0.4), diastole 0.4-0.8
+    const shade = (a, b, ink, t) => R.fill([tx(a), YT, tx(b), YT, tx(b), YT + YH, tx(a), YT + YH], { ink, t, wob: 0.1 });
+    shade(0, 0.1, 'Y', 0.18); shade(0.1, 0.4, 'P', 0.1); shade(0.4, 0.8, 'T', 0.1);
+    // curves (qualitative, left side): pressure in kPa against time in s
+    const draw = (pts, ink, w) => { const q = []; for (let i = 0; i < pts.length; i += 2) q.push(tx(pts[i]), py(pts[i + 1])); R.stroke(q, { ink, w, smooth: true, taper: 'none' }); };
+    draw([0, 10.4, 0.06, 10.2, 0.13, 10, 0.16, 12.6, 0.2, 15.2, 0.24, 16, 0.3, 14.9, 0.355, 12.3, 0.372, 11.0, 0.388, 11.9, 0.45, 11.3, 0.6, 10.6, 0.8, 10.2], 'B', 1.4);
+    draw([0, 0.9, 0.05, 1.5, 0.1, 1.7, 0.115, 5.2, 0.13, 10, 0.18, 14.4, 0.24, 16, 0.3, 14.6, 0.355, 10.8, 0.378, 6, 0.4, 2.6, 0.43, 1.1, 0.5, 0.8, 0.8, 0.9], 'P', 1.6);
+    draw([0, 0.8, 0.03, 1.6, 0.08, 1.3, 0.1, 0.8, 0.12, 1.5, 0.2, 1.7, 0.3, 2.1, 0.38, 2.5, 0.41, 1.2, 0.46, 0.9, 0.8, 0.8], 'T', 1.4);
+    R.text('aorta', tx(0.62), py(10.2), 4.2, { al: 'l', ink: 'B' }); R.text('left ventricle', tx(0.2), py(17.8), 4.2, { al: 'c', ink: 'P' }); R.text('left atrium', tx(0.55), py(2.7), 4.2, { al: 'l', ink: 'T' });
+    // valve events
+    const ev = (t, v, label, ink = 'B') => { R.dot(tx(t), py(v), 1.8, { ink }); };
+    ev(0.1, 1.7); ev(0.13, 10); ev(0.372, 11); ev(0.43, 1.1);
+    [[0.1, 'AV valve closes'], [0.13, 'semilunar valve opens'], [0.372, 'semilunar valve closes (dicrotic notch)'], [0.43, 'AV valve opens']].forEach(([t, s], i) => { const y = YT + YH + 8 + (i % 3) * 8; R.line(tx(t), YT + YH, tx(t), y - 4, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' }); R.text(s, tx(t) + (i === 2 ? -3 : 3), y + 2, 3.6, { al: i === 2 ? 'r' : 'l', ink: i % 2 ? 'P' : 'B' }); });
+    [['atrial systole', 0.05], ['ventricular systole', 0.25], ['diastole', 0.6]].forEach(([t, u]) => R.text(t, tx(u), YT - 4, 4, { al: 'c' }));
+    // volume curve
+    const VY = 172, VH = 44, vy = v => VY + VH - (v - 50) / 90 * VH;
+    R.arrow([X0, VY + VH, X0 + XW + 6, VY + VH], { ink: 'B', w: 1, hs: 3 }); R.arrow([X0, VY + VH, X0, VY - 4], { ink: 'B', w: 1, hs: 3 }); R.text('ventricle volume / cm^3', 18, VY + VH / 2, 3.8, { al: 'c', rot: -90 });
+    const vq = []; [[0, 110], [0.04, 121], [0.1, 130], [0.13, 130], [0.24, 100], [0.355, 66], [0.4, 65], [0.45, 84], [0.55, 104], [0.8, 110]].forEach(([t, v]) => vq.push(tx(t), vy(v))); R.stroke(vq, { ink: 'P', w: 1.5, smooth: true, taper: 'none' });
+    R.text('130', X0 - 4, vy(130) + 1.4, 3.6, { al: 'r' }); R.text('65', X0 - 4, vy(65) + 1.4, 3.6, { al: 'r' }); R.arrow([tx(0.5), vy(66), tx(0.5), vy(130)], { ink: 'T', w: 0.9, hs: 2.2, both: true }); R.text('stroke volume', tx(0.52), vy(98), 3.8, { al: 'l' });
+    R.text('time / s', X0 + XW / 2, VY + VH + 10, 4, { al: 'c' }); [0, 0.2, 0.4, 0.6, 0.8].forEach(t => { R.line(tx(t), VY + VH - 1.4, tx(t), VY + VH + 1.4, { ink: 'B', w: 0.6, taper: 'none' }); R.text(String(t), tx(t), VY + VH + 6, 3.4, { al: 'c' }); });
+    // events table
+    R.line(448, 24, 448, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    const cols = [52, 48, 40, 48], hx = 458, rows = [['phase', 'pressures', 'AV valve', 'semilunar valve'], ['atrial systole', 'atrium > ventricle', 'open', 'shut'], ['ventricular systole: start', 'ventricle > atrium, but < aorta', 'shut', 'shut'], ['ventricular systole: ejection', 'ventricle > aorta', 'shut', 'open'], ['diastole', 'ventricle < aorta; atria fill', 'shut, then open', 'shut']];
+    let ty = 30; rows.forEach((row, ri) => {
+      const cells = row.map((t, ci) => wrapText(t, cols[ci] - 4, 3.5)); const h = Math.max(...cells.map(c => c.length)) * 5.2 + 5;
+      if (ri === 0) R.fill([hx, ty, hx + 188, ty, hx + 188, ty + h, hx, ty + h], { ink: 'T', t: 0.35, wob: 0.15 });
+      let cx = hx; cells.forEach((c, ci) => { c.forEach((ln, k) => R.text(ln, cx + 2, ty + 7 + k * 5.2, 3.5, { al: 'l', ink: ri && ci >= 2 ? (ln.indexOf('open') >= 0 ? 'T' : 'P') : 'B' })); cx += cols[ci]; });
+      R.line(hx, ty + h, hx + 188, ty + h, { ink: 'B', w: 0.5, t: 0.7, taper: 'none' }); ty += h;
+    });
+    R.rect(hx, 30, 188, ty - 30, { ink: 'B', w: 0.9, wob: 0.2 });
+    let cx2 = hx; for (let i = 0; i < 3; i++) { cx2 += cols[i]; R.line(cx2, 30, cx2, ty, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' }); }
+    R.text('closed valves give one-way flow', 552, ty + 14, 4, { al: 'c' });
+    R.text('first heart sound: AV valves shut', 552, ty + 28, 3.8, { al: 'c' }); R.text('second heart sound: semilunar shut', 552, ty + 35, 3.8, { al: 'c' });
+    R.text('cardiac output = stroke volume × heart rate', 552, ty + 54, 4, { al: 'c', ink: 'P' });
+    R.text('130 cm^3 − 65 cm^3 = 65 cm^3 stroke volume', 552, ty + 62, 3.7, { al: 'c' });
+  },
+  anim(A, sc) { const t = A.ph(4.8) * 0.8; A.dot(44 + t / 0.8 * 380, 28 + 108 - (t < 0.13 ? 1.5 + t * 60 : t < 0.36 ? 9 + 7 * Math.sin((t - 0.13) / 0.23 * PI * 0.8) : 1.2) / 18 * 108, 2.2, 'P', 0.95, 1); },
+});
+
+/* ===================== 3.3.4.1 (cont.) blood vessels, tissue fluid, CVD, RP5 ===================== */
+/* cross-section of a vessel: lumen r0, wall layers (endothelium, elastic tissue, smooth muscle, collagen) */
+function vesselXS(R, x, y, r0, wall, o = {}) {
+  const outer = r0 + wall;
+  R.circle(x, y, outer, { ink: 'B', w: 1.3, fi: 'P', ft: 0.12, wob: 0.3 });
+  if (o.muscle) R.circle(x, y, r0 + wall * 0.62, { ink: 'B', w: 0.5, fi: 'P', ft: o.muscle, wob: 0.2 });
+  if (o.elastic) { R.circle(x, y, r0 + wall * 0.3, { ink: 'B', w: 0.9, wob: 0.3 }); R.circle(x, y, r0 + wall * 0.5, { ink: 'B', w: 0.9, wob: 0.3 }); }
+  R.circle(x, y, r0, { ink: 'B', w: 1, fi: o.ox === false ? 'B' : 'P', ft: o.ox === false ? 0.3 : 0.5, wob: 0.2 });
+  if (o.ox !== false) R.circle(x, y, r0, { ink: 'Y', w: 0, fi: 'Y', ft: 0.45 });
+  R.circle(x, y, r0 + 0.8, { ink: 'B', w: 0.8, wob: 0.15 });
+}
+
+/* ---------- 3.3.4.1g Structure of arteries, arterioles and veins ---------- */
+S({
+  id: '3.3.4.1g', num: '3.3.4.1', sub: 'Structure of arteries, arterioles and veins in relation to function', title: 'Mass transport in animals', topic: '3.3', slot: [0, 6], span: [2, 1], dna: 'mark', ao: 1,
+  covers: ['3.3.4.1.s11'],
+  card: {
+    text: '<b>Arteries</b> carry blood away from the heart at high pressure: thick walls with <b>elastic tissue</b> to stretch and recoil (smoothing the pulse), <b>smooth muscle</b>, a narrow lumen and folded endothelium. <b>Arterioles</b> branch from arteries, with more smooth muscle that contracts or relaxes to control blood flow into capillaries. <b>Veins</b> carry blood back to the heart at low pressure: thinner walls with little elastic tissue and muscle, a wide lumen, and <b>valves</b> that prevent backflow; contraction of nearby skeletal muscles squeezes blood along them.',
+    terms: ['artery', 'arteriole', 'vein', 'elastic tissue', 'smooth muscle', 'endothelium', 'lumen', 'valve', 'collagen'],
+    skill: 'MS 1.8: magnification of a section', eq: null,
+    q: 'Why do arteries have more elastic tissue than veins?', a: 'Blood leaves the heart in pulses at high pressure; the elastic wall stretches then recoils, maintaining pressure and smoothing blood flow. Veins carry blood at low pressure.'
+  },
+  draw(R, sc) {
+    R.text('arteries, arterioles and veins (cross-sections)', 332, 14, 5, { al: 'c' });
+    const cx = [100, 332, 560];
+    vesselXS(R, cx[0], 82, 14, 20, { muscle: 0.5, elastic: true }); vesselXS(R, cx[1], 82, 8, 11, { muscle: 0.65 }); vesselXS(R, cx[2], 82, 24, 7, { muscle: 0.3, ox: false });
+    [['artery', cx[0]], ['arteriole', cx[1]], ['vein', cx[2]]].forEach(([t, x]) => R.text(t, x, 28, 5.2, { al: 'c' }));
+    // labels
+    const lab = (t, tx, ty, x, y, al = 'l') => leader(R, t, x, y, tx, ty, { size: 4, al });
+    lab('thick wall', 20, 128, cx[0] - 26, 96, 'l'); lab('elastic tissue', 150, 128, cx[0] + 12, 94, 'l'); lab('smooth muscle', 150, 40, cx[0] + 12, 64, 'l'); lab('narrow lumen', 12, 40, cx[0] - 4, 76, 'l');
+    lab('endothelium', 262, 128, cx[1] - 4, 79, 'l'); lab('more smooth muscle', 380, 46, cx[1] + 11, 72, 'l');
+    lab('thin wall', 440, 128, cx[2] - 28, 95, 'l'); lab('wide lumen', 600, 128, cx[2] + 4, 84, 'l'); lab('little muscle and elastic tissue', 600, 40, cx[2] + 24, 62, 'r');
+    // function strips
+    R.line(8, 138, 656, 138, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const txt = (x, lines, ink) => lines.forEach((t, i) => R.text(t, x, 150 + i * 6.8, 4, { al: 'c', ink: i === 0 ? ink || 'P' : 'B' }));
+    txt(cx[0], ['away from the heart, high pressure', 'elastic wall stretches and recoils:', 'smooths the pulse of blood', 'muscle: strength']);
+    txt(cx[1], ['to capillary beds', 'smooth muscle contracts or relaxes:', 'controls how much blood', 'flows into capillaries']);
+    txt(cx[2], ['towards the heart, low pressure', 'valves prevent backflow', 'skeletal muscles squeeze veins', 'to move blood along']);
+    // longitudinal sections: pulse and valve
+    R.rect(40, 188, 120, 28, { ink: 'B', w: 1.2, fi: 'P', ft: 0.2, wob: 0.3 }); R.rect(40, 194, 120, 16, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.4 });
+    R.arrow([54, 202, 150, 202], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('pulse (stretches then recoils)', 100, 226, 3.8, { al: 'c' });
+    R.rect(272, 188, 120, 28, { ink: 'B', w: 1.2, fi: 'P', ft: 0.2, wob: 0.3 }); R.rect(272, 194, 120, 16, { ink: 'B', w: 0.8, fi: 'P', ft: 0.4 });
+    R.arrow([286, 202, 380, 202], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('blood flows through', 332, 226, 3.8, { al: 'c' });
+    R.rect(500, 188, 120, 28, { ink: 'B', w: 1.2, fi: 'P', ft: 0.12, wob: 0.3 }); R.rect(500, 194, 120, 16, { ink: 'B', w: 0.8, fi: 'B', ft: 0.3 });
+    R.stroke([560, 194, 572, 202, 560, 210], { ink: 'B', w: 1.4, smooth: false, taper: 'none' }); R.stroke([576, 194, 564, 202, 576, 210], { ink: 'B', w: 0.01, smooth: false, taper: 'none' });
+    R.poly([556, 194, 572, 194, 564, 204], { ink: 'B', w: 1, fi: 'P', ft: 0.7 }); R.poly([556, 210, 572, 210, 564, 200], { ink: 'B', w: 1, fi: 'P', ft: 0.7 });
+    R.arrow([514, 202, 552, 202], { ink: 'P', w: 1.1, hs: 2.6 }); R.arrow([578, 202, 608, 202], { ink: 'P', w: 1.1, hs: 2.6 }); R.text('valve (pocket) in a vein', 560, 226, 3.8, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(3); for (let i = 0; i < 4; i++) { const u = (p + i / 4) % 1; A.rbc(54 + u * 96, 202, 3.4 + Math.sin(u * PI) * 0.4, i, 0.9); A.rbc(286 + u * 94, 202, 3, 10 + i, 0.9); A.rbc(514 + u * 94, 202, 3, 20 + i, 0.75); } },
+});
+
+/* ---------- 3.3.4.1h Capillaries and tissue fluid ---------- */
+S({
+  id: '3.3.4.1h', num: '3.3.4.1', sub: 'Capillaries as exchange surfaces; formation and return of tissue fluid', title: 'Mass transport in animals', topic: '3.3', slot: [2, 6], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.3.4.1.s12', '3.3.4.1.s13'],
+  card: {
+    text: '<b>Capillaries</b> are one cell thick (short diffusion distance), narrow so red blood cells squeeze through slowly, and form dense <b>capillary beds</b> with a very large surface area for exchange. At the arterial end the <b>hydrostatic pressure</b> of blood is high and forces fluid out through gaps in the walls: <b>tissue fluid</b> (plasma without most proteins and no red cells) bathes the cells. As fluid leaves, hydrostatic pressure falls; at the venous end the <b>water potential</b> of the blood is lower than the tissue fluid (plasma proteins remain) so water re-enters by osmosis. Excess tissue fluid drains into <b>lymph vessels</b> and returns to the blood.',
+    terms: ['capillary', 'capillary bed', 'tissue fluid', 'hydrostatic pressure', 'water potential', 'plasma proteins', 'lymph', 'arterial end', 'venous end'],
+    skill: 'Interpret pressure and ψ data', eq: null,
+    q: 'Why does tissue fluid re-enter the capillary at the venous end?', a: 'Hydrostatic pressure has fallen and the plasma proteins (which stay in the blood) give the blood a lower water potential than the tissue fluid, so water enters by osmosis.'
+  },
+  draw(R, sc) {
+    R.text('capillary bed and tissue fluid', 332, 14, 5, { al: 'c' });
+    // arteriole -> capillary -> venule (horizontal)
+    const y0 = 80;
+    R.fill([20, y0 - 22, 640, y0 - 22, 640, y0 + 22, 20, y0 + 22], { ink: 'Y', t: 0.08, wob: 0.3 });
+    const cap = [24, y0, 100, y0, 150, y0 - 4, 200, y0 + 2, 250, y0 - 3, 300, y0 + 3, 350, y0 - 2, 400, y0 + 2, 450, y0 - 3, 500, y0, 640, y0];
+    R.stroke(cap, { ink: 'P', w: 18, t: 0.3, smooth: true, taper: 'none', solid: false }); R.stroke(cap.map((v, i) => i % 2 ? v - 9 : v), { ink: 'B', w: 1.3, smooth: true, taper: 'none' }); R.stroke(cap.map((v, i) => i % 2 ? v + 9 : v), { ink: 'B', w: 1.3, smooth: true, taper: 'none' });
+    for (let i = 0; i < 6; i++) R.ellipse(150 + i * 58, y0 - 1 + (i % 2 ? 3 : -3), 8, 4.4, { ink: 'B', w: 0.9, fi: 'P', ft: 0.9, rot: i * 7 });
+    R.text('arteriole', 60, y0 - 30, 4.4, { al: 'c' }); R.text('capillary bed: one cell thick', 330, y0 - 34, 4.4, { al: 'c' }); R.text('venule', 600, y0 - 30, 4.4, { al: 'c' });
+    // fluid out / in arrows
+    [[170, -1], [220, -1], [270, -1]].forEach(([x, d]) => { R.arrow([x, y0 - 12, x, y0 - 30], { ink: 'T', w: 1.2, hs: 3 }); R.arrow([x + 14, y0 + 12, x + 14, y0 + 30], { ink: 'T', w: 1.2, hs: 3 }); });
+    [[420, 1], [470, 1], [520, 1]].forEach(([x, d]) => { R.arrow([x, y0 - 30, x, y0 - 12], { ink: 'T', w: 1.0, hs: 2.6 }); R.arrow([x + 14, y0 + 30, x + 14, y0 + 12], { ink: 'T', w: 1.0, hs: 2.6 }); });
+    R.text('high hydrostatic pressure forces fluid out', 220, y0 + 44, 4.2, { al: 'c' }); R.text('plasma proteins stay in: lower ψ draws water back', 468, y0 + 44, 4.2, { al: 'c' });
+    R.text('arterial end', 190, y0 - 48, 4.6, { al: 'c', ink: 'P' }); R.text('venous end', 470, y0 - 48, 4.6, { al: 'c', ink: 'P' });
+    // pressure bars
+    R.line(8, 138, 656, 138, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('forces compared (relative size)', 120, 150, 4.4, { al: 'c' });
+    const bars = (x, hyd, osm, lab) => { R.text(lab, x + 38, 162, 4.4, { al: 'c' }); R.rect(x, 170, 30, 56 * hyd, { ink: 'B', w: 1, fi: 'P', ft: 0.6, wob: 0.15 }); R.rect(x + 40, 170, 30, 56 * osm, { ink: 'B', w: 1, fi: 'T', ft: 0.6, wob: 0.15 }); R.text('hydrostatic', x + 15, 234, 3.4, { al: 'c' }); R.text('osmotic', x + 55, 234, 3.4, { al: 'c' }); };
+    bars(40, 0.95, 0.5, 'arterial end'); bars(170, 0.35, 0.5, 'venous end');
+    R.text('net movement OUT', 75, 164, 0.01, { al: 'c' });
+    R.text('hydrostatic > osmotic: fluid out', 108, 248 - 0, 0.01, { al: 'c' });
+    // lymph + fate
+    R.line(300, 142, 300, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    const cells = [[336, 184], [376, 196], [416, 182]]; cells.forEach(([x, y]) => { R.circle(x, y, 13, { ink: 'B', w: 1, fi: 'P', ft: 0.15, wob: 0.3 }); R.circle(x + 2, y, 5, { ink: 'B', w: 0.7, fi: 'B', ft: 0.35 }); });
+    R.fill([320, 166, 440, 166, 440, 220, 320, 220], { ink: 'T', t: 0.07, wob: 0.2 }); R.text('tissue fluid bathes the cells', 380, 232, 4.2, { al: 'c' });
+    R.text('delivers oxygen and glucose,', 380, 154, 3.9, { al: 'c' }); R.text('takes away CO_2 and waste', 380, 160, 3.9, { al: 'c' });
+    R.stroke([456, 190, 480, 180, 508, 190, 534, 180, 560, 190, 590, 184], { ink: 'T', w: 6, t: 0.4, smooth: true, taper: 'none', solid: false }); R.stroke([456, 190, 480, 180, 508, 190, 534, 180, 560, 190, 590, 184], { ink: 'B', w: 1, smooth: true, taper: 'none' });
+    R.arrow([446, 200, 466, 192], { ink: 'T', w: 1, hs: 2.4 }); R.text('lymph vessel: excess', 530, 208, 4, { al: 'c' }); R.text('tissue fluid returns to the blood', 530, 214.5, 4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); for (let i = 0; i < 5; i++) { const u = (p + i / 5) % 1; A.rbc(24 + u * 612, 80 + Math.sin(u * 14 + i) * 2, 3.8, i, 0.9); } A.dot(190, 66 - (p * 18) % 18, 1.3, 'T', 0.8, 9); A.dot(470, 48 + (p * 18) % 18, 1.3, 'T', 0.8, 10); },
+});
+
+/* ---------- 3.3.4.1i Cardiovascular disease: risk factors, data and evidence ---------- */
+S({
+  id: '3.3.4.1i', num: '3.3.4.1', sub: 'Cardiovascular disease: risk-factor data, conflicting evidence, correlation and causation', title: 'Mass transport in animals', topic: '3.3', slot: [0, 7], dna: 'mark', ao: 3,
+  covers: ['3.3.4.1.s14', '3.3.4.1.s15', '3.3.4.1.s16'],
+  card: {
+    text: 'Cardiovascular disease (CVD) is linked to risk factors such as high blood pressure, high blood cholesterol, smoking, a diet high in saturated fat or salt, and inactivity. In <b>atheroma</b>, fatty deposits form under the lining of an artery, narrowing the lumen and raising blood pressure; a blood clot (<b>thrombosis</b>) can block a coronary artery, causing a heart attack. Students must <b>analyse and interpret data</b> on risk factors and CVD, <b>evaluate conflicting evidence</b> (sample size, controls, confounders, error bars) and recognise <b>correlations</b> versus <b>causal relationships</b>.',
+    terms: ['cardiovascular disease', 'risk factor', 'atheroma', 'blood pressure', 'cholesterol', 'thrombosis', 'correlation', 'causation', 'conflicting evidence'],
+    skill: 'MS 1.7, 1.10: scatter diagrams, dispersion', eq: null,
+    q: 'Two studies of salt intake and blood pressure disagree. Give two features you would check to evaluate them.', a: 'Sample size and how participants were chosen, control of confounding variables (age, exercise, other diet), and the spread of the data (error bars / standard deviation overlap).'
+  },
+  draw(R, sc) {
+    R.text('CVD: risk data and evidence', 160, 14, 5, { al: 'c' });
+    // atheroma in artery section
+    R.text('atheroma narrows an artery', 72, 28, 4.4, { al: 'c' });
+    const art = (x, narrowing) => { R.rrect(x, 36, 120, 34, 6, { ink: 'B', w: 1.2, fi: 'P', ft: 0.14, wob: 0.3 }); R.rect(x + 2, 40, 116, 26, { ink: 'B', w: 0.7, fi: 'P', ft: 0.35 }); if (narrowing) { R.poly([x + 30, 40, x + 46, 48, x + 70, 51, x + 90, 47, x + 100, 40], { ink: 'B', w: 0.9, fi: 'Y', ft: 0.7, smooth: true }); R.poly([x + 36, 66, x + 50, 58, x + 70, 56, x + 88, 59, x + 96, 66], { ink: 'B', w: 0.9, fi: 'Y', ft: 0.7, smooth: true }); } };
+    art(12, true); R.text('fatty deposit (plaque)', 72, 84, 4, { al: 'c' }); leader(R, 'narrowed lumen', 72, 53, 72, 98, { size: 4, al: 'c' });
+    R.line(144, 30, 144, 100, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.circle(176, 52, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.9 }); R.circle(196, 58, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.9 }); R.stroke([166, 46, 186, 54, 206, 50, 226, 60], { ink: 'P', w: 1, taper: 'none' });
+    R.text('blood clot (thrombosis)', 212, 84, 3.9, { al: 'c' }); R.text('blocks coronary artery', 212, 90, 3.9, { al: 'c' });
+    R.line(8, 106, 312, 106, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // scatter: risk factor vs CVD (correlation)
+    R.text('data: cholesterol and deaths from CHD', 80, 116, 4, { al: 'c' });
+    const g = R.graph(32, 124, 108, 66, { xmin: 3, xmax: 8, ymin: 0, ymax: 10, xl: 'blood cholesterol / mmol dm^-3', yl: 'CHD deaths', xt: [[4, '4'], [6, '6'], [8, '8']], yt: [], fs: 3.6, xly: 12, ylx: 4 }).axes();
+    [[3.6, 1.4], [4.2, 2.6], [4.6, 2.2], [5.0, 3.4], [5.4, 3.8], [5.6, 5.4], [6.0, 5.0], [6.4, 6.4], [6.8, 6.2], [7.2, 8.2], [7.6, 7.4]].forEach(([x, y]) => R.dot(g.X(x), g.Y(y), 1.5, { ink: 'B' }));
+    g.curve([3.2, 0.8, 7.8, 8.4], { ink: 'P', w: 1 });
+    R.text('positive correlation', 80, 206, 4, { al: 'c', ink: 'P' });
+    R.text('does it prove cause?', 80, 214, 4, { al: 'c' });
+    R.line(156, 110, 156, 236, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // conflicting evidence: two studies with error bars
+    R.text('conflicting evidence', 234, 116, 4.4, { al: 'c' });
+    const g2 = R.graph(176, 124, 124, 60, { xmin: 0, xmax: 6, ymin: 0, ymax: 10, xl: '', yl: 'mean systolic BP', xt: [], yt: [], fs: 3.6, ylx: 4 }).axes();
+    [[1, 4.6, 0.9, 'A low salt'], [2, 5.6, 1.0, 'A high salt'], [4, 4.8, 2.2, 'B low salt'], [5, 5.4, 2.4, 'B high salt']].forEach(([x, y, e]) => { R.rect(g2.X(x) - 7, g2.Y(y), 14, g2.Y(0) - g2.Y(y), { ink: 'B', w: 0.8, fi: 'P', ft: x < 3 ? 0.6 : 0.3, wob: 0.1 }); g2.err(x, y, e); });
+    R.text('study A', g2.X(1.5), g2.Y(0) + 7, 3.8, { al: 'c' }); R.text('study B', g2.X(4.5), g2.Y(0) + 7, 3.8, { al: 'c' });
+    R.text('A: small spread, clear difference.', 238, 202, 3.7, { al: 'c' }); R.text('B: large error bars overlap.', 238, 208, 3.7, { al: 'c' });
+    ['check: sample size, controls,', 'confounding variables, spread'].forEach((t, i) => R.text(t, 238, 220 + i * 6, 3.8, { al: 'c', ink: 'P' }));
+  },
+  anim(A, sc) { const p = A.ph(3); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.rbc(20 + u * 96, 53 + (i - 1) * 3, 2.6, i, 0.85); } },
+});
+
+/* ---------- RP5: dissection of a mass transport / gas exchange system or organ ---------- */
+rpScene({
+  id: 'RP5', num: '3.3.4.1', rp: 5, title: 'Mass transport in animals', sub: 'Required practical 5: dissection of a gas exchange or mass transport system, or an organ within it', topic: '3.3', slot: [1, 7],
+  covers: ['RP5'], at: ['e', 'h', 'j'], ms: ['MS 1.8', 'MS 0.1'], ps: ['PS 1.2', 'PS 2.2'],
+  card: {
+    text: 'Dissect an animal or plant gas exchange or mass transport system, or an organ within such a system. The AQA handbook’s example is a <b>sheep’s heart</b>: examine the external features and coronary arteries, cut open the chambers, look for the tendinous cords holding the atrioventricular valves, compare the thickness of the ventricle walls (and atrium walls), and label with pins and flags. Produce a scientific drawing or photograph with annotations, and calculate the magnification of the drawing. Similar approaches work for lungs or a fish head. Schools may choose other organs and methods.',
+    terms: ['dissection', 'scientific drawing', 'annotation', 'tendinous cords', 'ventricle wall', 'atrioventricular valve', 'magnification', 'aseptic/safe disposal'],
+    skill: 'MS 1.8: magnification of a drawing', eq: MATH(mt('magnification '), mo('='), mfrac(mt('size of drawing'), mt('size of real object'))),
+    eqn: 'e.g. wall drawn 36 mm, real wall 12 mm → ×3',
+    q: 'What does the thicker wall of the left ventricle tell you about its function?', a: 'It generates higher pressure to pump blood around the whole body, compared with the right ventricle pumping to the nearby lungs.'
+  },
+  apparatus(R, b) {
+    R.text('example: sheep’s heart on a dissecting tray', 92, 21, 4.4, { al: 'c' });
+    R.rrect(10, 30, 118, 84, 5, { ink: 'B', w: 1.3, fi: 'Y', ft: 0.2, wob: 0.3 });
+    // heart cut open
+    const h = [34, 56, 54, 46, 72, 52, 90, 48, 108, 58, 112, 82, 100, 100, 74, 108, 48, 98, 36, 78];
+    R.fill(h, { ink: 'P', t: 0.35, smooth: true, wob: 0.4 }); R.poly(h, { ink: 'B', w: 1.3, smooth: true, wob: 0.5 });
+    R.stroke([72, 52, 72, 104], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([42, 66, 100, 68], { ink: 'B', w: 1, taper: 'none' });
+    [[56, 60], [56, 88], [90, 60], [90, 90]].forEach(([x, y]) => R.ellipse(x, y, 10, 8, { ink: 'B', w: 0.8, fi: 'P', ft: 0.2 }));
+    R.line(52, 70, 52, 90, { ink: 'B', w: 0.5, taper: 'none' }); R.line(60, 70, 62, 90, { ink: 'B', w: 0.5, taper: 'none' });
+    // pins and flags
+    [[44, 52], [96, 50], [102, 82]].forEach(([x, y], i) => { R.line(x, y, x, y - 12, { ink: 'B', w: 0.9, taper: 'none' }); R.rect(x, y - 12, 9, 5, { ink: 'B', w: 0.7, fi: ['T', 'Y', 'P'][i], ft: 0.7, wob: 0.05 }); });
+    R.text('labelled pins', 68, 124, 3.8, { al: 'c' });
+    // tools
+    R.line(140, 38, 168, 38, { ink: 'B', w: 1.2, taper: 'none' }); R.rrect(132, 35, 12, 6, 2, { ink: 'B', w: 0.9, fi: 'P', ft: 0.6 }); R.text('scalpel', 152, 48, 3.7, { al: 'c' });
+    R.line(140, 62, 166, 78, { ink: 'B', w: 1, taper: 'none' }); R.line(140, 78, 166, 62, { ink: 'B', w: 1, taper: 'none' }); R.circle(138, 62, 3, { ink: 'B', w: 0.8 }); R.circle(138, 78, 3, { ink: 'B', w: 0.8 }); R.text('scissors', 152, 92, 3.7, { al: 'c' });
+    R.line(140, 106, 170, 106, { ink: 'B', w: 1, taper: 'none' }); R.circle(138, 106, 3, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.6 }); R.text('mounted needle', 154, 118, 3.7, { al: 'c' });
+    Icons.bio(R, 160, 132, 5);
+    // lens/drawing
+    R.text('drawing + annotations', 40, 136, 0.01, { al: 'c' });
+  },
+  results(R, b) {
+    R.text('left vs right ventricle wall', b.x + 60, b.y + 12, 4, { al: 'c' });
+    // two ventricle cross-sections
+    R.circle(b.x + 32, b.y + 52, 24, { ink: 'B', w: 1.3, fi: 'P', ft: 0.5, wob: 0.3 }); R.circle(b.x + 32, b.y + 52, 14, { ink: 'B', w: 1, fi: 'P', ft: 0.15, wob: 0.2 });
+    R.circle(b.x + 90, b.y + 52, 20, { ink: 'B', w: 1.3, fi: 'P', ft: 0.5, wob: 0.3 }); R.circle(b.x + 90, b.y + 52, 15.5, { ink: 'B', w: 1, fi: 'P', ft: 0.15, wob: 0.2 });
+    R.line(b.x + 32, b.y + 38, b.x + 32, b.y + 28, { ink: 'T', w: 1.2 }); R.text('12 mm', b.x + 32, b.y + 82, 3.8, { al: 'c' }); R.text('left', b.x + 32, b.y + 90, 3.6, { al: 'c' });
+    R.text('4 mm', b.x + 90, b.y + 82, 3.8, { al: 'c' }); R.text('right', b.x + 90, b.y + 90, 3.6, { al: 'c' });
+    R.text('measure the wall with a ruler', b.x + 60, b.y + 104, 3.7, { al: 'c' });
+  },
+  vars: { iv: 'which ventricle (left or right)', dv: 'wall thickness / mm', ctl: ['same heart, same level of cut', 'same ruler and reading method'] },
+  calc: ['magnification of the drawing', '= size of drawing ÷ real size', '= 36 mm ÷ 12 mm = × 3', 'wall ratio L : R = 12 : 4 = 3 : 1'],
+  risks: [['bio', 'raw meat: wash hands, disinfect'], ['warn', 'sharp scalpel and pins'], ['goggles', 'lab coat, eye protection']],
+  limits: ['hearts vary with age and size', 'trimmed hearts lose vessels/atria', 'cut position changes the wall thickness', 'drawings depend on the observer'],
+  interp: 'thicker left ventricle wall: pumps blood at higher pressure round the body',
+  anim(A, sc) { const p = A.ph(4); A.dot(44 + (p * 20) % 20, 142 - 0, 0, 'P', 0, 0); A.dot(62 + Math.sin(p * TAU) * 1.2, 80, 1.2, 'P', 0.7, 1); },
+});
+
+/* ===================== 3.3.4.2 Mass transport in plants ===================== */
+/* simple dicot plant: roots, stem, leaves.  Returns anchor points. */
+function plantDraw(R, x, y, h, o = {}) {
+  // soil line at y, shoot upward to y-h
+  const top = y - h;
+  R.stroke([x, y, x - 1, y - h * 0.4, x + 1, y - h * 0.75, x, top], { ink: 'T', w: o.sw || 4, t: 0.5, smooth: true, taper: 'none', solid: false }); R.stroke([x - (o.sw || 4) / 2, y, x - (o.sw || 4) / 2 - 1, y - h * 0.4, x + (o.sw || 4) / 2, top], { ink: 'B', w: 0.8, smooth: true, taper: 'none' }); R.stroke([x + (o.sw || 4) / 2, y, x + (o.sw || 4) / 2 + 1, y - h * 0.4, x + (o.sw || 4) / 2, top], { ink: 'B', w: 0.8, smooth: true, taper: 'none' });
+  const leaf = (lx, ly, dir, sz) => { const p = [lx, ly, lx + dir * sz * 0.5, ly - sz * 0.5, lx + dir * sz, ly - sz * 0.2, lx + dir * sz * 0.5, ly + sz * 0.1]; R.fill(p, { ink: 'T', t: 0.55, smooth: true, wob: 0.2 }); R.fill(p, { ink: 'Y', t: 0.55, smooth: true, wob: 0.2 }); R.poly(p, { ink: 'B', w: 0.9, smooth: true, wob: 0.3 }); R.line(lx, ly, lx + dir * sz * 0.9, ly - sz * 0.25, { ink: 'B', w: 0.5, taper: 'none' }); };
+  leaf(x, top + h * 0.1, -1, h * 0.28); leaf(x, top + h * 0.05, 1, h * 0.3); leaf(x, top + h * 0.34, -1, h * 0.24); leaf(x, top + h * 0.28, 1, h * 0.22);
+  if (o.roots === false) return { top };
+  // roots
+  [[-24, 18], [-10, 26], [8, 24], [22, 16], [0, 30]].forEach(([dx, dy], i) => { R.stroke([x, y, x + dx * 0.4, y + dy * 0.6, x + dx, y + dy], { ink: 'B', w: 1.1, smooth: true, taper: 'end' }); for (let k = 0; k < 4; k++) R.line(x + dx * (0.5 + k * 0.12), y + dy * (0.5 + k * 0.12), x + dx * (0.5 + k * 0.12) + (k % 2 ? 3 : -3), y + dy * (0.5 + k * 0.12) + 1.5, { ink: 'B', w: 0.4, taper: 'none' }); });
+  R.stroke([x - 54, y, x - 20, y - 1, x + 20, y + 1, x + 54, y], { ink: 'B', w: 1, smooth: true });
+  return { top };
+}
+function xylemTube(R, x, y0, y1, w, o = {}) { // xylem vessel with lignin rings
+  R.rect(x - w / 2, y0, w, y1 - y0, { ink: 'B', w: 1.1, fi: 'T', ft: 0.2, wob: 0.15 });
+  for (let yy = y0 + 4; yy < y1 - 2; yy += o.sp || 5) R.line(x - w / 2, yy, x + w / 2, yy, { ink: o.ring || 'P', w: 1.3, t: 0.9, taper: 'none' });
+}
+
+/* ---------- 3.3.4.2a Xylem and the cohesion-tension theory ---------- */
+S({
+  id: '3.3.4.2a', num: '3.3.4.2', sub: 'Xylem and the cohesion-tension theory of water transport', title: 'Mass transport in plants', topic: '3.3', slot: [2, 7], dna: 'mark', ao: 2,
+  covers: ['3.3.4.2.s1', '3.3.4.2.s2'],
+  card: {
+    text: '<b>Xylem</b> transports water (and mineral ions) in the stem and leaves of plants. Xylem vessels are long tubes of dead cells with no end walls, their walls thickened with <b>lignin</b>. In the <b>cohesion-tension theory</b>: water evaporates from the mesophyll cells and out through the stomata (<b>transpiration</b>); this lowers the water potential in the leaf so water is pulled out of the xylem, creating <b>tension</b> (negative pressure) in the xylem. Water molecules are <b>cohesive</b> (hydrogen bonds), so a continuous column of water is pulled up the xylem; adhesion to the walls also helps. Water enters the roots by osmosis down a water potential gradient.',
+    terms: ['xylem', 'lignin', 'transpiration', 'cohesion', 'tension', 'adhesion', 'water potential gradient', 'stomata'],
+    skill: 'Describe and explain', eq: null,
+    q: 'Why does water not break into separate parts as it is pulled up a tall tree?', a: 'Water molecules are cohesive: hydrogen bonds between them hold the column together while tension pulls it up.'
+  },
+  draw(R, sc) {
+    R.text('cohesion-tension: water pulled up the xylem', 160, 14, 4.8, { al: 'c' });
+    plantDraw(R, 138, 214, 150, { sw: 6 });
+    // numbered steps
+    R.bubble(190, 66, 4.6, '1'); R.bubble(150, 128, 4.6, '2'); R.bubble(150, 174, 4.6, '3'); R.bubble(112, 238, 4.6, '4');
+    // leaf cross-section zoom
+    R.circle(250, 62, 38, { ink: 'B', w: 1.3, fi: 'T', ft: 0.08 }); R.line(196, 66, 213, 62, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.stroke([212, 80, 228, 78, 262, 86, 288, 80], { ink: 'B', w: 1.2, taper: 'none' }); R.stroke([212, 44, 230, 46, 268, 40, 288, 46], { ink: 'B', w: 1.2, taper: 'none' });
+    [[226, 56], [246, 52], [266, 58], [236, 68], [258, 70]].forEach(([x, y]) => R.circle(x, y, 7, { ink: 'B', w: 0.8, fi: 'TY', ft: 0.2, wob: 0.2 }));
+    R.knock([242, 78, 258, 78, 258, 90, 242, 90]); R.text('stoma', 250, 100, 3.7, { al: 'c' });
+    for (let i = 0; i < 3; i++) { R.arrow([226 + i * 18, 46, 226 + i * 18, 32], { ink: 'T', w: 0.9, hs: 2.2 }); } R.arrow([250, 84, 250, 96], { ink: 'T', w: 1, hs: 2.4 }); R.text('H_2O evaporates', 250, 26, 3.7, { al: 'c', ink: 'T' });
+    xylemTube(R, 214, 50, 80, 8); R.text('xylem', 206, 92, 3.5, { al: 'r' });
+    // xylem column zoom
+    R.rect(214, 120, 76, 104, { ink: 'B', w: 1.3, fi: 'T', ft: 0.1, wob: 0.2 });
+    for (let yy = 124; yy < 222; yy += 8) R.line(214, yy, 290, yy, { ink: 'P', w: 1.5, t: 0.9, taper: 'none' });
+    for (let k = 0; k < 7; k++) { const x = 226 + (k % 3) * 24, y = 132 + Math.floor(k / 3) * 36 + (k % 2) * 6; R.polyline = null; for (let q = 0; q < 3; q++) { R.circle(x + q * 0, y + q * 9, 3.8, { ink: 'B', w: 0.7, fi: 'T', ft: 0.5 }); } for (let q = 0; q < 2; q++) R.line(x, y + q * 9 + 3.8, x, y + (q + 1) * 9 - 3.8, { ink: 'B', w: 0.8, taper: 'none' }); }
+    R.arrow([300, 214, 300, 128], { ink: 'T', w: 1.4, hs: 3 }); R.text('water pulled up', 252, 234, 3.7, { al: 'c' });
+    R.text('cohesive water molecules', 252, 112, 3.7, { al: 'c' });
+    // left steps text
+    const cap = (x, y, t, w = 100) => wrapText(t, w, 4).forEach((ln, i) => R.text(ln, x, y + i * 5.2, 4, { al: 'l' }));
+    cap(8, 40, '1 evaporation and loss of H_2O vapour from the leaf lowers its ψ'); cap(8, 126, '2 tension: water is pulled out of the xylem, pressure falls', 94);
+    cap(8, 172, '3 cohesion: the whole column of water rises', 94); cap(120, 240, 'water enters roots by osmosis', 90);
+  },
+  anim(A, sc) { const p = A.ph(5); for (let i = 0; i < 6; i++) A.dot(226 + (i % 3) * 24, 220 - ((p + i / 6) % 1) * 94, 1.2, 'T', 0.9, i); for (let i = 0; i < 3; i++) A.dot(226 + i * 18, 46 - ((p + i / 3) % 1) * 14, 1.1, 'T', 0.7, 8 + i); A.dot(138, 190 - p * 100, 1.3, 'T', 0.9, 20); },
+});
+
+/* ---------- 3.3.4.2b Phloem and the mass flow hypothesis ---------- */
+S({
+  id: '3.3.4.2b', num: '3.3.4.2', sub: 'Phloem and the mass flow hypothesis of translocation', title: 'Mass transport in plants', topic: '3.3', slot: [3, 7], dna: 'mark', ao: 2,
+  covers: ['3.3.4.2.s3', '3.3.4.2.s4'],
+  card: {
+    text: '<b>Phloem</b> transports organic substances (mainly sucrose) from <b>sources</b> (e.g. leaves) to <b>sinks</b> (e.g. roots, growing regions, storage organs): <b>translocation</b>. Phloem is made of living <b>sieve tube elements</b> joined at perforated <b>sieve plates</b>, each with a <b>companion cell</b>. The <b>mass flow hypothesis</b>: at the source, sucrose is actively loaded into the sieve tubes, lowering the water potential, so water enters by osmosis and the hydrostatic pressure rises. At the sink, sucrose is removed and used or stored, water potential rises, water leaves and pressure falls. Mass flow of sap occurs down this pressure gradient.',
+    terms: ['phloem', 'sucrose', 'translocation', 'source', 'sink', 'sieve tube', 'companion cell', 'mass flow hypothesis', 'hydrostatic pressure'],
+    skill: 'Source–sink reasoning', eq: null,
+    q: 'Why does water enter the sieve tubes at the source?', a: 'Sucrose is actively loaded in, lowering the water potential of the sieve tube below that of the surrounding xylem, so water enters by osmosis.'
+  },
+  draw(R, sc) {
+    R.text('mass flow: source to sink', 160, 14, 5, { al: 'c' });
+    xylemTube(R, 252, 50, 214, 12, { sp: 6 }); R.text('xylem', 252, 228, 3.8, { al: 'c' });
+    const sx = 132, tw = 36;
+    R.rrect(sx - 70, 24, 62, 36, 8, { ink: 'B', w: 1.2, fi: 'TY', ft: 0.1, wob: 0.3 }); R.text('leaf cell: source', sx - 39, 38, 3.8, { al: 'c' }); R.text('sucrose is made', sx - 39, 46, 3.6, { al: 'c' });
+    const seg = [[64, 98], [102, 138], [142, 176]];
+    seg.forEach(([a2, b2]) => { R.rect(sx - tw / 2, a2, tw, b2 - a2 - 4, { ink: 'B', w: 1.2, fi: 'T', ft: 0.12, wob: 0.15 }); R.rect(sx - tw / 2 + 3, b2 - 4, tw - 6, 4, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.5 }); for (let k = 0; k < 5; k++) R.dot(sx - 10 + k * 5, b2 - 2, 0.6, { ink: 'B' }); });
+    seg.forEach(([a2, b2]) => { R.rrect(sx + tw / 2 + 2, a2 + 4, 18, b2 - a2 - 12, 6, { ink: 'B', w: 1, fi: 'P', ft: 0.2, wob: 0.2 }); R.circle(sx + tw / 2 + 11, a2 + 14, 3, { ink: 'B', w: 0.7, fi: 'B', ft: 0.4 }); R.circle(sx + tw / 2 + 8, a2 + 24, 2, { ink: 'B', w: 0.6, fi: 'Y', ft: 0.7 }); });
+    R.rrect(sx - 70, 196, 62, 36, 8, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.3, wob: 0.3 }); R.text('root cell: sink', sx - 39, 210, 3.8, { al: 'c' }); R.text('sucrose is used', sx - 39, 218, 3.6, { al: 'c' });
+    const nd = [9, 6, 3]; seg.forEach(([a2, b2], i) => { for (let k = 0; k < nd[i]; k++) R.dot(sx - 12 + (k % 4) * 8, a2 + 7 + Math.floor(k / 4) * 10, 1.5, { ink: 'Y' }); });
+    R.arrow([sx - 12, 52, sx - 4, 66], { ink: 'P', w: 1, hs: 2.4 });
+    R.arrow([sx, 178, sx, 194], { ink: 'P', w: 1, hs: 2.4 });
+    R.arrow([244, 74, sx + tw / 2 + 22, 82], { ink: 'T', w: 1, hs: 2.4 }); R.arrow([sx + tw / 2 + 22, 186, 244, 194], { ink: 'T', w: 1, hs: 2.4 });
+    // left-hand annotations
+    R.text('active loading', 10, 82, 3.8, { al: 'l', ink: 'P' }); R.text('(ATP)', 10, 88, 3.6, { al: 'l', ink: 'P' });
+    R.text('high pressure', 10, 114, 3.8, { al: 'l', ink: 'P' }); R.text('low ψ', 10, 120, 3.6, { al: 'l', ink: 'P' });
+    R.text('low pressure', 10, 160, 3.8, { al: 'l', ink: 'T' }); R.text('high ψ', 10, 166, 3.6, { al: 'l', ink: 'T' });
+    R.arrow([88, 108, 88, 168], { ink: 'B', w: 1.5, hs: 3.2 }); R.text('mass flow', 80, 138, 3.8, { al: 'c', rot: -90 });
+    // right-hand: water arrows text and leaders
+    R.text('water in', 204, 66, 3.8, { al: 'c', ink: 'T' }); R.text('by osmosis', 204, 72, 3.6, { al: 'c', ink: 'T' });
+    R.text('water out', 204, 206, 3.8, { al: 'c', ink: 'T' }); R.text('solutes removed', 128, 208, 3.6, { al: 'l', ink: 'P' });
+    leader(R, 'sieve plate', 120, 98, 202, 110, { size: 3.8, al: 'c' }); leader(R, 'companion cell', sx + tw / 2 + 12, 126, 206, 130, { size: 3.8, al: 'c' }); leader(R, 'sieve tube element', sx + tw / 2 - 2, 156, 212, 156, { size: 3.8, al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); for (let i = 0; i < 5; i++) A.dot(120 + (i % 3) * 8, 70 + ((p + i / 5) % 1) * 106, 1.4, 'Y', 0.9, i); },
+});
+
+/* ---------- 3.3.4.2c Evidence: tracers, ringing; for and against mass flow ---------- */
+S({
+  id: '3.3.4.2c', num: '3.3.4.2', sub: 'Tracer and ringing experiments: evidence for and against the mass flow hypothesis', title: 'Mass transport in plants', topic: '3.3', slot: [0, 8], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.3.4.2.s5', '3.3.4.2.s6'],
+  card: {
+    text: '<b>Tracer</b> experiments: a leaf is supplied with ¹⁴CO₂; the radioactive carbon is incorporated into sugars, which can be traced (e.g. by autoradiography) moving from source to sink in the phloem. <b>Ringing</b> experiments: a ring of bark including the phloem is removed from a stem; sugars accumulate above the ring (a bulge forms) and the tissue below is starved, showing that sugars move in the phloem. <b>For</b> mass flow: a pressure gradient (sap flows faster nearer the source); metabolic inhibitors stop translocation (active loading); sap flows out of cut phloem. <b>Against</b>: sugars go to many sinks at different rates, not just the highest-pressure; sieve plates would resist flow. Mass flow is a <b>hypothesis</b>.',
+    terms: ['tracer', 'radioactive carbon', 'autoradiography', 'ringing', 'phloem', 'pressure gradient', 'metabolic inhibitor', 'hypothesis', 'evidence for and against'],
+    skill: 'Interpret evidence; correlation vs causation', eq: null,
+    q: 'In a ringing experiment, why does the stem swell above the ring but not below?', a: 'Sugars carried down in the phloem cannot pass the gap where the phloem was removed, so they accumulate above it; below it no sugars arrive.'
+  },
+  draw(R, sc) {
+    R.text('evidence for and against mass flow', 332, 14, 5, { al: 'c' });
+    // --- tracer experiment: leaf in 14CO2 container, plant outline with autoradiograph dark areas
+    const px = 76, py = 202;
+    plantDraw(R, px, py, 118, { sw: 5 });
+    R.rrect(px + 10, py - 128, 42, 28, 6, { ink: 'B', w: 1.1, fi: 'T', ft: 0.12, wob: 0.3 }); R.text('^{14}CO_2', px + 31, py - 111, 4.4, { al: 'c' });
+    R.text('1 supply one leaf with ^{14}CO_2', 8, 28, 3.9, { al: 'l' }); R.text('2 ^{14}C goes into sugars', 8, 34.5, 3.9, { al: 'l' }); R.text('3 plant killed, placed on film:', 8, 41, 3.9, { al: 'l' }); R.text('dark = radioactive', 8, 47.5, 3.9, { al: 'l' });
+    R.text('tracer: ^{14}C in sugars', 76, 240, 4, { al: 'c' });
+    R.stroke([px - 14, py - 88, px - 4, py - 60, px, py - 20], { ink: 'B', w: 6, t: 0.7, smooth: true, taper: 'none', solid: false });
+    R.line(150, 24, 150, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // --- ringing
+    R.text('ringing experiment', 232, 28, 4.6, { al: 'c' });
+    const stem = (x, ring, bulge) => {
+      const w = 22; R.rect(x - w / 2, 56, w, 150, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.25, wob: 0.3 });
+      R.rect(x - w / 2 + 4, 56, w - 8, 150, { ink: 'B', w: 0.8, fi: 'T', ft: 0.25 });                    // xylem core
+      R.rect(x - w / 2, 56, 4, 150, { ink: 'B', w: 0, fi: 'P', ft: 0.5 }); R.rect(x + w / 2 - 4, 56, 4, 150, { ink: 'B', w: 0, fi: 'P', ft: 0.5 });  // phloem under bark
+      if (ring) { R.knock([x - w / 2 - 2, 118, x + w / 2 + 2, 118, x + w / 2 + 2, 134, x - w / 2 - 2, 134]); R.line(x - w / 2 + 4, 118, x + w / 2 - 4, 118, { ink: 'B', w: 0.8, taper: 'none' }); R.line(x - w / 2 + 4, 134, x + w / 2 - 4, 134, { ink: 'B', w: 0.8, taper: 'none' }); R.rect(x - w / 2 + 4, 118, w - 8, 16, { ink: 'B', w: 0.8, fi: 'T', ft: 0.25 }); }
+      if (bulge) { R.ellipse(x, 108, w / 2 + 6, 10, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.45, wob: 0.3 }); }
+    };
+    stem(196, false, false); stem(268, true, true);
+    R.arrow([196, 60, 196, 110], { ink: 'Y', w: 1.4, hs: 3 }); R.text('sugars made in leaves', 196, 50, 3.6, { al: 'c' });
+    R.arrow([268, 60, 268, 98], { ink: 'Y', w: 1.4, hs: 3 }); cross(R, 268, 126, 3.4);
+    R.text('before', 196, 222, 4, { al: 'c' }); R.text('after: bulge above the ring', 268, 222, 4, { al: 'c' });
+    R.text('sugars build up above;', 268, 230, 3.6, { al: 'c' }); R.text('none reach below', 268, 236, 3.6, { al: 'c' });
+    leader(R, 'ring of bark removed', 279, 126, 308, 100, { size: 3.8, al: 'c' }); leader(R, 'phloem (in the bark)', 279, 170, 308, 186, { size: 3.8, al: 'c' });
+    R.line(344, 24, 344, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // --- for and against
+    R.text('evidence FOR', 450, 28, 4.8, { al: 'c', ink: 'T' });
+    ['sap flows out of cut phloem (positive pressure)', 'sap flows faster nearer the leaves than further down the stem: a pressure gradient', 'a metabolic inhibitor stops translocation: active loading needs ATP', 'companion cells have many mitochondria', 'ringing: sugars accumulate above a ring'].forEach((t, i) => { R.circle(364, 42 + i * 17.5 + 3.5, 2, { ink: 'B', w: 0.8, fi: 'T', ft: 0.7 }); wrapText(t, 120, 3.7).forEach((ln, k) => R.text(ln, 370, 44 + i * 17.5 + k * 4.6, 3.7, { al: 'l' })); });
+    R.line(358, 132, 560, 132, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('evidence AGAINST', 450, 142, 4.8, { al: 'c', ink: 'P' });
+    ['sugars move to many sinks at different rates, not only the highest-pressure one', 'sieve plates would hinder flow; high pressure would be needed', 'not all substances move in the same direction at the same time'].forEach((t, i) => { R.circle(364, 156 + i * 17.5 + 3.5, 2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); wrapText(t, 120, 3.7).forEach((ln, k) => R.text(ln, 370, 158 + i * 17.5 + k * 4.6, 3.7, { al: 'l' })); });
+    R.text('a hypothesis: not proven', 450, 224, 4.2, { al: 'c', ink: 'P' });
+    // --- right: interpreting graph (autoradiograph time series cartoon)
+    R.line(576, 24, 576, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('^{14}C reaches sinks over time', 616, 26, 3.7, { al: 'c' });
+    [[584, 6], [614, 24], [644, 48]].forEach(([x, t], i) => { R.text(['1 h', '24 h', '48 h'][i], x + 6, 222, 3.8, { al: 'c' }); R.stroke([x + 6, 190, x + 6, 66], { ink: 'T', w: 3.4, t: 0.4, taper: 'none', solid: false }); const ext = [0.15, 0.5, 0.9][i]; R.stroke([x + 6, 70, x + 6, 70 + 120 * ext], { ink: 'B', w: 4.4, t: 0.95, taper: 'none' }); R.circle(x + 6, 62, 7, { ink: 'B', w: 1, fi: 'T', ft: 0.3 }); R.circle(x + 6, 62, 3, { ink: 'B', w: 0, fi: 'B', ft: 0.9 }); });
+    R.text('source: leaf', 616, 46, 3.6, { al: 'c' }); R.text('sink: root', 616, 204, 3.6, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(196, 60 + p * 50, 1.6, 'Y', 0.9, 1); A.dot(268, 60 + p * 38, 1.6, 'Y', 0.9, 2); A.dot(76 - 10 + p * 4, 120 + p * 70, 1.5, 'B', 0.9, 3); },
+});
+
+/* ---------- 3.3.4.2d Potometer (skills suggestion: AT b) ---------- */
+S({
+  id: '3.3.4.2d', num: '3.3.4.2', sub: 'Skills opportunity: a potometer estimates the rate of transpiration (AT b)', title: 'Mass transport in plants', topic: '3.3', slot: [2, 8], span: [2, 1], dna: 'mark', ao: 2, tag: '3.3.4.2',
+  covers: ['3.3.4.2.s7'],
+  card: {
+    text: 'The specification suggests students <b>set up and use a potometer</b> to investigate the effect of a named environmental variable on the rate of <b>transpiration</b> (skills opportunity, AT b; this is <i>not</i> one of the 12 required practicals). A potometer actually measures water uptake, which is assumed to be directly related to water loss. A shoot is cut under water and fitted to the apparatus without air bubbles; the movement of an air bubble along a capillary scale in a set time estimates the rate. Change one factor (light, wind, temperature, humidity) and control the others. Schools may use other methods.',
+    terms: ['potometer', 'transpiration', 'water uptake', 'air bubble', 'capillary tube', 'independent variable', 'control variable'],
+    skill: 'MS 0.1, 2.3: rate and volume', eq: MATH(mt('volume moved '), mo('='), mi('π'), mi('r'), msup(mrow(), mn('2')), mo('×'), mt('distance moved by bubble')),
+    eqn: 'e.g. bubble moves 24 mm in 4 min, capillary radius 0.5 mm → 0.79 × 24 ÷ 4 ≈ 4.7 mm³ min⁻¹',
+    q: 'Why is the shoot cut and set up under water?', a: 'To prevent air entering the xylem, which would break the continuous water column and stop water moving up.'
+  },
+  draw(R, sc) {
+    R.text('potometer (example)', 100, 14, 4.8, { al: 'c' });
+    // shoot in bung, capillary with scale and bubble, reservoir
+    const sh = [26, 90, 30, 66, 18, 50, 36, 38, 28, 22]; plantDraw(R, 44, 120, 72, { sw: 3, roots: false });
+    R.rect(40, 118, 12, 12, { ink: 'B', w: 1, fi: 'Y', ft: 0.5, wob: 0.1 }); R.text('bung', 28, 128, 3.5, { al: 'r' });
+    R.stroke([46, 130, 46, 160, 60, 172, 160, 172, 160, 142], { ink: 'T', w: 6, t: 0.4, smooth: false, taper: 'none', solid: false }); R.stroke([42, 130, 42, 162, 58, 176, 164, 176], { ink: 'B', w: 1.1, smooth: false, taper: 'none' }); R.stroke([50, 130, 50, 158, 62, 168, 156, 168, 156, 142], { ink: 'B', w: 1.1, smooth: false, taper: 'none' });
+    R.rect(160, 142, 8, 40, { ink: 'B', w: 1, fi: 'T', ft: 0.2 }); R.circle(164, 156, 2.8, { ink: 'B', w: 0.8, fi: 'P', ft: 0.9 });
+    // capillary with scale
+    R.rect(96, 190, 100, 8, { ink: 'B', w: 1.1, fi: 'T', ft: 0.15, wob: 0.1 }); R.rect(122, 191.4, 6, 5.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.text('air bubble', 112, 186, 3.6, { al: 'c' });
+    for (let i = 0; i <= 10; i++) R.line(96 + i * 10, 198, 96 + i * 10, 198 + (i % 5 === 0 ? 5 : 3), { ink: 'B', w: 0.5, taper: 'none' }); R.text('mm scale', 146, 214, 3.6, { al: 'c' });
+    R.text('water moves this way', 98, 150, 3.5, { al: 'l' }); R.arrow([140, 160, 100, 160], { ink: 'T', w: 1, hs: 2.4 });
+    R.beaker(190, 168, 32, 36, { level: 0.5, ink: 'T', t: 0.4 }); R.text('reservoir', 206, 214, 3.6, { al: 'c' });
+    R.stroke([196, 194, 188, 194, 180, 190, 168, 190], { ink: 'T', w: 3, t: 0.4, smooth: true, taper: 'none', solid: false });
+    // lamp/fan factors
+    R.circle(18, 64, 6, { ink: 'B', w: 1, fi: 'Y', ft: 0.7 }); [0, 1, 2, 3, 4, 5].forEach(i => { const a = i * TAU / 6; R.line(18 + Math.cos(a) * 8, 64 + Math.sin(a) * 8, 18 + Math.cos(a) * 12, 64 + Math.sin(a) * 12, { ink: 'Y', w: 1, taper: 'none' }); });
+    R.text('light', 18, 82, 3.6, { al: 'c' });
+    R.line(226, 22, 226, 236, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // right: factors with graph
+    R.text('factors that increase the rate', 400, 14, 4.6, { al: 'c' });
+    const items = [['light intensity ↑', 'stomata open wider'], ['temperature ↑', 'faster evaporation, larger ψ gradient'], ['humidity ↓', 'steeper ψ gradient to the air'], ['air movement ↑', 'moist air blown away from the stomata']];
+    items.forEach(([a, b], i) => { const y = 34 + i * 24; R.circle(244, y, 3, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.8 }); R.text(a, 252, y + 1.4, 4.4, { al: 'l' }); R.text(b, 252, y + 8, 3.7, { al: 'l' }); });
+    const g = R.graph(266, 140, 120, 66, { xmin: 0, xmax: 10, ymin: 0, ymax: 10, xl: 'light intensity', yl: 'bubble speed', xt: [], yt: [], fs: 3.8, xly: 10, ylx: 5 }).axes();
+    g.curve(x => 1.4 + 7.6 * (1 - Math.exp(-x / 3)), { ink: 'P', w: 1.5 });
+    ['one factor changes;', 'others controlled', 'repeat and take a mean'].forEach((t, i) => R.text(t, 478, 150 + i * 7, 3.9, { al: 'c' }));
+    R.text('bubble distance ÷ time = rate', 400, 224, 4.2, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(8); A.dot(134 - p * 22, 193.6, 0, 'P', 0, 0); A.dot(124 + p * 40, 193.6, 2.4, 'P', 0.9, 1); for (let i = 0; i < 3; i++) A.dot(48 + ((p * 3 + i / 3) % 1) * 4, 124 + ((p * 3 + i / 3) % 1) * 30, 1, 'T', 0.7, 3 + i); },
+});
+
 /* ===================== 99 MAIN ===================== */
 (function boot() {
   initPlates(); layoutSheet(); resize();
   const fv = fitView(); cam.x = fv.x; cam.y = fv.y; cam.z = fv.z;
   Card.setEnabled(true);
   press.begin();
-  window.AQA = { setCard(b) { cardOn = b; }, cam, press, tour, TILES, JOBS, STAGE, SCENES, LAYERS, TOPICS, SHEET, get k() { return currentK; }, flyTo, viewFor, sceneRect, DLC, MISSING_GLYPHS,
+  window.AQA = { setCard(b) { cardOn = b; }, cam, press, tour, TILES, JOBS, STAGE, SCENES, LAYERS, TOPICS, SHEET, checkSlots, get k() { return currentK; }, flyTo, viewFor, sceneRect, DLC, MISSING_GLYPHS,
     recordAll(v = 0) { const t0 = performance.now(), rep = []; let tot = 0; for (const L of LAYERS) { const a = performance.now(); const dl = recordLayer(L, v, false); rep.push([L.id, dl.count, dl.bytes(), Math.round(performance.now() - a)]); tot += dl.bytes(); } return { ms: Math.round(performance.now() - t0), bytes: tot, missing: [...MISSING_GLYPHS], rep }; } };
   requestAnimationFrame(frame);
 })();

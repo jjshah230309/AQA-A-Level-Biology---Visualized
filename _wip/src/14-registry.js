@@ -21,6 +21,15 @@ function S(def) {
   if (SCENE_BY_ID[def.id]) throw new Error('duplicate scene ' + def.id);
   SCENES.push(def); SCENE_BY_ID[def.id] = def; return def;
 }
+function checkSlots() {
+  const occ = Object.create(null), clash = [];
+  for (const sc of SCENES) {
+    const sp = sc.span || [1, 1];
+    if (sc.slot[0] + sp[0] > 4) clash.push(sc.id + ' wider than the block');
+    for (let i = 0; i < sp[0]; i++) for (let j = 0; j < sp[1]; j++) { const k = sc.topic + ':' + (sc.slot[0] + i) + ',' + (sc.slot[1] + j); if (occ[k]) clash.push(sc.id + ' overlaps ' + occ[k] + ' at ' + k); else occ[k] = sc.id; }
+  }
+  return clash;
+}
 function computeBlocks() {
   for (const t of TOPICS) { t.rows = 1; }
   for (const sc of SCENES) { const t = TOPIC_BY_ID[sc.topic], sp = sc.span || [1, 1]; t.rows = Math.max(t.rows, sc.slot[1] + sp[1]); }
@@ -35,6 +44,7 @@ const BACKDROPS = Object.create(null), PATHS = [];
 let FURNITURE_DRAW = null, PATH_DRAW = null;
 function layoutSheet() {
   LAYERS.length = 0;
+  { const c = checkSlots(); if (c.length) console.error('SLOT CLASHES', c); }
   computeBlocks();
   for (const t of TOPICS) {
     const bd = BACKDROPS[t.id];
