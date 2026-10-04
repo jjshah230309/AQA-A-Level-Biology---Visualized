@@ -1,18 +1,175 @@
 <!doctype html>
-<!-- AQA A-level Biology topic by topic -->
+<!--
+AQA A-level Biology (7402), topic by topic: traceability
+Specification: AQA 7401/7402 v1.6 (section 3 content, 4 assessment objectives, 6 mathematical requirements, 7-8 practical skills).
+Scene ids are the specification section numbers (a, b, c ... split a long section); RP1-RP12 are the required practicals; SK.* are the skills scenes.
+A statement id such as 3.2.3.s7 is the 7th content statement of section 3.2.3 in specification order; the full list is the SPEC object in the script.
+The script checks all of this at load: AQA_COVERAGE.check() (also drawn as the coverage stamp on the title block).
+
+1. SPECIFICATION SECTION -> SCENES (statements drawn)
+  3.1.1    : s1-s6 -> 3.1.1   [6 statements]
+  3.1.2    : s1-s5 -> 3.1.2a; s6-s10 -> 3.1.2b   [10 statements]
+  3.1.3    : s1-s7 -> 3.1.3   [7 statements]
+  3.1.4.1  : s1-s8 -> 3.1.4.1   [8 statements]
+  3.1.4.2  : s1-s4, s8-s9 -> 3.1.4.2a; s5-s7, s10-s11 -> 3.1.4.2b   [11 statements]
+  3.1.5.1  : s1-s9 -> 3.1.5.1   [9 statements]
+  3.1.5.2  : s1-s7 -> 3.1.5.2   [7 statements]
+  3.1.6    : s1-s5 -> 3.1.6   [5 statements]
+  3.1.7    : s1-s6 -> 3.1.7   [6 statements]
+  3.1.8    : s1-s6 -> 3.1.8   [6 statements]
+  3.2.1.1  : s1-s11 -> 3.2.1.1   [11 statements]
+  3.2.1.2  : s1-s7 -> 3.2.1.2   [7 statements]
+  3.2.1.3  : s1-s4 -> 3.2.1.3a; s5-s6 -> 3.2.1.3b   [6 statements]
+  3.2.2    : s1-s7 -> 3.2.2a; s8-s10 -> 3.2.2b   [10 statements]
+  3.2.3    : s1-s3 -> 3.2.3a; s4-s7 -> 3.2.3b; s8-s11 -> 3.2.3c   [11 statements]
+  3.2.4    : s1-s2 -> 3.2.4a; s3 -> 3.2.4b; s4-s6 -> 3.2.4c; s7, s11 -> 3.2.4d; s8-s10 -> 3.2.4e; s11 -> 3.2.4f; s12-s13, s20-s21 -> 3.2.4g; s14-s15 -> 3.2.4h; s16-s21 -> 3.2.4i   [21 statements]
+  3.3.1    : s1-s3 -> 3.3.1   [3 statements]
+  3.3.2    : s1-s2 -> 3.3.2a; s3 -> 3.3.2b; s4 -> 3.3.2c; s5 -> 3.3.2d; s6 -> 3.3.2e; s7 -> 3.3.2f; s8 -> 3.3.2g; s9-s13 -> 3.3.2h   [13 statements]
+  3.3.3    : s1-s4 -> 3.3.3a; s5-s7 -> 3.3.3b   [7 statements]
+  3.3.4.1  : s1-s2 -> 3.3.4.1a; s2 -> 3.3.4.1b; s3-s4 -> 3.3.4.1c; s5 -> 3.3.4.1d; s6 -> 3.3.4.1e; s7, s11 -> 3.3.4.1f; s8 -> 3.3.4.1g; s9-s10 -> 3.3.4.1h; s12-s14 -> 3.3.4.1i   [14 statements]
+  3.3.4.2  : s1-s2 -> 3.3.4.2a; s3-s4 -> 3.3.4.2b; s5-s6 -> 3.3.4.2c; s7 -> 3.3.4.2d   [7 statements]
+  3.4.1    : s1-s3 -> 3.4.1a; s4-s6 -> 3.4.1b; s7 -> 3.4.1c   [7 statements]
+  3.4.2    : s1-s2 -> 3.4.2a; s3-s5 -> 3.4.2b; s6-s8 -> 3.4.2c   [8 statements]
+  3.4.3    : s1-s3 -> 3.4.3a; s4 -> 3.4.3b; s5-s7 -> 3.4.3c; s8-s11 -> 3.4.3d   [11 statements]
+  3.4.4    : s1-s4 -> 3.4.4a; s5-s7 -> 3.4.4b   [7 statements]
+  3.4.5    : s1-s2 -> 3.4.5a; s3-s6 -> 3.4.5b   [6 statements]
+  3.4.6    : s1-s4 -> 3.4.6a; s5 -> 3.4.6b   [5 statements]
+  3.4.7    : s1-s3 -> 3.4.7a; s4-s6 -> 3.4.7b   [6 statements]
+  3.5      : s1-s7 -> 3.5   [7 statements]
+  3.5.1    : s1-s5 -> 3.5.1a; s6-s9 -> 3.5.1b; s10 -> 3.5.1c; s11 -> 3.5.1d   [11 statements]
+  3.5.2    : s1-s3 -> 3.5.2a; s4 -> 3.5.2b; s5-s8 -> 3.5.2c; s9-s10 -> 3.5.2d   [10 statements]
+  3.5.3    : s1-s5 -> 3.5.3a; s6-s7 -> 3.5.3b; s8-s9 -> 3.5.3c   [9 statements]
+  3.5.4    : s1-s3, s5 -> 3.5.4a; s4, s6-s8 -> 3.5.4b   [8 statements]
+  3.6      : s1-s5 -> 3.6   [5 statements]
+  3.6.1.1  : s1-s3 -> 3.6.1.1a; s4 -> 3.6.1.1b; s5 -> 3.6.1.1c   [5 statements]
+  3.6.1.2  : s1-s3 -> 3.6.1.2a; s4 -> 3.6.1.2b   [4 statements]
+  3.6.1.3  : s1-s3 -> 3.6.1.3   [3 statements]
+  3.6.2.1  : s1-s2 -> 3.6.2.1a; s3-s4 -> 3.6.2.1b; s5-s7 -> 3.6.2.1c   [7 statements]
+  3.6.2.2  : s1-s3 -> 3.6.2.2a; s4-s7 -> 3.6.2.2b   [7 statements]
+  3.6.3    : s1-s2 -> 3.6.3a; s3 -> 3.6.3b; s4-s7 -> 3.6.3c   [7 statements]
+  3.6.4.1  : s1-s6 -> 3.6.4.1   [6 statements]
+  3.6.4.2  : s1-s5 -> 3.6.4.2a; s3-s6 -> 3.6.4.2b; s7-s8 -> 3.6.4.2c   [8 statements]
+  3.6.4.3  : s1-s2 -> 3.6.4.3a; s3-s7 -> 3.6.4.3b; s6-s7 -> 3.6.4.3c; s5 -> 3.6.4.3d   [7 statements]
+  3.7      : s1-s7 -> 3.7   [7 statements]
+  3.7.1    : s1-s6 -> 3.7.1a; s7 -> 3.7.1b; s8 -> 3.7.1c; s8 -> 3.7.1d; s8 -> 3.7.1e; s9 -> 3.7.1f   [9 statements]
+  3.7.2    : s1-s4 -> 3.7.2   [4 statements]
+  3.7.3    : s1-s4, s6 -> 3.7.3a; s5 -> 3.7.3b; s7-s8 -> 3.7.3c; s9-s11 -> 3.7.3d   [11 statements]
+  3.7.4    : s1-s4 -> 3.7.4a; s4 -> 3.7.4b; s5-s6 -> 3.7.4c; s7, s11 -> 3.7.4d; s8-s10 -> 3.7.4e; s12-s14 -> 3.7.4f   [14 statements]
+  3.8      : s1-s4 -> 3.8   [4 statements]
+  3.8.1    : s1-s2 -> 3.8.1a; s3-s5 -> 3.8.1b   [5 statements]
+  3.8.2.1  : s1-s5 -> 3.8.2.1a; s6-s8 -> 3.8.2.1b   [8 statements]
+  3.8.2.2  : s1-s2 -> 3.8.2.2a; s3-s7 -> 3.8.2.2b; s8-s10 -> 3.8.2.2c   [10 statements]
+  3.8.2.3  : s1-s4 -> 3.8.2.3a; s5-s6 -> 3.8.2.3b   [6 statements]
+  3.8.3    : s1-s4 -> 3.8.3   [4 statements]
+  3.8.4.1  : s1-s4 -> 3.8.4.1a; s5 -> 3.8.4.1b; s6-s9 -> 3.8.4.1c; s10-s13 -> 3.8.4.1d   [13 statements]
+  3.8.4.2  : s1-s4 -> 3.8.4.2   [4 statements]
+  3.8.4.3  : s1-s4 -> 3.8.4.3   [4 statements]
+
+2. REQUIRED PRACTICALS -> SCENE (spec section; apparatus and techniques; maths skills; practical skills). Methods are labelled as examples: teachers may vary them.
+  RP1 -> RP1 (section 3.1.4.2; AT a b c f l; MS 0.1, MS 1.11, MS 3.2, MS 3.6, MS 3.3; PS 2.4, PS 3.3); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP2 -> RP2 (section 3.2.2; AT d e f; MS 0.3, MS 1.8, MS 1.3; PS 2.4); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP3 -> RP3 (section 3.2.3; AT c h j l; MS 3.2, MS 3.4, MS 0.3, MS 1.3; PS 2.3, PS 3.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP4 -> RP4 (section 3.2.3; AT a b c j l; MS 3.2, MS 3.1, MS 1.3; PS 2.2, PS 4.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP5 -> RP5 (section 3.3.4.1; AT e h j; MS 1.8, MS 0.1; PS 1.2, PS 2.2); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP6 -> RP6 (section 3.4.4; AT c i; MS 0.2, MS 1.2, MS 0.3, MS 4.1; PS 2.3, PS 4.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP7 -> RP7 (section 3.5.1; AT b c g; MS 0.3, MS 1.3, MS 1.2; PS 2.2, PS 3.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP8 -> RP8 (section 3.5.1; AT a b c; MS 3.1, MS 3.2, MS 1.3; PS 2.3, PS 3.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP9 -> RP9 (section 3.5.2; AT a b c i; MS 3.1, MS 1.3, MS 0.2; PS 2.3, PS 3.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP10 -> RP10 (section 3.6.1.1; AT h; MS 1.9, MS 0.3, MS 1.3; PS 2.2, PS 4.1); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP11 -> RP11 (section 3.6.4.2; AT b c f; MS 0.2, MS 3.1, MS 3.2; PS 2.2, PS 3.1, PS 3.3); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+  RP12 -> RP12 (section 3.7.4; AT a b h k l; MS 1.5, MS 2.4, MS 1.9; PS 2.1, PS 2.4, PS 3.3); facets: principle, variables, controls, apparatus, measurement, calculation, risk, limitation, interpretation
+
+3. MATHEMATICAL SKILLS (spec 6) -> SCENES
+  MS 0.1  -> SK.MS0, used in RP1, RP5
+  MS 0.2  -> SK.MS0, used in RP6, RP9, RP11
+  MS 0.3  -> SK.MS0, used in RP2, RP3, RP6, RP7, RP10
+  MS 0.4  -> SK.MS0
+  MS 0.5  -> SK.MS0
+  MS 1.1  -> SK.MS1a
+  MS 1.2  -> SK.MS1a, used in RP6, RP7
+  MS 1.3  -> SK.MS1a, used in RP2, RP3, RP4, RP7, RP8, RP9, RP10
+  MS 1.4  -> SK.MS1a
+  MS 1.5  -> SK.MS1a, used in RP12
+  MS 1.6  -> SK.MS1b
+  MS 1.7  -> SK.MS1b
+  MS 1.8  -> SK.MS1b, used in RP2, RP5
+  MS 1.9  -> SK.MS1c, used in RP10, RP12
+  MS 1.10 -> SK.MS1d
+  MS 1.11 -> SK.MS1d, used in RP1
+  MS 2.1  -> SK.MS2
+  MS 2.2  -> SK.MS2
+  MS 2.3  -> SK.MS2
+  MS 2.4  -> SK.MS2, used in RP12
+  MS 2.5  -> SK.MS2
+  MS 3.1  -> SK.MS3, used in RP4, RP8, RP9, RP11
+  MS 3.2  -> SK.MS3, used in RP1, RP3, RP4, RP8, RP11
+  MS 3.3  -> SK.MS3, used in RP1
+  MS 3.4  -> SK.MS3, used in RP3
+  MS 3.5  -> SK.MS3
+  MS 3.6  -> SK.MS3, used in RP1
+  MS 4.1  -> SK.MS4, used in RP6
+
+4. APPARATUS AND TECHNIQUES (spec 8.1) -> SCENES
+  AT a  -> SK.AT; in required practicals RP1 RP4 RP8 RP9 RP12
+  AT b  -> SK.AT; in required practicals RP1 RP4 RP7 RP8 RP9 RP11 RP12
+  AT c  -> SK.AT; in required practicals RP1 RP3 RP4 RP6 RP7 RP8 RP9 RP11
+  AT d  -> SK.AT; in required practicals RP2
+  AT e  -> SK.AT; in required practicals RP2 RP5
+  AT f  -> SK.AT; in required practicals RP1 RP2 RP11
+  AT g  -> SK.AT; in required practicals RP7
+  AT h  -> SK.AT; in required practicals RP3 RP5 RP10 RP12
+  AT i  -> SK.AT; in required practicals RP6 RP9
+  AT j  -> SK.AT; in required practicals RP3 RP4 RP5
+  AT k  -> SK.AT; in required practicals RP12
+  AT l  -> SK.AT; in required practicals RP1 RP3 RP4 RP12
+
+5. PRACTICAL SKILLS (spec 8.3), CPAC (8.4), ASSESSMENT OBJECTIVES (4.2) -> SCENES
+  PS 1.1  -> SK.PS
+  PS 1.2  -> SK.PS
+  PS 2.1  -> SK.PS
+  PS 2.2  -> SK.PS
+  PS 2.3  -> SK.PS
+  PS 2.4  -> SK.PS
+  PS 3.1  -> SK.PS
+  PS 3.2  -> SK.PS
+  PS 3.3  -> SK.PS
+  PS 4.1  -> SK.PS
+  CPAC 1  -> SK.CPAC
+  CPAC 2  -> SK.CPAC
+  CPAC 3  -> SK.CPAC
+  CPAC 4  -> SK.CPAC
+  CPAC 5  -> SK.CPAC
+  AO1     -> SK.AO
+  AO2     -> SK.AO
+  AO3     -> SK.AO
+
+6. TOUR ORDER = SPECIFICATION ORDER (169 scenes)
+  3.1: 3.1.1 3.1.2a 3.1.2b 3.1.3 3.1.4.1 3.1.4.2a 3.1.4.2b RP1 3.1.5.1 3.1.5.2 3.1.6 3.1.7 3.1.8 
+  3.2: 3.2.1.1 3.2.1.2 3.2.1.3a 3.2.1.3b 3.2.2a 3.2.2b RP2 3.2.3a 3.2.3b 3.2.3c RP3 RP4 3.2.4a 3.2.4b 3.2.4c 3.2.4d 3.2.4e 3.2.4f 3.2.4g 3.2.4h 
+      3.2.4i 
+  3.3: 3.3.1 3.3.2a 3.3.2b 3.3.2c 3.3.2d 3.3.2e 3.3.2f 3.3.2g 3.3.2h 3.3.3a 3.3.3b 3.3.4.1a 3.3.4.1b 3.3.4.1c 3.3.4.1d 3.3.4.1e 3.3.4.1f 3.3.4.1g 
+      3.3.4.1h 3.3.4.1i RP5 3.3.4.2a 3.3.4.2b 3.3.4.2c 3.3.4.2d 
+  3.4: 3.4.1a 3.4.1b 3.4.1c 3.4.2a 3.4.2b 3.4.2c 3.4.3a 3.4.3b 3.4.3c 3.4.3d 3.4.4a 3.4.4b RP6 3.4.5a 3.4.5b 3.4.6a 3.4.6b 3.4.7a 3.4.7b 
+  3.5: 3.5 3.5.1a 3.5.1b 3.5.1c RP7 RP8 3.5.1d 3.5.2a 3.5.2b 3.5.2c 3.5.2d RP9 3.5.3a 3.5.3b 3.5.3c 3.5.4a 3.5.4b 
+  3.6: 3.6 3.6.1.1a 3.6.1.1b 3.6.1.1c RP10 3.6.1.2a 3.6.1.2b 3.6.1.3 3.6.2.1a 3.6.2.1b 3.6.2.1c 3.6.2.2a 3.6.2.2b 3.6.3a 3.6.3b 3.6.3c 3.6.4.1 
+      3.6.4.2a 3.6.4.2b 3.6.4.2c RP11 3.6.4.3a 3.6.4.3b 3.6.4.3c 3.6.4.3d 
+  3.7: 3.7 3.7.1a 3.7.1b 3.7.1c 3.7.1d 3.7.1e 3.7.1f 3.7.2 3.7.3a 3.7.3b 3.7.3c 3.7.3d 3.7.4a 3.7.4b 3.7.4c 3.7.4d 3.7.4e 3.7.4f RP12 
+  3.8: 3.8 3.8.1a 3.8.1b 3.8.2.1a 3.8.2.1b 3.8.2.2a 3.8.2.2b 3.8.2.2c 3.8.2.3a 3.8.2.3b 3.8.3 3.8.4.1a 3.8.4.1b 3.8.4.1c 3.8.4.1d 3.8.4.2 3.8.4.3 
+  SK: SK.AO SK.MS0 SK.MS1a SK.MS1b SK.MS1c SK.MS1d SK.MS2 SK.MS3 SK.MS4 SK.AT SK.PS SK.CPAC SK.RP 
+-->
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AQA A-level Biology, topic by topic</title><link rel="icon" href="data:,">
 <style>
 html,body{margin:0;height:100%;background:#26211d;overflow:hidden;font:15px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
 canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;display:block;cursor:grab}canvas:active{cursor:grabbing}
-#card{position:fixed;left:24px;top:50%;width:min(430px,34vw);max-height:84vh;overflow:auto;box-sizing:border-box;background:#f6eedb;color:#2a3a66;border:2px solid #3d5588;border-radius:6px 16px 6px 16px;padding:15px 18px 12px;box-shadow:6px 7px 0 #ff48b0b0,0 14px 44px #000a;opacity:0;pointer-events:none;transform:translateY(-44%);transition:opacity .5s,transform .5s}
+#card{position:fixed;left:1.6em;top:50%;width:min(28.7em,34vw);max-height:84vh;overflow:auto;box-sizing:border-box;font-size:clamp(15px,.8vw,34px);line-height:1.45;background:#f6eedb;color:#2a3a66;border:2px solid #3d5588;border-radius:.4em 1.07em .4em 1.07em;padding:1em 1.2em .8em;box-shadow:.4em .47em 0 #ff48b0b0,0 .93em 2.9em #000a;opacity:0;pointer-events:none;transform:translateY(-44%);transition:opacity .5s,transform .5s}
 #card.on{opacity:1;pointer-events:auto;transform:translateY(-50%)}
-#card .n{font-weight:700;letter-spacing:.06em;color:#00838a}#card .n b{background:#ff48b0;color:#fff;padding:1px 7px;border-radius:9px;margin-left:6px;font-size:12px;letter-spacing:0}
-#card h2{margin:2px 0 3px;font:700 21px/1.18 Georgia,"Times New Roman",serif;color:#3d5588}#card .s{font-size:13px;color:#7b6f5a;margin-bottom:5px}#card p{margin:8px 0}
-#card .t span{display:inline-block;margin:2px 4px 2px 0;padding:1px 8px;border:1.5px solid #3d5588;border-radius:10px;font-size:12.5px;background:#fff8}
-#card .e{margin:9px 0;padding:7px 10px;background:#ffe80044;border-left:4px solid #ffc800;border-radius:3px}#card .e i{display:block;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:#8a6d00}#card .e small{display:block;font-size:12px;color:#5b5238}
-#card math{font-size:1.18em}#card .q{margin:8px 0 2px;padding:6px 10px;background:#00838a1c;border-radius:4px}#card .q summary{cursor:pointer;font-weight:600;color:#00656b}#card .h{margin-top:9px;font-size:11px;color:#9a8e76}
-@media(max-width:759px){#card{left:0;right:0;top:auto;bottom:0;width:auto;max-height:50vh;border-radius:16px 16px 0 0;transform:translateY(10%);padding-bottom:max(12px,env(safe-area-inset-bottom))}#card.on{transform:none}#card h2{font-size:18px}#card .h{display:none}}
+#card .n{font-weight:700;letter-spacing:.06em;color:#00838a}#card .n b{background:#ff48b0;color:#fff;padding:.07em .58em;border-radius:.75em;margin-left:.5em;font-size:.8em;letter-spacing:0}
+#card h2{margin:.13em 0 .2em;font:700 1.4em/1.18 Georgia,"Times New Roman",serif;color:#3d5588}#card .s{font-size:.87em;color:#7b6f5a;margin-bottom:.35em}#card p{margin:.53em 0}
+#card .t span{display:inline-block;margin:.13em .27em .13em 0;padding:.07em .64em;border:1.5px solid #3d5588;border-radius:.8em;font-size:.83em;background:#fff8}
+#card .e{margin:.6em 0;padding:.47em .67em;background:#ffe80044;border-left:.27em solid #ffc800;border-radius:.2em;overflow-x:auto;scrollbar-width:thin}#card .e math{font-size:.94em;max-width:none}#card .e i{display:block;font-size:.77em;letter-spacing:.07em;text-transform:uppercase;color:#8a6d00}#card .e small{display:block;font-size:.8em;color:#5b5238}
+#card math{font-size:1.18em}#card .q{margin:.53em 0 .13em;padding:.4em .67em;background:#00838a1c;border-radius:.27em}#card .q summary{cursor:pointer;font-weight:600;color:#00656b}#card .h{margin-top:.6em;font-size:.73em;color:#9a8e76}
+@media(max-width:759px){#card{left:0;right:0;top:auto;bottom:0;width:auto;max-height:44vh;font-size:13.5px;line-height:1.4;padding:11px 16px;border-radius:16px 16px 0 0;transform:translateY(10%);padding-bottom:max(10px,env(safe-area-inset-bottom))}#card.on{transform:none}#card h2{font-size:1.26em}#card p{margin:.4em 0}#card .t span{font-size:.85em;padding:0 .5em}#card .e{margin:.45em 0;padding:.35em .65em}#card .h{display:none}}
 </style></head><body><canvas id="c"></canvas><div id="card"></div>
 <script>
 'use strict';
@@ -236,12 +393,12 @@ const GLYPHS = (() => {
   def('↔', 7.4, '0.4,3.6 7,3.6', '2.4,1.6 0.3,3.6 2.4,5.6', '5,1.6 7.1,3.6 5,5.6');
   def('⇌', 7, '0.2,2.4 6.6,2.4', '5,0.8 6.8,2.4', '0.4,5.2 6.8,5.2', '2,6.8 0.2,5.2');
   // ---- greek & symbols
-  def('α', 5.4, Ec(2.1, 4.8, 2, 2.2, 10), 'c4.1,2.6 4.2,5.5 4.6,6.6 5.3,7');
+  def('α', 5.8, Ec(2.1, 4.8, 2, 2.2, 10), 'c5.5,2.5 4.4,3.4 3.7,4.6 3.3,5.6 3.4,6.5 4.1,7 5.6,6.6');
   def('β', 4.8, 'c0.3,10 0.3,1.6 0.9,0.4 2.2,0 3.4,0.3 3.9,1.4 3.4,2.5 2.4,3.2 1.2,3.6', 'c1.2,3.6 2.8,3.8 4.2,4.4 4.5,5.6 4,6.6 2.8,7 1.2,6.8 0.3,6.2');
   def('γ', 5, '0,2.6 2.4,7 2.4,10', '4.8,2.6 2.4,7');
   def('Δ', 6.4, '0,7 3.2,0 6.2,7 0,7');
   def('Σ', 5.4, '4.8,0 0,0 2.6,3.5 0,7 4.8,7');
-  def('π', 5.6, '0,2.6 5.2,2.6', '1.2,2.6 1,7', '4,2.6 4.2,7');
+  def('π', 5.6, '0,2.8 5.2,2.6', '1.4,2.7 1.2,7', '4,2.7 3.9,5.8 4.6,7');
   def('ψ', 5.8, 'c0.1,2.4 0.3,5 1.2,6.3 2.8,6.6 4.4,6.3 5.2,5 5.4,2.4', '2.8,0 2.8,10');
   def('χ', 5, '0.2,2.6 4.6,10', '4.6,2.6 0.2,10');
   def('θ', 4.6, Ec(2.3, 3.5, 2, 3.5, 10), '0.5,3.5 4.1,3.5');
@@ -262,7 +419,7 @@ const GLYPHS = (() => {
   def('σ', 5, Ec(2.2, 4.9, 2.1, 2.1, 10), '2.2,2.8 4.8,2.8');
   def('•', 2.4, '1.2,3 1.2,4');
   def('∆', 6.4, '0,7 3.2,0 6.2,7 0,7');
-  def('√', 5, '0,4.2 1,5.6 2.4,0 5,0');
+  def('√', 5.8, '0,4.6 1,4 2.4,7 4.2,0 5.8,0');
   def('∩', 5, 'c0.5,7 0.5,2 1.5,0.6 2.6,0.2 3.7,0.6 4.5,2 4.5,7');
   def(' ', 3);
   return G;
@@ -380,6 +537,26 @@ class Recorder {
   stroke(pts, o = {}) {
     let p = flat(pts);
     if (p.length < 4) return this;
+    if (o.dash) {   // dashed line: walk the smoothed path and emit short undashed strokes
+      const on = Array.isArray(o.dash) ? o.dash[0] : 3.4, off = Array.isArray(o.dash) ? o.dash[1] : 2.8, cl = !!o.closed;
+      const sm = o.smooth !== undefined ? o.smooth : (p.length > 4 && !o.sharp);
+      const q = sm ? catmull(p, cl, 2.6) : densify(p, cl, 1.2), n = q.length / 2, o2 = Object.assign({}, o, { dash: false, taper: 'none', smooth: false, closed: false });
+      let acc = 0, draw = true, seg = [q[0], q[1]];
+      const nn = cl ? n + 1 : n;
+      for (let i = 1; i < nn; i++) {
+        const ax = q[(i - 1) % n * 2], ay = q[(i - 1) % n * 2 + 1], bx = q[i % n * 2], by = q[i % n * 2 + 1], L = Math.hypot(bx - ax, by - ay);
+        let pos = 0;
+        while (pos < L) {
+          const lim = draw ? on : off, step = Math.min(L - pos, lim - acc);
+          pos += step; acc += step;
+          const px = ax + (bx - ax) * pos / L, py = ay + (by - ay) * pos / L;
+          if (draw) seg.push(px, py);
+          if (acc >= lim - 1e-6) { if (draw && seg.length >= 4) this.stroke(seg, o2); draw = !draw; acc = 0; seg = draw ? [px, py] : []; }
+        }
+      }
+      if (draw && seg.length >= 4) this.stroke(seg, o2);
+      return this;
+    }
     const ink = inkMask(o.ink === undefined ? 'B' : o.ink); if (!ink) return this;
     const closed = !!o.closed;
     p = this.tp(p);
@@ -476,7 +653,7 @@ class Recorder {
   _shape(pts, o, closedSmooth) {
     if (o.fi) this.fill(pts, { ink: o.fi, t: o.ft === undefined ? 1 : o.ft, smooth: closedSmooth, wob: o.fwob });
     if (o.fi2) this.fill(pts, { ink: o.fi2, t: o.ft2 === undefined ? 1 : o.ft2, smooth: closedSmooth, wob: o.fwob });
-    if (o.ink !== '' && o.ink !== null && o.w !== 0) this.stroke(pts, { ink: o.ink === undefined ? 'B' : o.ink, w: o.w === undefined ? 1.1 : o.w, closed: true, smooth: closedSmooth, wob: o.wob, t: o.st });
+    if (o.ink !== '' && o.ink !== null && o.w !== 0) this.stroke(pts, { ink: o.ink === undefined ? 'B' : o.ink, w: o.w === undefined ? 1.1 : o.w, closed: true, smooth: closedSmooth, wob: o.wob, t: o.st, dash: o.dash });
     return this;
   }
   ellipse(cx, cy, rx, ry, o = {}) {
@@ -808,12 +985,13 @@ function tileExists(k, tx, ty) {
   const s = lodScale(k);
   return !((tx + 1) * TILE < SHEET.x0 * s || tx * TILE > SHEET.x1 * s || (ty + 1) * TILE < SHEET.y0 * s || ty * TILE > SHEET.y1 * s);
 }
-function want(k, tx, ty, v, prio, stages) {
+const haveAny = (k, tx, ty) => TILES.has(tkey(k, tx, ty, 0)) || TILES.has(tkey(k, tx, ty, 1)) || TILES.has(tkey(k, tx, ty, 2));
+function want(k, tx, ty, v, prio, stages, fb) {
   const key = tkey(k, tx, ty, v);
   const t = TILES.get(key);
   if (t) { t.used = frameNo; return t; }
   let j = JOBS.get(key);
-  if (!j) { j = { k, tx, ty, v, prio, seen: frameNo, stages: !!stages, key }; JOBS.set(key, j); }
+  if (!j) { j = { k, tx, ty, v, prio, seen: frameNo, stages: !!stages, key, fb: !!fb }; JOBS.set(key, j); }
   else { j.seen = frameNo; if (prio > j.prio) j.prio = prio; if (stages) j.stages = true; }
   return null;
 }
@@ -865,21 +1043,23 @@ function* bakeJob(job) {
     for (let i = 0; i < arr.length && TILES.size > MAX_TILES * 0.85; i++) TILES.delete(arr[i][0]);
   }
 }
+const BAKE = { ms: 0, n: 0 };
 function runJobs(budget) {
   const t0 = performance.now();
   while (performance.now() - t0 < budget) {
     if (!curGen) {
       let best = null;
       for (const j of JOBS.values()) {
-        if (j.seen < frameNo - 24 && !j.keep) { JOBS.delete(j.key); continue; }
+        if ((j.seen < frameNo - 24 && !j.keep) || (j.fb && haveAny(j.k, j.tx, j.ty))) { JOBS.delete(j.key); continue; }
         if (!best || j.prio > best.prio) best = j;
       }
       if (!best) return false;
       JOBS.delete(best.key); curJob = best; curGen = bakeJob(best);
     }
     const r = curGen.next();
-    if (r.done) { curGen = null; curJob = null; }
+    if (r.done) { curGen = null; curJob = null; BAKE.n++; }
   }
+  BAKE.ms += performance.now() - t0;
   return true;
 }
 
@@ -889,17 +1069,19 @@ const SLOT_W = 320, SLOT_H = 240, GUT = 24, BLK_PAD = 28, BLK_TOP = 96, BLK_COLS
 const BW = BLK_COLS * SLOT_W + (BLK_COLS - 1) * GUT + 2 * BLK_PAD;
 const bhFor = rows => rows * SLOT_H + (rows - 1) * GUT + BLK_TOP + BLK_PAD;
 const BGAP = 64, MARG_X = 130, MARG_T = 170, MARG_B = 250;
-/* Topic blocks snake through the sheet so consecutive topics touch:  row0 L->R 3.1 3.2 3.3 ; row1 R->L 3.4 3.5 3.6 ; row2 L->R 3.7 3.8 Skills */
+/* Topic blocks snake through a 5 x 2 sheet so consecutive topics touch:
+   row 0  L->R  3.1 3.2 3.3 3.4 3.5      row 1  R->L  3.6 3.7 3.8 Skills, then the title block at the far left */
 const TOPICS = [
   { id: '3.1', name: 'Biological molecules', col: 0, row: 0 },
   { id: '3.2', name: 'Cells', col: 1, row: 0 },
   { id: '3.3', name: 'Organisms exchange substances with their environment', col: 2, row: 0 },
-  { id: '3.4', name: 'Genetic information, variation and relationships between organisms', col: 2, row: 1 },
-  { id: '3.5', name: 'Energy transfers in and between organisms', col: 1, row: 1 },
-  { id: '3.6', name: 'Organisms respond to changes in their internal and external environments', col: 0, row: 1 },
-  { id: '3.7', name: 'Genetics, populations, evolution and ecosystems', col: 0, row: 2 },
-  { id: '3.8', name: 'The control of gene expression', col: 1, row: 2 },
-  { id: 'SK', name: 'Mathematical, practical and assessment skills', col: 2, row: 2 },
+  { id: '3.4', name: 'Genetic information, variation and relationships between organisms', col: 3, row: 0 },
+  { id: '3.5', name: 'Energy transfers in and between organisms', col: 4, row: 0 },
+  { id: '3.6', name: 'Organisms respond to changes in their internal and external environments', col: 4, row: 1 },
+  { id: '3.7', name: 'Genetics, populations, evolution and ecosystems', col: 3, row: 1 },
+  { id: '3.8', name: 'The control of gene expression', col: 2, row: 1 },
+  { id: 'SK', name: 'Mathematical, practical and assessment skills', col: 1, row: 1 },
+  { id: 'TT', name: 'AQA A-level Biology, topic by topic', col: 0, row: 1, minRows: 12, noScenes: true },
 ];
 const TOPIC_BY_ID = Object.create(null); TOPICS.forEach(t => TOPIC_BY_ID[t.id] = t);
 function S(def) {
@@ -916,14 +1098,14 @@ function checkSlots() {
   return clash;
 }
 function computeBlocks() {
-  for (const t of TOPICS) { t.rows = 1; }
-  for (const sc of SCENES) { const t = TOPIC_BY_ID[sc.topic], sp = sc.span || [1, 1]; t.rows = Math.max(t.rows, sc.slot[1] + sp[1]); }
-  const rowH = [0, 0, 0];
+  for (const t of TOPICS) { t.rows = 1; t.usedRows = 0; }
+  for (const sc of SCENES) { const t = TOPIC_BY_ID[sc.topic], sp = sc.span || [1, 1]; t.rows = Math.max(t.rows, sc.slot[1] + sp[1]); t.usedRows = t.rows; }
+  const rowH = [0, 0];
   for (const t of TOPICS) { t.minRows = t.minRows || 1; t.rows = Math.max(t.rows, t.minRows); t.bh = bhFor(t.rows); rowH[t.row] = Math.max(rowH[t.row], t.bh); }
-  const rowY = [MARG_T, MARG_T + rowH[0] + BGAP, MARG_T + rowH[0] + rowH[1] + 2 * BGAP];
-  for (const t of TOPICS) { const x = MARG_X + t.col * (BW + BGAP); t.rect = [x, rowY[t.row], x + BW, rowY[t.row] + rowH[t.row]]; }
+  const rowY = [MARG_T, MARG_T + rowH[0] + BGAP];
+  for (const t of TOPICS) { const x = MARG_X + t.col * (BW + BGAP); t.rect = [x, rowY[t.row], x + BW, rowY[t.row] + rowH[t.row]]; t.freeY = t.usedRows ? BLK_TOP + t.usedRows * (SLOT_H + GUT) - GUT + 14 : BLK_TOP; }
   SHEET.x0 = 0; SHEET.y0 = 0;
-  SHEET.x1 = MARG_X * 2 + 3 * BW + 2 * BGAP; SHEET.y1 = MARG_T + MARG_B + rowH[0] + rowH[1] + rowH[2] + 2 * BGAP;
+  SHEET.x1 = MARG_X * 2 + 5 * BW + 4 * BGAP; SHEET.y1 = MARG_T + MARG_B + rowH[0] + rowH[1] + BGAP;
 }
 const BACKDROPS = Object.create(null), PATHS = [];
 let FURNITURE_DRAW = null, PATH_DRAW = null;
@@ -960,6 +1142,8 @@ const cam = { x: 2300, y: 2000, z: 0.2 };
 let zMin = 0.05, zMax = 20, cardOn = true;
 const MAXPX = 8.6e6;
 const isMobile = /Android|iPhone|iPad|Mobi/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && innerWidth < 900);
+// memory budgets: a tile canvas is 1 MB, a recorded scene up to a few MB
+if (isMobile || (navigator.deviceMemory && navigator.deviceMemory <= 4)) { MAX_TILES = 150; DL_BUDGET = 60e6; }
 const sheetW = () => SHEET.x1 - SHEET.x0, sheetH = () => SHEET.y1 - SHEET.y0;
 
 function resize() {
@@ -975,8 +1159,8 @@ const fitView = () => ({ x: (SHEET.x0 + SHEET.x1) / 2, y: (SHEET.y0 + SHEET.y1) 
 /* ---- card region (css px) ---- */
 function availArea() {
   if (!cardOn) return { x: 0, y: 0, w: VW, h: VH };
-  if (VW >= 760) { const cw = Math.min(430, VW * 0.34) + 36; return { x: cw, y: 0, w: VW - cw, h: VH }; }
-  const ch = Math.min(VH * 0.5, 400); return { x: 0, y: 0, w: VW, h: VH - ch };
+  if (VW >= 760) { const fs = clamp(VW * 0.008, 15, 34), cw = Math.min(28.7 * fs, VW * 0.34) + 2.4 * fs; return { x: cw, y: 0, w: VW - cw, h: VH }; }
+  const ch = Math.min(VH * 0.44, 380); return { x: 0, y: 0, w: VW, h: VH - ch };
 }
 function viewFor(rect, pad = 1.08) {
   const A = availArea(), w = rect[2] - rect[0], h = rect[3] - rect[1];
@@ -1155,18 +1339,31 @@ function drawCanvasTile(c, wx0, wy0, ww, Z, ox, oy) {
   const dx = (wx0 - cam.x) * Z + CW / 2 + ox, dy = (wy0 - cam.y) * Z + CH / 2 + oy, dw = ww * Z;
   ctx.drawImage(c, Math.floor(dx), Math.floor(dy), Math.ceil(dw + (dx - Math.floor(dx))) + 1, Math.ceil(dw + (dy - Math.floor(dy))) + 1);
 }
+let missN = 0;
 function drawTiles(v) {
   const Z = cam.z * DPR, k = lodFor(Z), s = lodScale(k), tw = TILE / s;
   const hw = CW / 2 / Z, hh = CH / 2 / Z;
   const tx0 = Math.floor((cam.x - hw) * s / TILE), tx1 = Math.floor((cam.x + hw) * s / TILE), ty0 = Math.floor((cam.y - hh) * s / TILE), ty1 = Math.floor((cam.y + hh) * s / TILE);
   const moving = !!flight || Math.hypot(vel.x, vel.y) > 40 || !!zoomT;
   const miss = [];
+  missN = 0;
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
     if (!tileExists(k, tx, ty)) continue;
     const d = Math.hypot((tx + .5) * tw - cam.x, (ty + .5) * tw - cam.y);
     let e = want(k, tx, ty, v, 10000 - d * 0.4);
     for (let o = 1; o < 3; o++) { const e2 = want(k, tx, ty, (v + o) % 3, 6000 - d * 0.4 - o * 100); if (!e && e2) e = e2; }
     if (e) drawCanvasTile(e.c, tx * tw, ty * tw, tw, Z, 0, 0); else miss.push([tx, ty, k]);
+  }
+  missN = miss.length;
+  // a half- and quarter-resolution ancestor is baked first, so the stand-in for a missing tile is never wildly upscaled
+  for (const [tx, ty] of miss) for (let dj = 2; dj <= 4; dj += 2) {
+    const j = k - dj; if (j < 0) break;
+    const sj = lodScale(j), twj = TILE / sj, x0 = tx * tw, y0 = ty * tw;
+    const a0 = Math.floor(x0 / twj), a1 = Math.floor((x0 + tw - 1e-6) / twj), b0 = Math.floor(y0 / twj), b1 = Math.floor((y0 + tw - 1e-6) / twj);
+    for (let b = b0; b <= b1; b++) for (let a = a0; a <= a1; a++) {
+      if (!tileExists(j, a, b) || haveAny(j, a, b)) continue;
+      want(j, a, b, v, 12000 - dj * 20 - Math.hypot((a + .5) * twj - cam.x, (b + .5) * twj - cam.y) * 0.4, false, true);
+    }
   }
   // fallbacks from coarser levels
   for (const [tx, ty] of miss) {
@@ -1317,7 +1514,7 @@ function frame(ts) {
   renderMs = lerp(renderMs, performance.now() - t0, 0.1);
   // bake budget
   const hurry = press.on || (NOW < 8);
-  const budget = hurry ? 22 : isMoving() ? clamp(13 - renderMs, 3, 7) : clamp(15 - renderMs, 5, 12);
+  const budget = hurry ? 22 : isMoving() ? (missN ? clamp(15 - renderMs, 4, 9) : clamp(13 - renderMs, 3, 7)) : (missN ? clamp(24 - renderMs, 8, 20) : clamp(15 - renderMs, 5, 12));
   runJobs(budget);
   requestAnimationFrame(frame);
 }
@@ -1468,7 +1665,7 @@ FURNITURE_DRAW = function (R) {
   // registration targets at mid-edges and corners
   for (const [x, y] of [[W / 2, 34], [W / 2, H - 34], [34, H / 2], [W - 34, H / 2], [34, 34], [W - 34, 34], [34, H - 34], [W - 34, H - 34]]) regTarget(R, x, y);
   // ink swatch strip along the bottom margin
-  const sy = H - 150, sh = 28, x0 = 340;
+  const sy = H - 150, sh = 28, x0 = Math.round(W / 2 - 1250);
   let x = x0;
   const solid = [['Y'], ['P'], ['T'], ['B']];
   solid.forEach(k => { R.rect(x, sy, sh, sh, { ink: '', fi: k[0], ft: 1, w: 0 }); R.rect(x, sy, sh, sh, { ink: 'B', w: 0.7, wob: 0.1 }); x += sh + 5; });
@@ -1484,7 +1681,7 @@ FURNITURE_DRAW = function (R) {
     x += sh + 5;
   }
   // meaning of the inks (glyphs, no words): protein blob / water drop / ATP-energy / keyline
-  const kx = 2540, ky = sy + 14;
+  const kx = x0 + 1900, ky = sy + 14;
   R.circle(kx, ky, 8, { ink: 'B', w: 1, fi: 'P', ft: 0.9 }); R.text('protein', kx + 12, ky + 3, 6.5, { ink: 'B' });
   R.circle(kx + 112, ky, 8, { ink: 'B', w: 1, fi: 'T', ft: 0.55 }); R.text('water', kx + 124, ky + 3, 6.5, { ink: 'B' });
   R.circle(kx + 218, ky, 8, { ink: 'B', w: 1, fi: 'Y', ft: 1 }); R.text('energy', kx + 230, ky + 3, 6.5, { ink: 'B' });
@@ -2220,8 +2417,8 @@ function blockHeader(R, L, o = {}) {
   R.text(num, 30, 66, t.id === 'SK' ? 34 : 50, { al: 'l', w: t.id === 'SK' ? 4.2 : 6 });
   const nw = labelWidth(num, t.id === 'SK' ? 34 : 50) + 50;
   // title in up to two lines
-  const lines = wrapText(t.name, W - nw - 260, 13);
-  lines.slice(0, 2).forEach((s, i) => R.text(s, nw + 8, 48 + i * 17 - (lines.length > 1 ? 6 : -4), 13, { al: 'l' }));
+  const lines = wrapText(t.name, W - nw - 300, 17);
+  lines.slice(0, 2).forEach((s, i) => R.text(s, nw + 8, 44 + i * 22 - (lines.length > 1 ? 8 : -6), 17, { al: 'l' }));
   R.stroke([24, 80, 160, 84, 420, 79, 700, 83, W - 24, 80], { ink: 'B', w: 1.6, wob: 0.6 });
   R.stroke([24, 86, 300, 88, W - 24, 86], { ink: o.ink || 'P', w: 0.8, wob: 0.5, t: 0.9 });
   R.helix(W - 230, 44, W - 30, 44, { amp: 11, turns: 5, w: 1.1 });
@@ -2233,13 +2430,53 @@ function conduit(R, pts, o = {}) {
   R.stroke(pts, { ink: 'B', w: 0.9, smooth: true, taper: 'none', wob: 0.7, t: 0.8 });
 }
 
-/* ===================== 28 BACKDROPS: one cut-away diorama per topic block (drawn behind the windows) ===================== */
-function drift(R, n, W, H, fn) { for (let i = 0; i < n; i++) { const x = 20 + R.rng() * (W - 40), y = 100 + R.rng() * (H - 120); fn(x, y, i); } }
+/* ===================== 28 BACKDROPS: one cut-away diorama per topic block (drawn behind the windows) =====================
+   Every block gets: a pale wash in the topic's ink, a hatched section edge (the "cut" through the specimen), the big numeral and
+   title, a few drifting specimens in the gutters, and a hero vignette in the free space under the windows.  Windows knock
+   the art out beneath them, so the backdrop is only ever seen between and below the scenes.                                  */
+function drift(R, n, W, H, fn, y0 = 100) { for (let i = 0; i < n; i++) { const x = 24 + R.rng() * (W - 48), y = y0 + R.rng() * (H - y0 - 24); fn(x, y, i); } }
+/* wash + hatched section edge + keyline */
+function blockFrame(R, L, ink, tint, o = {}) {
+  const W = L.w, H = L.h, e = o.edge || 11;
+  R.fill(R.rrectPts(6, 6, W - 12, H - 12, 22), { ink, t: tint, wob: 0.8 });
+  R.hatch([9, 100, 9 + e, 100, 9 + e, H - 30, 9, H - 30], 45, 4.4, { ink: o.hink || 'B', w: 0.35, t: 0.75 });
+  R.hatch([W - 9 - e, 100, W - 9, 100, W - 9, H - 30, W - 9 - e, H - 30], 45, 4.4, { ink: o.hink || 'B', w: 0.35, t: 0.75 });
+  R.hatch([30, H - 9 - e, W - 30, H - 9 - e, W - 30, H - 9, 30, H - 9], 45, 4.4, { ink: o.hink || 'B', w: 0.35, t: 0.75 });
+  R.rrect(6, 6, W - 12, H - 12, 22, { ink: 'B', w: 2.2, wob: 0.8 });
+  blockHeader(R, L, { ink });
+}
+/* region of the block not used by any window */
+function freeRegion(L) { const t = L.topic; return { x: 40, y: t.freeY, w: L.w - 80, h: L.h - t.freeY - 34 }; }
+/* ball-and-stick water molecule: O (red-orange overprint) with two teal H */
+function waterMol(R, x, y, rot, s = 1) {
+  const a = rad(rot), d = 16 * s, ha = rad(52);
+  const h1 = [x + Math.cos(a - ha) * d, y + Math.sin(a - ha) * d], h2 = [x + Math.cos(a + ha) * d, y + Math.sin(a + ha) * d];
+  R.line(x, y, h1[0], h1[1], { ink: 'B', w: 1.1 * s, taper: 'none' }); R.line(x, y, h2[0], h2[1], { ink: 'B', w: 1.1 * s, taper: 'none' });
+  R.circle(h1[0], h1[1], 5 * s, { ink: 'B', w: 0.8, fi: 'T', ft: 0.45 }); R.circle(h2[0], h2[1], 5 * s, { ink: 'B', w: 0.8, fi: 'T', ft: 0.45 });
+  R.circle(x, y, 8.4 * s, { ink: 'B', w: 1, fi: 'P', ft: 0.55, fi2: 'Y', ft2: 0.7 });
+  return [h1, h2];
+}
+/* α-helix ribbon: a pink coil with a shaded back strand */
+function alphaCoil(R, x0, y0, x1, y1, turns, amp, w = 4) {
+  const N = Math.round(turns * 14), dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux, back = [], front = [];
+  for (let i = 0; i <= N; i++) { const u = i / N, th = u * turns * TAU, off = Math.sin(th) * amp, z = Math.cos(th); const px = x0 + dx * u + nx * off, py = y0 + dy * u + ny * off; (z > 0 ? front : back).push([px, py, u]); }
+  let seg = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, th = u * turns * TAU, z = Math.cos(th), off = Math.sin(th) * amp, px = x0 + dx * u + nx * off, py = y0 + dy * u + ny * off;
+    if (z <= 0) { seg.push(px, py); } else { if (seg.length >= 4) { R.stroke(seg, { ink: 'P', w: w * 0.7, t: 0.35, smooth: true, taper: 'none', wob: 0.25 }); } seg = []; }
+  }
+  if (seg.length >= 4) R.stroke(seg, { ink: 'P', w: w * 0.7, t: 0.35, smooth: true, taper: 'none', wob: 0.25 });
+  seg = [];
+  for (let i = 0; i <= N; i++) {
+    const u = i / N, th = u * turns * TAU, z = Math.cos(th), off = Math.sin(th) * amp, px = x0 + dx * u + nx * off, py = y0 + dy * u + ny * off;
+    if (z > 0) seg.push(px, py); else { if (seg.length >= 4) { R.stroke(seg, { ink: 'B', w: w + 1.2, smooth: true, taper: 'both', wob: 0.2 }); R.stroke(seg, { ink: 'P', w, smooth: true, taper: 'both', wob: 0.2, t: 0.9 }); } seg = []; }
+  }
+  if (seg.length >= 4) { R.stroke(seg, { ink: 'B', w: w + 1.2, smooth: true, taper: 'both', wob: 0.2 }); R.stroke(seg, { ink: 'P', w, smooth: true, taper: 'both', wob: 0.2, t: 0.9 }); }
+}
+
+/* ---------------------------------------- 3.1 Biological molecules ---------------------------------------- */
 BACKDROPS['3.1'] = (R, L) => {
-  const W = L.w, H = L.h;
-  R.fill(R.rrectPts(6, 6, W - 12, H - 12, 22), { ink: 'T', t: 0.1, wob: 0.8 });
-  blockHeader(R, L, { ink: 'T' });
-  // molecules drifting in the gutters of a water droplet: sugars, amino acids, ATP, ions
+  const W = L.w, H = L.h; blockFrame(R, L, 'T', 0.1, { hink: 'T' });
   drift(R, 46, W, H, (x, y, i) => {
     const k = i % 5;
     if (k === 0) R.poly(hexPts(x, y, 5.5, i), { ink: 'B', w: 0.8, fi: 'Y', ft: 0.35 });
@@ -2247,7 +2484,211 @@ BACKDROPS['3.1'] = (R, L) => {
     else if (k === 2) { R.circle(x, y, 2.2, { ink: 'B', w: 0.7, fi: 'T', ft: 0.5 }); R.circle(x + 3.2, y + 1, 1.6, { ink: 'B', w: 0.6, fi: 'T', ft: 0.3 }); }
     else if (k === 3) R.ellipse(x, y, 4, 2.6, { ink: 'B', w: 0.7, fi: 'Y', ft: 0.3, rot: i * 37 });
     else R.dot(x, y, 1.1, { ink: 'B' });
-  });
+  }, 100);
+  const f = freeRegion(L), cx = W / 2, top = f.y + 20, hh = f.h - 20;
+  // a droplet of water, cut open: teardrop outline (circle + tangents to a tip) with a lattice of hydrogen-bonded molecules
+  const dr = Math.min(hh * 0.46, 500), cy = top + hh - dr - 6, tip = [cx, top], dd = cy - tip[1], a1 = Math.acos(dr / dd), A = -PI / 2 + a1, pts = [tip[0], tip[1]];
+  for (let i = 0; i <= 72; i++) { const a = A + i * (TAU - 2 * a1) / 72; pts.push(cx + Math.cos(a) * dr, cy + Math.sin(a) * dr); }
+  R.fill(pts, { ink: 'T', t: 0.12, wob: 0.8 }); R.poly(pts, { ink: 'B', w: 2, wob: 0.8 });
+  R.stroke([cx - dr * 0.62, cy - dr * 0.1, cx - dr * 0.5, cy - dr * 0.42, cx - dr * 0.3, cy - dr * 0.66], { ink: 'T', w: 3, t: 0.4, smooth: true, taper: 'both', wob: 0.4 });
+  // lattice of waters
+  const mols = [], sp = 96;
+  for (let r = 0; r < 14; r++) for (let c = 0; c < 16; c++) {
+    const x = cx - dr * 1.1 + c * sp + (r % 2) * sp / 2 + (R.rng() - 0.5) * 20, y = top + r * 80 + (R.rng() - 0.5) * 20;
+    const inCircle = Math.hypot(x - cx, y - cy) < dr - 36, inTip = y < cy && y > tip[1] + 40 && Math.abs(x - cx) < (y - tip[1]) * Math.tan(PI / 2 - a1) * 0.9 - 24; if (inCircle || inTip) mols.push([x, y, R.rng() * 360]);
+  }
+  const hs = [];
+  mols.forEach(([x, y, rot]) => { const hh2 = waterMol(R, x, y, rot, 1.5); hh2.forEach(h => hs.push(h)); });
+  hs.forEach(h => { let best = null, bd = 72; for (const [x, y] of mols) { const d = Math.hypot(h[0] - x, h[1] - y); if (d > 12 && d < bd) { bd = d; best = [x, y]; } } if (best) { const dx = best[0] - h[0], dy = best[1] - h[1], L2 = Math.hypot(dx, dy); R.line(h[0] + dx / L2 * 8, h[1] + dy / L2 * 8, best[0] - dx / L2 * 14, best[1] - dy / L2 * 14, { ink: 'B', w: 1, taper: 'none', dash: [3, 3.4] }); } });
+  // solutes in the drop: protein coil, DNA, glucose, sodium and chloride ions, phospholipid micelle, ATP
+  alphaCoil(R, cx - dr * 0.78, cy + dr * 0.4, cx - dr * 0.02, cy + dr * 0.1, 6, 40, 11);
+  R.helix(cx + dr * 0.05, cy - dr * 0.55, cx + dr * 0.66, cy + dr * 0.14, { amp: 36, turns: 5, w: 2.4 });
+  [[0.42, 0.55], [0.55, 0.38], [-0.1, 0.62]].forEach(([u, v]) => { R.poly(hexPts(cx + dr * u, cy + dr * v, 34, 0.5), { ink: 'B', w: 2, fi: 'Y', ft: 0.5 }); R.circle(cx + dr * u + 14, cy + dr * v - 14, 7, { ink: 'B', w: 0.8, fi: 'P', ft: 0.5, fi2: 'Y', ft2: 0.7 }); });
+  [[-0.3, -0.3, 'Na', 'T'], [-0.18, -0.12, 'Cl', 'Y'], [0.2, 0.3, 'Na', 'T'], [0.32, 0.68, 'Cl', 'Y']].forEach(([u, v, t, ink]) => { R.circle(cx + dr * u, cy + dr * v, 22, { ink: 'B', w: 1.4, fi: ink, ft: 0.6 }); R.text(t, cx + dr * u, cy + dr * v + 7, 20, { al: 'c' }); });
+  // phospholipid micelle (heads out)
+  { const mx = cx - dr * 0.12, my = cy - dr * 0.3; for (let k = 0; k < 14; k++) { const a = k * TAU / 14; R.line(mx + Math.cos(a) * 22, my + Math.sin(a) * 22, mx + Math.cos(a) * 58, my + Math.sin(a) * 58, { ink: 'B', w: 1.6, taper: 'none' }); R.circle(mx + Math.cos(a) * 68, my + Math.sin(a) * 68, 12, { ink: 'B', w: 1.2, fi: 'T', ft: 0.9 }); } }
+  // sparkle: a few drifting labels for scale (no prose)
+  R.text('H_2O', cx + dr * 0.8, top + hh - 14, 36, { al: 'c', w: 3 });
+};
+BACKDROPS['3.2'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'P', 0.07, { hink: 'P' });
+  // the block is a cell: a bilayer runs round the edge of the block, with channel and carrier proteins in it
+  const inset = 18, rr0 = 70, path = [];
+  const seg = (x0, y0, x1, y1) => { const n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / 40)); for (let i = 0; i < n; i++) path.push(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n); };
+  const arc = (cx, cy, a0) => { for (let i = 0; i <= 6; i++) { const a = a0 - (PI / 2) * i / 6; path.push(cx + Math.cos(a) * rr0, cy + Math.sin(a) * rr0); } };
+  seg(inset, 110, inset, H - inset - rr0); arc(inset + rr0, H - inset - rr0, PI); seg(inset + rr0, H - inset, W - inset - rr0, H - inset); arc(W - inset - rr0, H - inset - rr0, PI / 2); seg(W - inset, H - inset - rr0, W - inset, 110); path.push(W - inset, 110);
+  const bl = R.bilayer(path, { gap: 6, hr: 2.1, sp: 7, tail: 3.4, coreT: 0.2 });
+  [0.05, 0.14, 0.23, 0.33, 0.46, 0.55, 0.66, 0.78, 0.9].forEach((u, i) => { const q = bl.at(u), ang = Math.atan2(q[5], q[4]) * 180 / PI; R.memProtein(q[0], q[1], ang, ['channel', 'carrier', 'pump'][i % 3], { gap: 6, s: 1.1 }); });
+  const f = freeRegion(L), y0 = f.y + 10, h = f.h - 10;
+  // organelle montage (about three times the scale of the windows): nucleus, RER, Golgi, mitochondria, lysosome, vesicles
+  R.nucleus(190, y0 + h * 0.5, 150, 118, { pores: 12, chromatin: 60 });
+  R.rer(380, y0 + h * 0.2, 250, 5, { rot: 6 }); R.rer(330, y0 + h * 0.72, 300, 4, { rot: -4 });
+  R.golgi(760, y0 + h * 0.34, 190, { n: 6 }); R.vesicle(690, y0 + h * 0.62, 12, { fi: 'P', ft: 0.5 }); R.vesicle(730, y0 + h * 0.72, 9, { fi: 'P', ft: 0.5 }); R.vesicle(960, y0 + h * 0.3, 11, { fi: 'P', ft: 0.5 });
+  R.mito(930, y0 + h * 0.66, 260, 120, -8); R.mito(1230, y0 + h * 0.3, 190, 90, 20);
+  R.lysosome(1180, y0 + h * 0.74, 22); R.lysosome(1260, y0 + h * 0.62, 16);
+  drift(R, 22, W, H, (x, y, i) => { if (y > f.y - 20) R.ribosome(x, y, 1.1); else if (i % 3 === 0) R.ribosome(x, y, 0.8); }, f.y - 10);
+};
+BACKDROPS['3.3'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'T', 0.07, { hink: 'T' });
+  // branching airway / vein tree growing out of the header band and running down the gutters
+  const tree = (x, y, a, len, w, d) => {
+    if (d === 0 || len < 8) return;
+    const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len;
+    R.stroke([x, y, (x + x2) / 2 + (R.rng() - 0.5) * 4, (y + y2) / 2 + (R.rng() - 0.5) * 4, x2, y2], { ink: 'B', w, smooth: true, taper: 'end', wob: 0.4, t: 0.85 });
+    R.stroke([x, y, x2, y2], { ink: 'T', w: w * 2.4, smooth: true, taper: 'end', t: 0.18, solid: false, wob: 0.3 });
+    const sp = 0.42 + R.rng() * 0.2;
+    tree(x2, y2, a - sp, len * 0.72, w * 0.72, d - 1); tree(x2, y2, a + sp, len * 0.72, w * 0.72, d - 1);
+  };
+  tree(W - 480, 4, PI / 2 + 0.2, 60, 4, 7); tree(W - 150, 4, PI / 2 - 0.1, 44, 3.2, 6);
+  drift(R, 30, W, H, (x, y, i) => { if (i % 3 === 0) { R.circle(x, y, 4.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.5 }); R.circle(x, y, 1.4, { ink: 'B', w: 0.5, fi: 'P', ft: 0.1 }); } else if (i % 3 === 1) R.circle(x, y, 2.6, { ink: 'B', w: 0.7, fi: 'T', ft: 0.5 }); else { R.circle(x, y, 2, { ink: 'B', w: 0.6, fi: 'P', ft: 0.6, fi2: 'Y', ft2: 0.7 }); } });
+};
+BACKDROPS['3.4'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'B', 0.045, { hink: 'B' });
+  const f = freeRegion(L), y0 = f.y + 24, h = f.h - 24, cy = y0 + h * 0.5;
+  // from the nucleus to the double helix: nucleus -> chromosome -> chromatin fibre -> DNA
+  R.nucleus(150, cy, 110, 92, { pores: 10, chromatin: 50 });
+  R.arrow([270, cy, 322, cy], { ink: 'B', w: 2, hs: 7 });
+  chromosome(R, 420, cy, 190, 28, { fi: 'B', ft: 0.5, bands: [[0.2, 'P'], [0.35, 'Y'], [0.62, 'P'], [0.8, 'Y']] });
+  R.arrow([520, cy, 572, cy], { ink: 'B', w: 2, hs: 7 });
+  const fib = []; for (let i = 0; i <= 12; i++) fib.push(620 + i * 40, cy + Math.sin(i * 1.3) * 46); chromatin(R, fib, 18, { w: 1.6 });
+  R.arrow([1110, cy, 1150, cy], { ink: 'B', w: 2, hs: 7 });
+  R.helix(1170, cy, 1384, cy - 0, { amp: 40, turns: 3.2, w: 2 });
+  ['nucleus', 'chromosome', 'chromatin: DNA on histones', 'DNA'].forEach((t, i) => R.text(t, [150, 420, 860, 1276][i], y0 + h - 4, 11, { al: 'c' }));
+};
+BACKDROPS['3.5'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'Y', 0.1, { hink: 'Y' });
+  const f = freeRegion(L), y0 = f.y + 10, h = f.h - 10, gy = y0 + h * 0.52;
+  // sun with photons, a plant, and the soil beneath (roots, hyphae, nutrient cycling)
+  R.circle(170, y0 + 90, 70, { ink: 'B', w: 2, fi: 'Y', ft: 0.85 });
+  for (let k = 0; k < 16; k++) { const a = k * TAU / 16, r0 = 84, r1 = 112 + (k % 2) * 18; R.line(170 + Math.cos(a) * r0, y0 + 90 + Math.sin(a) * r0, 170 + Math.cos(a) * r1, y0 + 90 + Math.sin(a) * r1, { ink: 'Y', w: 5, taper: 'end', t: 0.8 }); }
+  for (let k = 0; k < 5; k++) R.photon(262 + k * 30, y0 + 120 + k * 30, 0.55, 70, k);
+  plantDraw(R, 560, gy, 200, { sw: 9, roots: false }); plantDraw(R, 820, gy, 150, { sw: 7, roots: false }); plantDraw(R, 1100, gy, 230, { sw: 10, roots: false });
+  // soil
+  R.fill([30, gy, W - 30, gy, W - 30, y0 + h, 30, y0 + h], { ink: 'Y', t: 0.28, wob: 0.8 }); R.fill([30, gy, W - 30, gy, W - 30, y0 + h, 30, y0 + h], { ink: 'P', t: 0.1, wob: 0.8 });
+  R.stroke([30, gy, 200, gy - 3, 500, gy + 2, 900, gy - 2, W - 30, gy], { ink: 'B', w: 2, smooth: true, wob: 0.5 });
+  [560, 820, 1100].forEach((px, i) => { for (let k = 0; k < 7; k++) { const a = PI / 2 + (k - 3) * 0.28, len = 90 + (k % 3) * 40; R.stroke([px, gy, px + Math.cos(a) * len * 0.4, gy + Math.sin(a) * len * 0.5, px + Math.cos(a) * len, gy + Math.sin(a) * len], { ink: 'B', w: 2.2, smooth: true, taper: 'end', wob: 0.4 }); } });
+  // mycorrhizal hyphae linking the roots
+  for (let k = 0; k < 14; k++) { const x0 = 520 + k * 52, y1 = gy + 60 + (k % 4) * 22; R.stroke([x0, y1, x0 + 40, y1 + 14, x0 + 80, y1 - 6, x0 + 120, y1 + 10], { ink: 'T', w: 1.4, smooth: true, taper: 'both', wob: 0.4 }); }
+  drift(R, 70, W, H, (x, y) => { if (y > gy + 30 && y < y0 + h) R.circle(x, y, 2 + R.rng() * 3, { ink: 'B', w: 0.6, fi: 'P', ft: 0.2 + R.rng() * 0.3 }); }, gy + 30);
+  for (let k = 0; k < 8; k++) R.circle(320 + k * 24, gy + 100 + (k % 3) * 18, 6, { ink: 'B', w: 0.8, fi: 'T', ft: 0.5 });   // bacteria
+  R.text('N', 244, gy + 98, 22, { al: 'c', w: 3 }); R.text('P', 1290, gy + 90, 22, { al: 'c', w: 3 });
+};
+BACKDROPS['3.6'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'P', 0.07, { hink: 'P' });
+  // neurones threading the header band and the gutters
+  const dendrite = (x, y, a, len, w, d) => { if (d === 0) return; const x2 = x + Math.cos(a) * len, y2 = y + Math.sin(a) * len; R.stroke([x, y, x2, y2], { ink: 'B', w, smooth: true, taper: 'end', wob: 0.5 }); dendrite(x2, y2, a - 0.5, len * 0.7, w * 0.7, d - 1); dendrite(x2, y2, a + 0.5, len * 0.7, w * 0.7, d - 1); };
+  [[W - 600, 20], [W - 360, 24], [W - 140, 18]].forEach(([x, y], i) => { R.circle(x, y, 9, { ink: 'B', w: 1.2, fi: 'P', ft: 0.3 }); R.circle(x, y, 3.4, { ink: 'B', w: 0.8, fi: 'B', ft: 0.5 }); dendrite(x, y + 6, PI / 2 + (i - 1) * 0.5, 34, 2.2, 4); });
+  drift(R, 18, W, H, (x, y, i) => { R.circle(x, y, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.3 }); R.circle(x, y, 2, { ink: 'B', w: 0.6, fi: 'B', ft: 0.5 }); for (let k = 0; k < 3; k++) R.stroke([x, y, x + Math.cos(k * 2.1 + i) * 16, y + Math.sin(k * 2.1 + i) * 16], { ink: 'B', w: 0.8, taper: 'end', smooth: true }); });
+};
+BACKDROPS['3.7'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'Y', 0.09, { hink: 'Y' });
+  const f = freeRegion(L), y0 = f.y + 10, h = f.h - 10, base = y0 + h, k = h / 480;
+  // rolling hills split by a river: allopatric populations of two beetle forms; trees, grass and a bird
+  const hl = [[30, 0], [30, -150], [220, -230], [430, -190], [610, -80], [668, 0]].map(([x, y]) => [x, base + y * k]);
+  const hr = [[744, 0], [830, -90], [1010, -240], [1200, -300], [W - 30, -230], [W - 30, 0]].map(([x, y]) => [x, base + y * k]);
+  R.fill(hl.flat(), { ink: 'Y', t: 0.3, wob: 0.8 }); R.fill(hr.flat(), { ink: 'Y', t: 0.3, wob: 0.8 });
+  R.stroke(hl.slice(1, 5).flat(), { ink: 'B', w: 2.4, smooth: true, wob: 0.6 }); R.stroke(hr.slice(1, 5).flat(), { ink: 'B', w: 2.4, smooth: true, wob: 0.6 });
+  const rv = [[668, 0], [696, -60], [706, -140], [724, -230], [730, -360]].map(([x, y]) => [x, base + y * k]);
+  R.stroke(rv.flat(), { ink: 'T', w: 60, t: 0.4, solid: false, smooth: true, taper: 'both', wob: 0.6 }); R.stroke(rv.flat(), { ink: 'B', w: 1.2, smooth: true, taper: 'none', t: 0.7 });
+  for (let n = 0; n < 11; n++) beetle(R, 110 + n * 48 + (n % 3) * 8, base - (40 + (n % 4) * 36) * k, 'Y', 0.35, (n * 47) % 80 - 40, 1.8);
+  for (let n = 0; n < 11; n++) beetle(R, 880 + n * 44 + (n % 3) * 8, base - (46 + (n % 4) * 40) * k, 'B', 0.8, (n * 53) % 80 - 40, 1.8);
+  treeGlyph(R, 350, base - 150 * k, 3); treeGlyph(R, 1250, base - 250 * k, 3); treeGlyph(R, 120, base - 90 * k, 2); treeGlyph(R, 1000, base - 200 * k, 2.2);
+  for (let n = 0; n < 11; n++) { grassTuft(R, 70 + n * 56, base - 4, 1.4); grassTuft(R, 790 + n * 58, base - 4, 1.4); }
+  R.stroke([480, y0 + 50, 530, y0 + 24, 584, y0 + 54], { ink: 'B', w: 3.4, smooth: true, taper: 'both' }); R.stroke([530, y0 + 46, 584, y0 + 24, 640, y0 + 54], { ink: 'B', w: 3.4, smooth: true, taper: 'both' });
+  R.text('river: a barrier, so no gene flow', 724, base - 400 * k, 18, { al: 'c' });
+  R.arrow([640, base - 380 * k, 560, base - 330 * k], { ink: 'B', w: 1.6, hs: 8 }); R.arrow([808, base - 380 * k, 888, base - 330 * k], { ink: 'B', w: 1.6, hs: 8 });
+};
+BACKDROPS['3.8'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'B', 0.045, { hink: 'B' });
+  const f = freeRegion(L), y0 = f.y + 10, h = f.h - 10, by = y0 + h - 40, k = Math.min(1.5, h / 420);
+  // lab bench: gel tank, tube rack, Petri dishes, floating plasmids and a helix
+  R.rect(40, by, W - 80, 30, { ink: 'B', w: 2.4, fi: 'Y', ft: 0.2, wob: 0.5 }); R.hatch([40, by + 6, W - 40, by + 6, W - 40, by + 30, 40, by + 30], 45, 6, { ink: 'B', w: 0.4, t: 0.6 });
+  R.rrect(70, by - 180 * k, 440, 180 * k, 14, { ink: 'B', w: 2.4, fi: 'T', ft: 0.12, wob: 0.5 }); R.rect(110, by - 138 * k, 360, 96 * k, { ink: 'B', w: 1.6, fi: 'T', ft: 0.2 });
+  for (let c = 0; c < 7; c++) { const x = 140 + c * 46; R.rect(x - 12, by - 130 * k, 24, 8, { ink: 'B', w: 1, fi: 'B', ft: 0.2 }); for (let q = 0; q < 3; q++) if ((c + q) % 3 !== 0) R.rect(x - 12, by - 112 * k + q * 20 * k + (c % 2) * q * 3, 24, 5, { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); }
+  R.circle(90, by - 196 * k, 10, { ink: 'B', w: 1.8, fi: 'P', ft: 0.9 }); R.circle(490, by - 196 * k, 10, { ink: 'B', w: 1.8, fi: 'T', ft: 0.9 }); R.text('+', 90, by - 192 * k, 14, { al: 'c' }); R.text('−', 490, by - 192 * k, 16, { al: 'c' });
+  R.rect(580, by - 20, 400, 14, { ink: 'B', w: 1.8, fi: 'Y', ft: 0.3 });
+  for (let n = 0; n < 9; n++) R.tube(598 + n * 42, by - 190 * k, 20, 170 * k, { level: 0.5 + (n % 3) * 0.1, ink: ['T', 'P', 'Y'][n % 3], t: 0.35 });
+  [1090, 1220, 1340].forEach((x, i) => { const r = 56 - i * 6; R.circle(x, by - r - 4, r, { ink: 'B', w: 2.2, fi: 'T', ft: 0.1 }); R.circle(x, by - r - 4, r - 10, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.2 }); for (let q = 0; q < 10; q++) R.circle(x + Math.cos(q * 2.4 + i) * (r - 24) * (q % 3 ? 1 : 0.4), by - r - 4 + Math.sin(q * 2.4 + i) * (r - 24) * (q % 3 ? 1 : 0.4), 3.2, { ink: 'B', w: 0.7, fi: 'P', ft: 0.7 }); });
+  [[760, by - 300 * k, 38], [930, by - 360 * k, 30], [1100, by - 300 * k, 42], [1280, by - 350 * k, 34]].forEach(([x, y, r], i) => plasmid(R, x, y, r, { ink: ['T', 'P'][i % 2], sites: [0.4, 2.8] }));
+  R.helix(130, by - 250 * k - 40, 700, by - 360 * k, { amp: 30, turns: 4, w: 2 });
+  R.text('+ DNA is negatively charged: it runs towards +', 290, by - 224 * k - 10, 0.01, { al: 'c' });
+};
+BACKDROPS['SK'] = (R, L) => {
+  const W = L.w, H = L.h; blockFrame(R, L, 'T', 0.06, { hink: 'T' });
+  // graph paper washes the free area; a ruler, calculator and a graph with a tangent sit on it
+  const f = freeRegion(L), x0 = f.x, y0 = f.y + 10, w = f.w, h = f.h - 10;
+  for (let x = 0; x <= w; x += 24) R.line(x0 + x, y0, x0 + x, y0 + h, { ink: 'T', w: x % 120 === 0 ? 0.7 : 0.3, t: 0.55, taper: 'none' });
+  for (let y = 0; y <= h; y += 24) R.line(x0, y0 + y, x0 + w, y0 + y, { ink: 'T', w: y % 120 === 0 ? 0.7 : 0.3, t: 0.55, taper: 'none' });
+  const g = R.graph(x0 + 90, y0 + 50, 640, h - 130, { xmin: 0, xmax: 10, ymin: 0, ymax: 10, xl: 'x', yl: 'y', fs: 12, xly: 24, ylx: 20, xt: [0, 2, 4, 6, 8, 10], yt: [0, 2, 4, 6, 8, 10] }).axes();
+  g.curve(x => 10 * (1 - Math.exp(-x / 3)) , { ink: 'P', w: 3 }); g.tangent(2, 10 * (1 - Math.exp(-2 / 3)), 10 / 3 * Math.exp(-2 / 3), 380, { ink: 'T', w: 2 });
+  g.vdrop(2, 10 * (1 - Math.exp(-2 / 3)), { ink: 'B', w: 1 }); g.hdrop(2, 10 * (1 - Math.exp(-2 / 3)), { ink: 'B', w: 1 });
+  // ruler
+  const rx = x0 + 820, ry = y0 + 60; R.rect(rx, ry, 480, 56, { ink: 'B', w: 2, fi: 'Y', ft: 0.3, wob: 0.4 });
+  for (let k = 0; k <= 48; k++) R.line(rx + k * 10, ry, rx + k * 10, ry + (k % 10 === 0 ? 26 : k % 5 === 0 ? 18 : 11), { ink: 'B', w: 1, taper: 'none' });
+  for (let k = 0; k <= 4; k++) R.text(String(k * 10), rx + k * 100 + 2, ry + 44, 11, { al: 'c' }); R.text('mm', rx + 440, ry + 46, 11, { al: 'c' });
+  // calculator
+  const cx = x0 + 860, cy = y0 + 180; R.rrect(cx, cy, 190, 250, 16, { ink: 'B', w: 2.4, fi: 'B', ft: 0.12, wob: 0.5 }); R.rect(cx + 16, cy + 16, 158, 52, { ink: 'B', w: 1.4, fi: 'T', ft: 0.3 }); R.text('0.693', cx + 168, cy + 56, 28, { al: 'r' });
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 4; c++) R.rrect(cx + 18 + c * 40, cy + 84 + r * 32, 32, 24, 5, { ink: 'B', w: 1.1, fi: (c === 3 || r === 0) ? 'P' : 'Y', ft: 0.35, wob: 0.2 });
+  // pipette and a set of standard-form numerals
+  R.text('3.0 × 10', x0 + 1130, y0 + 260, 34, { al: 'l', w: 2.6 }); R.text('8', x0 + 1320, y0 + 244, 22, { al: 'l', w: 2.6 });
+  R.text('Σ   √   π   %   log', x0 + 1110, y0 + 340, 26, { al: 'l' });
+  R.text('y = mx + c', x0 + 1110, y0 + 400, 28, { al: 'l' });
+};
+/* ---------------------------------------- title block ---------------------------------------- */
+BACKDROPS['TT'] = (R, L) => {
+  const W = L.w, H = L.h;
+  R.fill(R.rrectPts(6, 6, W - 12, H - 12, 22), { ink: 'Y', t: 0.08, wob: 0.8 });
+  R.rrect(6, 6, W - 12, H - 12, 22, { ink: 'B', w: 2.4, wob: 0.8 });
+  R.rrect(16, 16, W - 32, H - 32, 16, { ink: 'B', w: 0.8, wob: 0.6 });
+  // title (each line scaled to fit the block width); y values are baselines, glyph height is about the size
+  const fit = (str, size, maxW) => Math.min(size, maxW / labelWidth(str, 1));
+  const l1 = 'AQA A-level', l2 = 'Biology', l3 = 'topic by topic';
+  R.text(l1, 60, 150, fit(l1, 96, W - 130), { al: 'l', w: 8 });
+  R.text(l2, 60, 330, fit(l2, 160, W - 130), { al: 'l', w: 13 });
+  R.stroke([60, 392, 400, 398, 900, 391, 1348, 396], { ink: 'B', w: 3, wob: 0.8 }); R.stroke([60, 404, 700, 406, 1348, 403], { ink: 'P', w: 1.6, wob: 0.6, t: 0.9 });
+  R.text(l3, 60, 490, fit(l3, 76, W - 130), { al: 'l', w: 6.4 });
+  R.text('specification 7402: every topic, subtopic, required practical,', 62, 548, 20, { al: 'l' });
+  R.text('and maths and practical skill, on one printed sheet', 62, 576, 20, { al: 'l' });
+  R.helix(60, 636, 1348, 636, { amp: 26, turns: 18, w: 1.8 });
+  // the four inks
+  R.text('four spot inks, overprinted', 60, 736, 26, { al: 'l', w: 2.4 });
+  const inks = [['Y', 'yellow', 'energy, lipids, carbohydrate'], ['P', 'pink', 'protein, blood'], ['T', 'teal', 'water, membranes, nucleic-acid bases'], ['B', 'blue', 'lines, DNA backbone, text']];
+  inks.forEach(([k, nm, d], i) => { const y = 786 + i * 62; R.circle(100, y, 26, { ink: 'B', w: 1.6, fi: k, ft: 1 }); R.text(nm, 150, y + 7, 22, { al: 'l', w: 2 }); R.text(d, 330, y + 7, 18, { al: 'l' }); });
+  R.text('overprints', 60, 1050, 20, { al: 'l', w: 2 });
+  [['PY', 'red-orange: oxygen'], ['TY', 'green: plants'], ['PB', 'violet: deoxygenated'], ['TB', 'deep blue-green']].forEach(([k, d], i) => { const x = 60 + (i % 2) * 650, y = 1086 + Math.floor(i / 2) * 56; k.split('').forEach((c, j) => R.rect(x + j * 20, y - 22, 20, 44, { ink: '', fi: c, ft: 1, w: 0 })); R.rect(x, y - 22, 40, 44, { ink: 'B', w: 1.2, wob: 0.2 }); R.text(d, x + 56, y + 6, 18, { al: 'l' }); });
+  // frame grammar
+  R.text('window frames show the kind of thinking', 60, 1230, 26, { al: 'l', w: 2.4 });
+  [['AO1', 'knowledge', 1], ['AO2', 'application', 2], ['AO3', 'analysis and evaluation', 3]].forEach(([a, d, k], i) => { const x = 60 + i * 440, y = 1256; R.rrect(x, y, 90, 70, 10, { ink: 'B', w: 2.2, wob: 0.5 }); if (k === 2) R.rrect(x + 4, y + 4, 82, 62, 7, { ink: 'B', w: 0.8, wob: 0.4 }); if (k === 3) for (const [cx, cy, an] of [[x, y, 0], [x + 90, y, 90], [x + 90, y + 70, 180], [x, y + 70, 270]]) R.hatch(rectCorner(cx, cy, an, 20), 45, 2.6, { ink: 'P', w: 0.6 }); R.text(a, x + 45, y + 44, 24, { al: 'c', w: 2.2 }); R.text(d, x + 106, y + 40, 18, { al: 'l' }); });
+  // how to read and use
+  R.text('how to use the sheet', 60, 1432, 26, { al: 'l', w: 2.4 });
+  ['drag to pan, wheel or pinch to zoom, double-click to fly to a scene', 'arrow keys pan; Shift + arrows or PageUp/PageDown: previous / next scene', '+ and − zoom, 0 fits the sheet, C shows or hides the topic card', 'space starts or pauses the guided tour, in specification order', 'any input pauses the tour; it resumes after a short rest'].forEach((t, i) => R.text(t, 60, 1480 + i * 36, 20, { al: 'l' }));
+  // map of the sheet
+  const mx = 60, my = 1740, mw = 600;
+  R.text('map of the sheet', mx, my - 16, 26, { al: 'l', w: 2.4 });
+  const tw = mw / 5, th0 = 130, th1 = 220;
+  [['3.1', 0, 0], ['3.2', 1, 0], ['3.3', 2, 0], ['3.4', 3, 0], ['3.5', 4, 0], ['3.6', 4, 1], ['3.7', 3, 1], ['3.8', 2, 1], ['Skills', 1, 1], ['you', 0, 1]].forEach(([n, c, r], i) => { const x = mx + c * tw, y = my + (r ? th0 + 10 : 0), h = r ? th1 : th0; R.rect(x + 3, y, tw - 6, h, { ink: 'B', w: 1.4, fi: n === 'you' ? 'P' : ['Y', 'T', 'P'][i % 3], ft: n === 'you' ? 0.3 : 0.12, wob: 0.3 }); R.text(n === 'you' ? 'here' : n, x + tw / 2, y + h / 2 + 8, n === 'Skills' ? 16 : 20, { al: 'c', w: 1.6 }); });
+  R.text('the sheet snakes: 3.1 → 3.5 along the top,', mx + mw + 40, my + 24, 18, { al: 'l' }); R.text('then back 3.6 → Skills along the bottom', mx + mw + 40, my + 50, 18, { al: 'l' });
+  R.text('dotted teal routes link related ideas', mx + mw + 40, my + 98, 18, { al: 'l', ink: 'T' }); R.text('(e.g. ATP, membranes, enzymes, DNA)', mx + mw + 40, my + 124, 18, { al: 'l' });
+  R.text('scene numbers are the AQA section numbers', mx + mw + 40, my + 172, 18, { al: 'l' }); R.text('RP1 to RP12 mark the required practicals', mx + mw + 40, my + 198, 18, { al: 'l', ink: 'P' });
+  // specimen plate: a giant double helix wound with the cast of the course
+  const py = 2170, ph = H - 450;
+  R.helix(W / 2, py, W / 2, ph, { amp: 120, turns: 4.5, w: 3 });
+  R.nucleus(290, py + 70, 120, 94, { pores: 10, chromatin: 50 });
+  R.mito(1120, py + 70, 260, 112, -10);
+  R.chloroplast(280, py + 290, 240, 124, 10, { grana: 5 });
+  neurone(R, 880, py + 300, 300, { myel: true, n: 4, r: 18 });
+  R.antibody(1180, py + 480, -PI / 2 + 0.25, 'tri', { s: 3.2 });
+  R.bacterium(280, py + 480, 220, 74, -8, { ag: ['tri', 'sq', 'circ', 'trap', 'tri', 'sq'], flag: true });
+  R.lymphocyte(1000, py + 600, 56, {}); R.phagocyte(300, py + 620, 62, {});
+  R.text('cells, molecules, organisms, populations', W / 2, ph + 40, 20, { al: 'c' });
+  // coverage stamp
+  const qy = H - 390;
+  R.rrect(60, qy, W - 120, 310, 14, { ink: 'B', w: 1.6, fi: 'T', ft: 0.06, wob: 0.5 });
+  R.text('coverage check', 90, qy + 56, 30, { al: 'l', w: 2.6 });
+  const cv = (typeof COVERAGE_RESULT !== 'undefined' && COVERAGE_RESULT) || null;
+  const lines = cv ? cv.stamp : ['checking…'];
+  lines.forEach((t, i) => R.text(t, 90, qy + 104 + i * 34, 22, { al: 'l', ink: i === 0 ? 'P' : 'B' }));
+  R.text('methods shown for required practicals are examples; teachers may vary them', 90, qy + 282, 16, { al: 'l', ink: 'P' });
 };
 
 /* ===================== 29 LIB IMMUNE: antigens, receptors, antibodies, immune cells =====================
@@ -2851,7 +3292,7 @@ Recorder.prototype.pentose = function (cx, cy, r, c2, o = {}) {
 /* ---------- 3.1.5.1 Structure of DNA and RNA ---------- */
 S({
   id: '3.1.5.1', num: '3.1.5.1', title: 'Structure of DNA and RNA', topic: '3.1', slot: [1, 2], dna: 'bio',
-  covers: ['3.1.5.1.s1', '3.1.5.1.s2', '3.1.5.1.s3', '3.1.5.1.s4', '3.1.5.1.s5', '3.1.5.1.s6', '3.1.5.1.s7', '3.1.5.1.s8'],
+  covers: ['3.1.5.1.s1', '3.1.5.1.s2', '3.1.5.1.s3', '3.1.5.1.s4', '3.1.5.1.s5', '3.1.5.1.s6', '3.1.5.1.s7', '3.1.5.1.s8', '3.1.5.1.s9'],
   card: {
     text: 'DNA and RNA are information-carrying polymers of <b>nucleotides</b>. In all living cells DNA holds genetic information and RNA transfers it from DNA to the ribosomes; ribosomes are made of RNA and protein. A nucleotide = a pentose, a nitrogen-containing organic base and a phosphate group. DNA: deoxyribose and A, C, G or T. RNA: ribose and A, C, G or U. A condensation reaction between nucleotides forms a <b>phosphodiester bond</b>. DNA is a double helix: two polynucleotide chains held by hydrogen bonds between specific complementary base pairs. RNA is a relatively short single chain. DNA’s simplicity led many scientists to doubt that it carried the genetic code.',
     terms: ['nucleotide', 'pentose', 'base', 'phosphate', 'deoxyribose', 'ribose', 'phosphodiester bond', 'double helix', 'complementary base pairing', 'hydrogen bond', 'ribosome'],
@@ -2915,7 +3356,7 @@ S({
 /* ---------- 3.1.5.2 DNA replication ---------- */
 S({
   id: '3.1.5.2', num: '3.1.5.2', title: 'DNA replication', topic: '3.1', slot: [2, 2], span: [2, 1], dna: 'bio', ao: 3,
-  covers: ['3.1.5.2.s1', '3.1.5.2.s2', '3.1.5.2.s3', '3.1.5.2.s4', '3.1.5.2.s5', '3.1.5.2.s6'],
+  covers: ['3.1.5.2.s1', '3.1.5.2.s2', '3.1.5.2.s3', '3.1.5.2.s4', '3.1.5.2.s5', '3.1.5.2.s6', '3.1.5.2.s7'],
   card: {
     text: 'Semi-conservative replication ensures genetic continuity between generations of cells. The double helix <b>unwinds</b> and <b>DNA helicase</b> breaks the hydrogen bonds between complementary bases; each polynucleotide strand acts as a template. Free DNA nucleotides are attracted to exposed bases by complementary base pairing, and <b>DNA polymerase</b> catalyses the condensation reaction joining adjacent nucleotides. Each new molecule has one original and one new strand. Meselson and Stahl’s ¹⁵N/¹⁴N density-gradient experiment supported the Watson–Crick semi-conservative model over conservative replication.',
     terms: ['semi-conservative', 'DNA helicase', 'DNA polymerase', 'template strand', 'complementary base pairing', 'hydrogen bond', 'genetic continuity'],
@@ -3917,7 +4358,7 @@ rpScene({
 /* ---------- RP4: permeability of cell-surface membranes ---------- */
 rpScene({
   id: 'RP4', num: '3.2.3', rp: 4, title: 'Transport across cell membranes', sub: 'Required practical 4: effect of a named variable on the permeability of cell-surface membranes', topic: '3.2', slot: [2, 4],
-  covers: ['RP4'], at: ['b', 'c', 'h', 'j'], ms: ['MS 3.2', 'MS 3.1', 'MS 1.3'], ps: ['PS 2.2', 'PS 4.1'],
+  covers: ['RP4'], at: ['a', 'b', 'c', 'j', 'l'], ms: ['MS 3.2', 'MS 3.1', 'MS 1.3'], ps: ['PS 2.2', 'PS 4.1'],
   card: {
     text: 'Investigate the effect of a named variable on the permeability of cell-surface membranes. The AQA handbook’s example uses beetroot: the purple pigment (betalain) is inside vacuoles and cannot cross undamaged membranes. Soak equal beetroot discs in different concentrations of alcohol (or detergent, or different temperatures), then measure how much pigment leaks out, by comparing colour with a set of standards or by using a <b>colorimeter</b> and a <b>calibration curve</b>. Teachers may use other variables, tissues and methods.',
     terms: ['permeability', 'betalain', 'colorimeter', 'absorbance', 'calibration curve', 'named variable', 'control variable'],
@@ -5140,7 +5581,7 @@ S({
 /* ---------- 3.3.4.1b Oxyhaemoglobin dissociation curve; cooperative binding ---------- */
 S({
   id: '3.3.4.1b', num: '3.3.4.1', sub: 'The oxyhaemoglobin dissociation curve and cooperative binding of oxygen', title: 'Mass transport in animals', topic: '3.3', slot: [1, 4], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.3.4.1.s3', '3.3.4.1.s4'],
+  covers: ['3.3.4.1.s2'],
   card: {
     text: 'The <b>oxyhaemoglobin dissociation curve</b> plots % saturation of haemoglobin against the partial pressure of oxygen (kPa). It is S-shaped because binding is <b>cooperative</b>: the binding of the first oxygen changes the shape of haemoglobin, making it easier for further oxygens to bind (steep middle). At high pO₂ in the lungs (about 13 kPa) haemoglobin is almost saturated (loading); at the low pO₂ of respiring tissues (about 5 kPa for resting muscle) it unloads a large fraction of its oxygen. A small fall in pO₂ gives a large fall in saturation where the curve is steep.',
     terms: ['dissociation curve', '% saturation', 'partial pressure of oxygen', 'kPa', 'cooperative binding', 'affinity', 'loading', 'unloading'],
@@ -5175,7 +5616,7 @@ S({
 /* ---------- 3.3.4.1c Bohr effect and different haemoglobins ---------- */
 S({
   id: '3.3.4.1c', num: '3.3.4.1', sub: 'The Bohr effect; haemoglobins adapted to different environments', title: 'Mass transport in animals', topic: '3.3', slot: [3, 4], dna: 'mark', ao: 3,
-  covers: ['3.3.4.1.s5', '3.3.4.1.s6'],
+  covers: ['3.3.4.1.s3', '3.3.4.1.s4'],
   card: {
     text: 'A higher concentration (partial pressure) of <b>carbon dioxide</b> lowers haemoglobin’s affinity for oxygen, so the dissociation curve shifts <b>to the right</b>: at any given pO₂ the haemoglobin is less saturated, releasing more oxygen to actively respiring tissues. This is the <b>Bohr effect</b>. Many animals have <b>different types of haemoglobin</b> adapted to their environment: haemoglobin with a curve to the <b>left</b> (higher affinity) suits low-oxygen habitats, e.g. a lugworm in sand or a fetus; haemoglobin with a curve to the <b>right</b> suits highly active animals or those with a high metabolic rate.',
     terms: ['Bohr effect', 'carbon dioxide', 'shift to the right', 'affinity', 'lugworm', 'adaptation', 'metabolic rate'],
@@ -5221,7 +5662,7 @@ function oxStroke(R, pts, ox, w, o = {}) {
 /* ---------- 3.3.4.1d General pattern of blood circulation in a mammal ---------- */
 S({
   id: '3.3.4.1d', num: '3.3.4.1', sub: 'General pattern of blood circulation in a mammal: heart, lungs, kidneys', title: 'Mass transport in animals', topic: '3.3', slot: [0, 5], dna: 'mark', ao: 1,
-  covers: ['3.3.4.1.s7'],
+  covers: ['3.3.4.1.s5'],
   card: {
     text: 'In mammals blood circulates in a <b>double circulation</b>: the right side of the heart pumps deoxygenated blood to the lungs via the <b>pulmonary artery</b>; oxygenated blood returns in the <b>pulmonary veins</b> to the left side, which pumps it round the body via the <b>aorta</b>. Blood returns to the right atrium in the <b>vena cava</b>. The <b>coronary arteries</b> supply the heart muscle itself; the <b>renal arteries</b> take blood to the kidneys and the <b>renal veins</b> carry it away. Names are required only for the coronary arteries and for the vessels entering and leaving the heart, lungs and kidneys.',
     terms: ['double circulation', 'aorta', 'vena cava', 'pulmonary artery', 'pulmonary vein', 'coronary artery', 'renal artery', 'renal vein'],
@@ -5271,7 +5712,7 @@ S({
 /* ---------- 3.3.4.1e Gross structure of the human heart ---------- */
 S({
   id: '3.3.4.1e', num: '3.3.4.1', sub: 'Gross structure of the human heart', title: 'Mass transport in animals', topic: '3.3', slot: [1, 5], dna: 'mark', ao: 1,
-  covers: ['3.3.4.1.s8'],
+  covers: ['3.3.4.1.s6'],
   card: {
     text: 'The human heart has four chambers: two thin-walled <b>atria</b> receive blood; two <b>ventricles</b> pump it out. The <b>left ventricle</b> has a thicker muscular wall than the right, as it pumps blood at higher pressure round the whole body, while the right pumps only to the lungs. <b>Atrioventricular valves</b> (tricuspid on the right, bicuspid on the left) are held by <b>tendinous cords</b> and prevent backflow into the atria; <b>semilunar valves</b> at the base of the aorta and pulmonary artery prevent backflow into the ventricles. The <b>septum</b> keeps oxygenated and deoxygenated blood separate. The <b>coronary arteries</b> supply the heart muscle.',
     terms: ['atrium', 'ventricle', 'atrioventricular valve', 'semilunar valve', 'tendinous cords', 'septum', 'aorta', 'vena cava', 'pulmonary artery', 'pulmonary vein', 'coronary artery'],
@@ -5320,7 +5761,7 @@ S({
 /* ---------- 3.3.4.1f The cardiac cycle ---------- */
 S({
   id: '3.3.4.1f', num: '3.3.4.1', sub: 'The cardiac cycle: pressure, volume and valve movements', title: 'Mass transport in animals', topic: '3.3', slot: [2, 5], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.3.4.1.s9', '3.3.4.1.s10'],
+  covers: ['3.3.4.1.s7', '3.3.4.1.s11'],
   card: {
     text: 'In the <b>cardiac cycle</b> pressure and volume changes in the atria and ventricles open and close valves so blood flows in one direction. <b>Atrial systole</b>: atria contract, pressure rises above the ventricle, AV valves open and top up the ventricle. <b>Ventricular systole</b>: ventricles contract, pressure rises above the atria so the <b>AV valves close</b> (first sound); when ventricular pressure exceeds the artery the <b>semilunar valves open</b> and blood is ejected. <b>Diastole</b>: the ventricle relaxes, pressure falls below the artery, so the <b>semilunar valves close</b> (second sound); the atria fill, and when atrial pressure exceeds ventricular pressure the AV valves open again.',
     terms: ['cardiac cycle', 'atrial systole', 'ventricular systole', 'diastole', 'atrioventricular valve', 'semilunar valve', 'pressure', 'volume', 'unidirectional flow'],
@@ -5391,7 +5832,7 @@ function vesselXS(R, x, y, r0, wall, o = {}) {
 /* ---------- 3.3.4.1g Structure of arteries, arterioles and veins ---------- */
 S({
   id: '3.3.4.1g', num: '3.3.4.1', sub: 'Structure of arteries, arterioles and veins in relation to function', title: 'Mass transport in animals', topic: '3.3', slot: [0, 6], span: [2, 1], dna: 'mark', ao: 1,
-  covers: ['3.3.4.1.s11'],
+  covers: ['3.3.4.1.s8'],
   card: {
     text: '<b>Arteries</b> carry blood away from the heart at high pressure: thick walls with <b>elastic tissue</b> to stretch and recoil (smoothing the pulse), <b>smooth muscle</b>, a narrow lumen and folded endothelium. <b>Arterioles</b> branch from arteries, with more smooth muscle that contracts or relaxes to control blood flow into capillaries. <b>Veins</b> carry blood back to the heart at low pressure: thinner walls with little elastic tissue and muscle, a wide lumen, and <b>valves</b> that prevent backflow; contraction of nearby skeletal muscles squeezes blood along them.',
     terms: ['artery', 'arteriole', 'vein', 'elastic tissue', 'smooth muscle', 'endothelium', 'lumen', 'valve', 'collagen'],
@@ -5430,7 +5871,7 @@ S({
 /* ---------- 3.3.4.1h Capillaries and tissue fluid ---------- */
 S({
   id: '3.3.4.1h', num: '3.3.4.1', sub: 'Capillaries as exchange surfaces; formation and return of tissue fluid', title: 'Mass transport in animals', topic: '3.3', slot: [2, 6], span: [2, 1], dna: 'mark', ao: 2,
-  covers: ['3.3.4.1.s12', '3.3.4.1.s13'],
+  covers: ['3.3.4.1.s9', '3.3.4.1.s10'],
   card: {
     text: '<b>Capillaries</b> are one cell thick (short diffusion distance), narrow so red blood cells squeeze through slowly, and form dense <b>capillary beds</b> with a very large surface area for exchange. At the arterial end the <b>hydrostatic pressure</b> of blood is high and forces fluid out through gaps in the walls: <b>tissue fluid</b> (plasma without most proteins and no red cells) bathes the cells. As fluid leaves, hydrostatic pressure falls; at the venous end the <b>water potential</b> of the blood is lower than the tissue fluid (plasma proteins remain) so water re-enters by osmosis. Excess tissue fluid drains into <b>lymph vessels</b> and returns to the blood.',
     terms: ['capillary', 'capillary bed', 'tissue fluid', 'hydrostatic pressure', 'water potential', 'plasma proteins', 'lymph', 'arterial end', 'venous end'],
@@ -5472,7 +5913,7 @@ S({
 /* ---------- 3.3.4.1i Cardiovascular disease: risk factors, data and evidence ---------- */
 S({
   id: '3.3.4.1i', num: '3.3.4.1', sub: 'Cardiovascular disease: risk-factor data, conflicting evidence, correlation and causation', title: 'Mass transport in animals', topic: '3.3', slot: [0, 7], dna: 'mark', ao: 3,
-  covers: ['3.3.4.1.s14', '3.3.4.1.s15', '3.3.4.1.s16'],
+  covers: ['3.3.4.1.s12', '3.3.4.1.s13', '3.3.4.1.s14'],
   card: {
     text: 'Cardiovascular disease (CVD) is linked to risk factors such as high blood pressure, high blood cholesterol, smoking, a diet high in saturated fat or salt, and inactivity. In <b>atheroma</b>, fatty deposits form under the lining of an artery, narrowing the lumen and raising blood pressure; a blood clot (<b>thrombosis</b>) can block a coronary artery, causing a heart attack. Students must <b>analyse and interpret data</b> on risk factors and CVD, <b>evaluate conflicting evidence</b> (sample size, controls, confounders, error bars) and recognise <b>correlations</b> versus <b>causal relationships</b>.',
     terms: ['cardiovascular disease', 'risk factor', 'atheroma', 'blood pressure', 'cholesterol', 'thrombosis', 'correlation', 'causation', 'conflicting evidence'],
@@ -6809,7 +7250,7 @@ S({
 /* ---------- RP7: chromatography of leaf pigments ---------- */
 rpScene({
   id: 'RP7', num: '3.5.1', rp: 7, title: 'Photosynthesis', sub: 'Required practical 7: chromatography to investigate leaf pigments', topic: '3.5', slot: [0, 2],
-  covers: ['RP7'], at: ['g', 'b'], ms: ['MS 0.3', 'MS 1.3', 'MS 1.2'], ps: ['PS 2.2', 'PS 3.1'],
+  covers: ['RP7'], at: ['b', 'c', 'g'], ms: ['MS 0.3', 'MS 1.3', 'MS 1.2'], ps: ['PS 2.2', 'PS 3.1'],
   card: {
     text: 'Use <b>chromatography</b> to investigate the pigments isolated from leaves of different plants (e.g. shade-tolerant and shade-intolerant plants, or leaves of different colours). In the AQA handbook’s example a leaf disc is crushed onto chromatography paper on a pencil <b>origin</b> line, the paper hangs in a solvent (propanone : petroleum ether, 1 : 9) in a stoppered tube, and pigments rise at different rates. Mark the <b>solvent front</b>, then calculate each pigment’s <b>R<sub>f</sub> value</b> = distance moved by the pigment ÷ distance moved by the solvent. Other methods (e.g. thin-layer) are possible.',
     terms: ['chromatography', 'origin', 'solvent front', 'Rf value', 'pigment', 'chlorophyll', 'carotene', 'solubility', 'affinity for the paper'],
@@ -7092,7 +7533,7 @@ S({
 /* ===================== RP9; 3.5.3 Energy and ecosystems; 3.5.4 Nutrient cycles ===================== */
 rpScene({
   id: 'RP9', num: '3.5.2', rp: 9, title: 'Respiration', sub: 'Required practical 9: effect of a named variable on the rate of respiration of single-celled organisms', topic: '3.5', slot: [0, 4],
-  covers: ['RP9'], at: ['b', 'i'], ms: ['MS 3.1', 'MS 1.3', 'MS 0.2'], ps: ['PS 2.3', 'PS 3.1'],
+  covers: ['RP9'], at: ['a', 'b', 'c', 'i'], ms: ['MS 3.1', 'MS 1.3', 'MS 0.2'], ps: ['PS 2.3', 'PS 3.1'],
   card: {
     text: 'Investigate the effect of a named variable on the rate of respiration of a culture of single-celled organisms. The AQA handbook’s example uses yeast and glucose at different temperatures with <b>methylene blue</b>: as yeast respires, electrons taken up by methylene blue turn it from blue to colourless. Time how long decolourisation takes at each temperature (35 °C water bath; sample results 20 °C: 275 s, 35 °C: 128 s, 45 °C: 145 s). Rate is 1 ÷ time. Rates can also be measured with a respirometer (oxygen uptake or CO₂ production). Schools may use other variables and organisms.',
     terms: ['yeast', 'respiration', 'methylene blue', 'redox indicator', 'temperature', 'rate', 'respirometer', 'single-celled organism'],
@@ -7166,7 +7607,7 @@ S({
 /* ---------- 3.5.3b Consumers: net production, efficiency, farming ---------- */
 S({
   id: '3.5.3b', num: '3.5.3', sub: 'Net production of consumers, efficiency of transfer, farming practices', title: 'Energy and ecosystems', topic: '3.5', slot: [3, 4], dna: 'mark', ao: 3,
-  covers: ['3.5.3.s6', '3.5.3.s7', '3.5.3.s8'],
+  covers: ['3.5.3.s6', '3.5.3.s7'],
   card: {
     text: 'The <b>net production of consumers</b> (N) is <b>N = I − (F + R)</b>, where I is the chemical energy store in ingested food, F the energy lost in <b>faeces and urine</b> and R the <b>respiratory losses</b>. Primary and secondary productivity are the rates of primary or secondary production (e.g. kJ ha⁻¹ year⁻¹). Energy transfer between trophic levels is not 100 % efficient: <b>efficiency = (energy transferred ÷ energy available) × 100</b>. Farming practices increase the efficiency of transfer by <b>simplifying food webs</b> (reducing energy losses to non-human food chains, e.g. by removing pests and weeds) and by <b>reducing respiratory losses</b> within a human food chain (e.g. restricting livestock movement and keeping them warm).',
     terms: ['net production', 'ingested food', 'faeces and urine', 'respiratory losses', 'efficiency of energy transfer', 'trophic level', 'food web', 'farming practice'],
@@ -7195,7 +7636,7 @@ S({
 /* ---------- 3.5.3c Farming to increase efficiency ---------- */
 S({
   id: '3.5.3c', num: '3.5.3', sub: 'Farming practices that increase the efficiency of energy transfer', title: 'Energy and ecosystems', topic: '3.5', slot: [0, 5], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.5.3.s9'],
+  covers: ['3.5.3.s8', '3.5.3.s9'],
   card: {
     text: 'Farming practices designed to increase the efficiency of energy transfer to humans: <b>simplifying food webs</b> to reduce energy losses to non-human food chains (e.g. <b>herbicides</b> remove weeds that compete with the crop for light and nutrients; <b>pesticides</b> kill insects that eat the crop), and <b>reducing respiratory losses</b> within a human food chain (e.g. keeping livestock in barns or pens with restricted movement and in warm conditions so less energy is lost as heat or used in movement). More of the energy fixed by the crop or fed to the animal ends up as biomass that humans can eat.',
     terms: ['simplifying food webs', 'herbicide', 'pesticide', 'respiratory loss', 'livestock', 'energy transfer', 'biomass', 'non-human food chain'],
@@ -7271,7 +7712,7 @@ S({
 /* ---------- 3.5.4b Phosphorus cycle, mycorrhizae, fertilisers, eutrophication ---------- */
 S({
   id: '3.5.4b', num: '3.5.4', sub: 'Phosphorus cycle; mycorrhizae; fertilisers, leaching and eutrophication', title: 'Nutrient cycles', topic: '3.5', slot: [0, 6], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.5.4.s4', '3.5.4.s6', '3.5.4.s7', '3.5.4.s8', '3.5.4.s9'],
+  covers: ['3.5.4.s4', '3.5.4.s6', '3.5.4.s7', '3.5.4.s8'],
   card: {
     text: 'In the <b>phosphorus cycle</b> phosphate ions in rocks and soil are taken up by plants and passed to animals; <b>saprobionts</b> decompose dead material and release phosphate ions; phosphate may be lost to sediments. <b>Mycorrhizae</b> (a symbiosis between fungi and plant roots) increase the surface area of the root system, helping the plant take up water and inorganic ions (phosphate) from the soil; the fungus receives organic compounds. <b>Fertilisers</b> (natural, e.g. manure, or artificial) replace nitrates and phosphates lost when crops are harvested and livestock removed. Excess fertiliser <b>leaches</b> into water, causing <b>eutrophication</b>: algal bloom, light blocked, plants die, saprobionts multiply and use up oxygen, fish die.',
     terms: ['phosphorus cycle', 'phosphate ions', 'mycorrhiza', 'saprobiont', 'natural fertiliser', 'artificial fertiliser', 'leaching', 'eutrophication', 'algal bloom'],
@@ -7979,7 +8420,7 @@ S({
 /* ---------- 3.6.3b Ultrastructure of a myofibril: bands ---------- */
 S({
   id: '3.6.3b', num: '3.6.3', sub: 'Ultrastructure of a myofibril: sarcomere bands in relaxed and contracted muscle', title: 'Skeletal muscles', topic: '3.6', slot: [0, 6], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.6.3.s2'],
+  covers: ['3.6.3.s3'],
   card: {
     text: 'A sarcomere runs from one <b>Z line</b> to the next. <b>Actin</b> (thin) filaments are attached to the Z lines; <b>myosin</b> (thick) filaments lie in the middle, held at the <b>M line</b>. The <b>A band</b> is the length of the myosin filaments (dark) and does not change on contraction. The <b>I band</b> is the region with actin only (light) and gets <b>shorter</b>. The <b>H zone</b> is the part of the A band with myosin only and gets <b>shorter</b> (may disappear). The sarcomere itself shortens as the actin filaments slide between the myosin filaments (<b>sliding filament theory</b>): the filaments do not shorten.',
     terms: ['sarcomere', 'Z line', 'M line', 'A band', 'I band', 'H zone', 'actin', 'myosin', 'sliding filament', 'ultrastructure'],
@@ -8047,7 +8488,7 @@ function crossFrame(R, x0, st) {
 /* ---------- 3.6.3c Actinomyosin cycle; ATP and phosphocreatine; slow and fast fibres ---------- */
 S({
   id: '3.6.3c', num: '3.6.3', sub: 'Cross-bridge cycle, ATP and phosphocreatine, slow and fast fibres', title: 'Skeletal muscles', topic: '3.6', slot: [2, 6], span: [2, 1], dna: 'mark', ao: 2,
-  covers: ['3.6.3.s3', '3.6.3.s4', '3.6.3.s5', '3.6.3.s6'],
+  covers: ['3.6.3.s4', '3.6.3.s5', '3.6.3.s6', '3.6.3.s7'],
   card: {
     text: 'In resting muscle <b>tropomyosin</b> blocks the myosin-binding sites on <b>actin</b>. When an action potential reaches the muscle, <b>calcium ions</b> are released into the sarcoplasm; they bind to a protein on tropomyosin, which moves and exposes the binding sites. A <b>myosin head</b> binds to actin forming an <b>actinomyosin bridge</b>, then bends (<b>power stroke</b>), pulling the actin filament along. <b>ATP</b> binds to the head so it detaches; ATP hydrolysis (by ATPase, activated by Ca²⁺) provides energy to return the head to its original position so it can bind further along. The cycle repeats while Ca²⁺ is present; Ca²⁺ is actively transported back into the sarcoplasmic reticulum using ATP. <b>Phosphocreatine</b> stores a phosphate that can rapidly regenerate ATP from ADP, anaerobically and without lactate, but only for a few seconds. <b>Slow</b> fibres (posture, endurance) are rich in mitochondria, capillaries and myoglobin; <b>fast</b> fibres (sprinting, power) have few mitochondria and capillaries, little myoglobin, and stores of glycogen and phosphocreatine; they fatigue quickly.',
     terms: ['actinomyosin bridge', 'tropomyosin', 'calcium ions', 'ATP', 'phosphocreatine', 'power stroke', 'sarcoplasmic reticulum', 'slow fibre', 'fast fibre', 'myoglobin'],
@@ -8470,7 +8911,7 @@ const NEPH = {
   cd: [340, 112, 340, 300, 340, 462],
 };
 S({
-  id: '3.6.4.3c', num: '3.6.4.3', sub: 'The nephron: filtration, reabsorption and the loop of Henle', title: 'Control of blood water potential', topic: '3.6', slot: [0, 10], span: [2, 2], dna: 'mark', ao: 1,
+  id: '3.6.4.3b', num: '3.6.4.3', sub: 'The nephron: filtration, reabsorption and the loop of Henle', title: 'Control of blood water potential', topic: '3.6', slot: [0, 10], span: [2, 2], dna: 'mark', ao: 1,
   covers: ['3.6.4.3.s3', '3.6.4.3.s4', '3.6.4.3.s5', '3.6.4.3.s6', '3.6.4.3.s7'],
   card: {
     text: 'Each <b>nephron</b> begins in the <b>cortex</b> with the <b>glomerulus</b> (a knot of capillaries) inside the <b>Bowman’s capsule</b>. High blood pressure forces water and small molecules through the capillary wall, the basement membrane and the capsule lining to form the <b>glomerular filtrate</b>; proteins and blood cells stay in the blood. In the <b>proximal convoluted tubule (PCT)</b> glucose is reabsorbed (and much water). The <b>loop of Henle</b> dips into the <b>medulla</b>: the ascending limb is impermeable to water and actively transports Na⁺ out, maintaining a <b>gradient of sodium ions</b> (low water potential) in the medulla; the descending limb is permeable to water, which leaves by osmosis. The <b>distal convoluted tubule (DCT)</b> and the <b>collecting duct</b> reabsorb water by osmosis, the amount depending on <b>ADH</b>. Urine passes to the ureter.',
@@ -8558,8 +8999,8 @@ S({
 
 /* ---------- 3.6.4.3d Loop of Henle gradient, ADH at the collecting duct, loop length (big scene) ---------- */
 S({
-  id: '3.6.4.3d', num: '3.6.4.3', sub: 'Sodium ion gradient, ADH and aquaporins, and loop length', title: 'Control of blood water potential', topic: '3.6', slot: [2, 10], span: [2, 2], dna: 'mark', ao: 2,
-  covers: ['3.6.4.3.s5', '3.6.4.3.s6', '3.6.4.3.s7'],
+  id: '3.6.4.3c', num: '3.6.4.3', sub: 'Sodium ion gradient, ADH and aquaporins, and loop length', title: 'Control of blood water potential', topic: '3.6', slot: [2, 10], span: [2, 2], dna: 'mark', ao: 2,
+  covers: ['3.6.4.3.s6', '3.6.4.3.s7'],
   card: {
     text: 'The <b>loop of Henle</b> maintains a <b>gradient of sodium ions</b> in the medulla: the ascending limb is impermeable to water and actively transports Na⁺ out, so the medulla has a low water potential; the descending limb is permeable to water, which leaves by osmosis. Filtrate then reaches the <b>DCT</b> and <b>collecting duct</b>, where water is reabsorbed by osmosis down the water potential gradient into the medulla and the blood. <b>ADH</b> binds to receptors on the cells of the DCT and collecting duct, and <b>aquaporins</b> are inserted into their membranes, so more water is reabsorbed. Without ADH the walls are far less permeable and dilute urine is produced. Animals with a <b>longer loop of Henle</b> (e.g. those living in dry habitats) set up a steeper gradient and can produce more concentrated urine.',
     terms: ['sodium ion gradient', 'water potential', 'osmosis', 'ADH', 'aquaporin', 'collecting duct', 'loop length', 'concentrated urine'],
@@ -8623,7 +9064,7 @@ S({
 
 /* ---------- 3.6.4.3e Proximal convoluted tubule cell: structure and reabsorption ---------- */
 S({
-  id: '3.6.4.3e', num: '3.6.4.3', sub: 'Proximal convoluted tubule: reabsorption of glucose and water', title: 'Control of blood water potential', topic: '3.6', slot: [3, 9], dna: 'mark', ao: 2,
+  id: '3.6.4.3d', num: '3.6.4.3', sub: 'Proximal convoluted tubule: reabsorption of glucose and water', title: 'Control of blood water potential', topic: '3.6', slot: [3, 9], dna: 'mark', ao: 2,
   covers: ['3.6.4.3.s5'],
   card: {
     text: 'The wall of the <b>proximal convoluted tubule</b> is a single layer of epithelial cells with <b>microvilli</b> (a large surface area) facing the filtrate and many <b>mitochondria</b> to supply ATP. Sodium ions are actively transported out of the cell into the blood, giving a low Na⁺ concentration inside the cell. Glucose then enters from the filtrate by <b>co-transport</b> with sodium ions and leaves into the blood by facilitated diffusion. The lowered water potential of the cell and blood draws water in by <b>osmosis</b>. All the glucose is normally reabsorbed here, so none appears in the urine.',
@@ -8691,7 +9132,7 @@ function chromPair(R, x, y, h, a1, a2) {
 /* ---------- 3.7 overview: common ancestry, populations, gene pools, isolation, communities ---------- */
 S({
   id: '3.7', num: '3.7', sub: 'Evolution, common ancestry, populations and communities', title: 'Genetics, populations, evolution and ecosystems', topic: '3.7', slot: [0, 0], span: [2, 1], dna: 'bio', ao: 1,
-  covers: ['3.7.s1', '3.7.s2', '3.7.s3', '3.7.s4', '3.7.s5', '3.7.s6'],
+  covers: ['3.7.s1', '3.7.s2', '3.7.s3', '3.7.s4', '3.7.s5', '3.7.s6', '3.7.s7'],
   card: {
     text: 'The <b>theory of evolution</b> underpins modern biology: all new species arise from existing species, so species share <b>common ancestry</b>, shown in <b>phylogenetic classification</b>. This explains shared chemistry (the same 20 or so amino acids), physiological pathways such as anaerobic respiration, cell structure, <b>DNA</b> as the genetic material and the near-<b>universal genetic code</b>. Individuals of a species share the same genes but usually different <b>alleles</b>. A species exists as one or more <b>populations</b>; phenotypes vary because of genetic and environmental factors. <b>Genetic drift</b> (important in small populations) and <b>natural selection</b> change <b>allele frequencies</b>; a change in allele frequency is <b>evolution</b>. If a population is isolated there is no <b>gene flow</b>, differences accumulate and <b>reproductive isolation</b> means a new species has evolved. Populations of different species form <b>communities</b>, affected by <b>biotic</b> and <b>abiotic</b> factors.',
     terms: ['evolution', 'common ancestry', 'phylogenetic classification', 'universal genetic code', 'allele', 'population', 'genetic drift', 'natural selection', 'gene flow', 'reproductive isolation', 'community', 'biotic factor', 'abiotic factor'],
@@ -9439,7 +9880,7 @@ S({
 /* ---------- 3.7.4f Conservation and managing succession ---------- */
 S({
   id: '3.7.4f', num: '3.7.4', sub: 'Conservation: managing succession and balancing human needs', title: 'Populations in ecosystems', topic: '3.7', slot: [2, 8], span: [2, 1], dna: 'mark', ao: 3,
-  covers: ['3.7.4.s9', '3.7.4.s12', '3.7.4.s13'],
+  covers: ['3.7.4.s12', '3.7.4.s13', '3.7.4.s14'],
   card: {
     text: 'Conservation of habitats frequently involves <b>managing succession</b>: grazing, cutting, coppicing or burning stops succession so that an earlier stage with high biodiversity is maintained (without management, grassland becomes scrub and then woodland). There is a conflict between <b>human needs</b> (food, timber, housing, fuel, water) and <b>conservation</b>; the aim is to manage natural resources so they are <b>sustainable</b>, i.e. available for future generations. You should be able to <b>evaluate evidence and data</b> about issues relating to the conservation of species and habitats, and consider <b>conflicting evidence</b> (sample size, controls, repeatability, bias, time scale, and whether a correlation shows cause).',
     terms: ['conservation', 'managing succession', 'sustainability', 'human needs', 'biodiversity', 'conflicting evidence', 'evaluate', 'sustainable resources'],
@@ -9810,7 +10251,7 @@ S({
 /* ---------- 3.8.2.2b Epigenetics: DNA methylation and histone acetylation ---------- */
 S({
   id: '3.8.2.2b', num: '3.8.2.2', sub: 'Epigenetic control: increased DNA methylation and decreased histone acetylation', title: 'Regulation of transcription and translation', topic: '3.8', slot: [0, 3], span: [2, 1], dna: 'bio', ao: 2,
-  covers: ['3.8.2.2.s3', '3.8.2.2.s4', '3.8.2.2.s5', '3.8.2.2.s6'],
+  covers: ['3.8.2.2.s3', '3.8.2.2.s4', '3.8.2.2.s5', '3.8.2.2.s6', '3.8.2.2.s7'],
   card: {
     text: '<b>Epigenetics</b> involves <b>heritable changes in gene function without changes to the base sequence of DNA</b>. The changes are caused by changes in the environment that <b>inhibit transcription</b> by (1) <b>increased methylation</b> of the DNA (methyl groups added to cytosine bases, often at CpG sites, so transcription factors and RNA polymerase cannot bind) or (2) <b>decreased acetylation</b> of the associated <b>histones</b>: with fewer acetyl groups the histones are more positively charged, bind the DNA more tightly, so chromatin is condensed and the gene is not transcribed. Acetylated histones loosen the DNA so genes can be transcribed. Epigenetic changes are relevant to the development and treatment of disease, especially <b>cancer</b>, and may be treated by drugs that reverse them.',
     terms: ['epigenetics', 'heritable', 'methylation', 'acetylation', 'histone', 'chromatin', 'transcription', 'base sequence', 'environment', 'cancer'],
@@ -9868,7 +10309,7 @@ S({
 /* ---------- 3.8.2.2c RNA interference and evaluating genetic v environmental influences ---------- */
 S({
   id: '3.8.2.2c', num: '3.8.2.2', sub: 'RNA interference, and evaluating genetic and environmental influences on phenotype', title: 'Regulation of transcription and translation', topic: '3.8', slot: [2, 3], span: [2, 1], dna: 'bio', ao: 3,
-  covers: ['3.8.2.2.s7', '3.8.2.2.s8', '3.8.2.2.s9'],
+  covers: ['3.8.2.2.s8', '3.8.2.2.s9', '3.8.2.2.s10'],
   card: {
     text: 'In eukaryotes and some prokaryotes, <b>translation</b> of the mRNA produced from target genes can be inhibited by <b>RNA interference (RNAi)</b>. Small double-stranded RNA molecules (siRNA, or miRNA) are produced in the cell; one strand joins a protein complex and binds to the <b>complementary base sequence</b> on the target mRNA in the cytoplasm. The mRNA is then cut up and degraded (or blocked), so it <b>cannot be translated</b> and the protein is not made. You should be able to <b>interpret data</b> from investigations into gene expression and <b>evaluate data</b> on the relative influences of genetic and environmental factors on phenotype, for example <b>twin studies</b>: if identical twins (same genes) differ, environment matters; compare with non-identical twins and unrelated people, and consider sample size.',
     terms: ['RNA interference', 'siRNA', 'miRNA', 'complementary', 'mRNA degradation', 'translation', 'twin study', 'genotype', 'environment', 'sample size'],
@@ -10112,7 +10553,7 @@ S({
 /* ---------- 3.8.4.1b Amplifying DNA in vitro: PCR ---------- */
 S({
   id: '3.8.4.1b', num: '3.8.4.1', sub: 'In vitro amplification: the polymerase chain reaction (PCR)', title: 'Recombinant DNA technology', topic: '3.8', slot: [0, 6], span: [2, 1], dna: 'bio', ao: 2,
-  covers: ['3.8.4.1.s5', '3.8.4.1.s6'],
+  covers: ['3.8.4.1.s5'],
   card: {
     text: 'Fragments of DNA can be amplified by <b>in vitro</b> and <b>in vivo</b> techniques. The <b>polymerase chain reaction (PCR)</b> is an in vitro method. The reaction mixture contains the DNA fragment, <b>DNA polymerase</b> (a heat-stable enzyme), <b>primers</b> (short single strands that bind to the ends of the target), and free <b>nucleotides</b>. Each cycle: (1) heat to about <b>95 °C</b>: hydrogen bonds break and the strands separate; (2) cool to about <b>50–60 °C</b>: primers anneal (bind by complementary base pairing); (3) heat to about <b>72 °C</b>: DNA polymerase adds nucleotides to the primers, building new strands. The number of copies doubles each cycle, so after n cycles there are 2ⁿ copies of the starting fragment.',
     terms: ['PCR', 'in vitro', 'primer', 'DNA polymerase', 'denature', 'anneal', 'hydrogen bonds', 'nucleotides', 'cycle'],
@@ -10167,7 +10608,7 @@ function plasmid(R, cx, cy, r, o = {}) {
 }
 S({
   id: '3.8.4.1c', num: '3.8.4.1', sub: 'In vivo amplification: vectors, ligase, transformation and marker genes', title: 'Recombinant DNA technology', topic: '3.8', slot: [2, 6], span: [2, 1], dna: 'bio', ao: 2,
-  covers: ['3.8.4.1.s7', '3.8.4.1.s8', '3.8.4.1.s9', '3.8.4.1.s10'],
+  covers: ['3.8.4.1.s6', '3.8.4.1.s7', '3.8.4.1.s8', '3.8.4.1.s9'],
   card: {
     text: 'In the <b>in vivo</b> method, a DNA fragment is inserted into a <b>vector</b> (for example a <b>plasmid</b>) and taken up by host cells, which are cultured so they copy it. <b>Promoter</b> and <b>terminator</b> regions are added to the fragment so that it is transcribed in the host. The same <b>restriction endonuclease</b> cuts the vector and the fragment, leaving complementary <b>sticky ends</b>; <b>DNA ligase</b> joins them (forming phosphodiester bonds) to make <b>recombinant DNA</b>. <b>Transformation</b>: host cells (for example bacteria) take up the vector. Few cells take it up, so <b>marker genes</b> (for example antibiotic resistance or fluorescence) detect which cells are transformed (<b>genetically modified</b>) so they can be selected and cultured. (You do not need to recall specific marker genes.)',
     terms: ['in vivo', 'vector', 'plasmid', 'promoter', 'terminator', 'restriction endonuclease', 'DNA ligase', 'transformation', 'marker gene', 'genetically modified', 'host cell'],
@@ -10214,7 +10655,7 @@ S({
 /* ---------- 3.8.4.1d Uses of recombinant DNA technology; gene therapy; the debate ---------- */
 S({
   id: '3.8.4.1d', num: '3.8.4.1', sub: 'Applications, gene therapy and the ethical, financial and social issues', title: 'Recombinant DNA technology', topic: '3.8', slot: [0, 7], span: [2, 1], dna: 'bio', ao: 3,
-  covers: ['3.8.4.1.s11', '3.8.4.1.s12', '3.8.4.1.s13', '3.8.4.1.s14'],
+  covers: ['3.8.4.1.s10', '3.8.4.1.s11', '3.8.4.1.s12', '3.8.4.1.s13'],
   card: {
     text: 'Genetically modified (transgenic) organisms are used in <b>agriculture</b> (crops with higher yield, extra nutrients, or resistance to pests or herbicides), in <b>industry</b> (microorganisms making enzymes) and in <b>medicine</b> (bacteria making human proteins such as insulin; <b>gene therapy</b>). In <b>gene therapy</b> a working copy of an allele is delivered into a patient’s cells using a <b>vector</b> (for example a modified virus) to treat a genetic disorder; this is recombinant DNA technology applied to people. You should be able to <b>evaluate the ethical, financial and social issues</b> of use and <b>ownership</b> (patents, cost, access) in agriculture, industry and medicine, and <b>balance</b> the <b>humanitarian</b> benefits (feeding people, treating disease) against opposition from <b>environmentalists</b> (effects on biodiversity, gene transfer to wild plants) and <b>anti-globalisation activists</b> (control by large companies, cost to poorer farmers).',
     terms: ['transgenic', 'genetically modified', 'gene therapy', 'vector', 'patent', 'ownership', 'humanitarian', 'environmentalist', 'anti-globalisation', 'biodiversity', 'ethical issue'],
@@ -10716,9 +11157,9 @@ S({
       draw(x, y); R.text(rps, x + 148, y + 66, 3.1, { al: 'r', ink: 'T' });
     };
     const at = [
-      ['AT a', 'mass, time, volume, temperature, length, pH', 'RP 1, 4, 7, 8, 9, 12', (x, y) => { R.thermometer(x + 24, y + 28, 22, { level: 0.6 }); R.stopwatch(x + 66, y + 48, 9); R.tube(x + 100, y + 30, 8, 30, { level: 0.5, ink: 'T', t: 0.3 }); R.text('pH 7', x + 134, y + 50, 4, { al: 'c' }); }],
-      ['AT b', 'instruments, e.g. colorimeter, potometer', 'RP 1, 4, 5…', (x, y) => { R.rrect(x + 20, y + 34, 48, 20, 3, { ink: 'B', w: 1, fi: 'B', ft: 0.1 }); R.cuvette(x + 30, y + 36, 7, 12, { ink: 'P', t: 0.5 }); R.rect(x + 48, y + 38, 16, 8, { ink: 'B', w: 0.6, fi: 'T', ft: 0.3 }); R.text('0.65', x + 56, y + 44, 3.4, { al: 'c' }); R.tube(x + 96, y + 28, 7, 30, { level: 0.4, ink: 'T', t: 0.3 }); R.line(x + 100, y + 28, x + 130, y + 40, { ink: 'B', w: 0.8, taper: 'none' }); }],
-      ['AT c', 'glassware; serial dilutions', 'RP 3, 6, 11', (x, y) => { [0, 1, 2, 3].forEach(k => R.tube(x + 20 + k * 20, y + 28, 8, 34, { level: 0.55, ink: 'P', t: 0.5 - k * 0.12 })); R.arrow([x + 24, y + 26, x + 38, y + 26], { ink: 'B', w: 0.7, hs: 1.8 }); R.text('÷ 2 each step', x + 100, y + 66, 3.2, { al: 'c' }); }],
+      ['AT a', 'mass, time, volume, temperature, length, pH', 'RP 1, 4, 8, 9, 12', (x, y) => { R.thermometer(x + 24, y + 28, 22, { level: 0.6 }); R.stopwatch(x + 66, y + 48, 9); R.tube(x + 100, y + 30, 8, 30, { level: 0.5, ink: 'T', t: 0.3 }); R.text('pH 7', x + 134, y + 50, 4, { al: 'c' }); }],
+      ['AT b', 'instruments, e.g. colorimeter, potometer', 'RP 1, 4, 7, 8, 9, 11, 12', (x, y) => { R.rrect(x + 20, y + 34, 48, 20, 3, { ink: 'B', w: 1, fi: 'B', ft: 0.1 }); R.cuvette(x + 30, y + 36, 7, 12, { ink: 'P', t: 0.5 }); R.rect(x + 48, y + 38, 16, 8, { ink: 'B', w: 0.6, fi: 'T', ft: 0.3 }); R.text('0.65', x + 56, y + 44, 3.4, { al: 'c' }); R.tube(x + 96, y + 28, 7, 30, { level: 0.4, ink: 'T', t: 0.3 }); R.line(x + 100, y + 28, x + 130, y + 40, { ink: 'B', w: 0.8, taper: 'none' }); }],
+      ['AT c', 'glassware; serial dilutions', 'RP 1, 3, 4, 6, 7, 8, 9, 11', (x, y) => { [0, 1, 2, 3].forEach(k => R.tube(x + 20 + k * 20, y + 28, 8, 34, { level: 0.55, ink: 'P', t: 0.5 - k * 0.12 })); R.arrow([x + 24, y + 26, x + 38, y + 26], { ink: 'B', w: 0.7, hs: 1.8 }); R.text('÷ 2 each step', x + 118, y + 38, 3.4, { al: 'c' }); }],
       ['AT d', 'light microscope, graticule', 'RP 2', (x, y) => { R.circle(x + 40, y + 46, 14, { ink: 'B', w: 1, fi: 'T', ft: 0.12 }); for (let k = 0; k < 8; k++) R.line(x + 30 + k * 2.4, y + 44, x + 30 + k * 2.4, y + 48, { ink: 'B', w: 0.4, taper: 'none' }); R.circle(x + 40, y + 46, 5, { ink: 'B', w: 0.8, fi: 'P', ft: 0.5 }); R.text('graticule', x + 40, y + 66, 3.2, { al: 'c' }); R.rect(x + 80, y + 36, 40, 8, { ink: 'B', w: 0.9, fi: 'B', ft: 0.15 }); R.rect(x + 90, y + 44, 20, 14, { ink: 'B', w: 0.9, fi: 'B', ft: 0.2 }); }],
       ['AT e', 'scientific drawing with annotations', 'RP 2, 5', (x, y) => { R.ellipse(x + 40, y + 46, 22, 14, { ink: 'B', w: 1.1, wob: 0.4 }); R.circle(x + 36, y + 46, 5, { ink: 'B', w: 0.9 }); R.line(x + 58, y + 40, x + 100, y + 32, { ink: 'B', w: 0.6, taper: 'end' }); R.text('nucleus', x + 102, y + 34, 3.4, { al: 'l' }); R.line(x + 20, y + 46, x + 100, y + 56, { ink: 'B', w: 0.6, taper: 'end' }); R.text('membrane', x + 102, y + 58, 3.4, { al: 'l' }); }],
       ['AT f', 'qualitative reagents for biological molecules', 'RP 1, 2, 11', (x, y) => { [['T', 'Benedict’s'], ['B', 'biuret'], ['Y', 'iodine']].forEach(([ink, nm], k) => { R.tube(x + 22 + k * 40, y + 30, 8, 30, { level: 0.55, ink: ink === 'B' ? 'P' : ink, t: 0.4, ink2: ink === 'B' ? 'B' : null, t2: 0.3 }); R.text(nm, x + 26 + k * 40, y + 68, 3, { al: 'c' }); }); }],
@@ -10831,13 +11272,176 @@ S({
   anim(A, sc) { const p = A.ph(6); const i = Math.floor(p * 12), col = i < 6 ? 0 : 1, row = i % 6; A.dot(10 + col * 328 + 14, 22 + row * 34 + 15, 2.2, 'P', 0.9, 1); },
 });
 
+/* ===================== 99a PATHWAYS: faint dotted routes that link ideas across topics =====================
+   Drawn between the backdrops and the windows, so a route disappears behind every window it crosses and only shows in the
+   gutters; each end carries a small glyph naming the idea that links the two scenes.                                      */
+const PATH_LIST = [
+  ['3.1.6', '3.5.2c', 'atp'], ['3.1.6', '3.6.3c', 'atp'], ['3.6.4.2b', '3.1.6', 'atp'],
+  ['3.1.4.2a', '3.3.3a', 'enz'], ['3.1.4.2b', '3.6.4.1', 'enz'],
+  ['3.1.4.1', '3.3.4.1a', 'prot'],
+  ['3.1.5.1', '3.4.1a', 'dna'], ['3.1.5.2', '3.8.4.1b', 'dna'], ['3.4.2a', '3.8.2.2a', 'dna'], ['3.4.2b', '3.8.1b', 'dna'],
+  ['3.1.7', '3.3.4.2a', 'h2o'], ['3.1.7', '3.2.3b', 'h2o'],
+  ['3.2.3a', '3.6.2.1a', 'mem'], ['3.2.3c', '3.3.3b', 'cot'], ['3.3.3b', '3.6.4.3d', 'cot'],
+  ['3.2.2a', '3.8.2.3a', 'cell'], ['3.2.1.1', '3.8.2.1a', 'cell'],
+  ['3.4.3b', '3.7.1a', 'chr'], ['3.4.4a', '3.7.3a', 'sel'], ['3.4.6a', '3.7.4a', 'div'], ['3.4.7a', 'RP12', 'div'],
+  ['3.5.1a', '3.5.2c', 'hp'], ['3.5.2a', '3.6.4.2a', 'glu'], ['3.3.4.1a', '3.5.2c', 'o2'],
+  ['3.2.4a', '3.8.4.2', 'ab'], ['3.7.1f', 'RP10', 'chi'], ['SK.MS1c', '3.7.1f', 'chi'], ['RP3', 'RP11', 'cal'],
+  ['3.6.2.2a', '3.6.3c', 'ca'], ['3.5.3a', '3.7.4a', 'en'],
+];
+function pathGlyph(R, kind, x, y) {
+  R.knock(polyPts(x, y, 10.5, 16));
+  const ring = (ink, ft, lbl, sz = 6) => { R.circle(x, y, 9, { ink: 'B', w: 1, fi: ink, ft }); if (lbl) R.text(lbl, x, y + sz * 0.36, sz, { al: 'c' }); };
+  switch (kind) {
+    case 'atp': ring('Y', 0.9, 'ATP', 5.2); break;
+    case 'enz': R.fill([x - 8, y - 6, x + 2, y - 8, x + 8, y - 1, x + 6, y + 7, x - 6, y + 8, x - 9, y + 2], { ink: 'P', t: 0.85, smooth: true, wob: 0.1 }); R.poly([x - 8, y - 6, x + 2, y - 8, x + 8, y - 1, x + 6, y + 7, x - 6, y + 8, x - 9, y + 2], { ink: 'B', w: 0.9, smooth: true, wob: 0.1 }); R.fill([x + 5, y - 2, x + 1, y + 1, x + 5, y + 4], { ink: 'B', t: 1, wob: 0 }); break;
+    case 'prot': R.stroke([x - 9, y + 3, x - 5, y - 5, x - 1, y + 4, x + 3, y - 5, x + 7, y + 3], { ink: 'P', w: 2.6, smooth: true, taper: 'none' }); break;
+    case 'dna': R.helix(x - 9, y, x + 9, y, { amp: 4.6, turns: 1.6, w: 0.9 }); break;
+    case 'h2o': R.drop(x, y + 1, 9, { label: 'H₂O' }); break;
+    case 'mem': R.bilayer([x - 11, y, x + 11, y], { gap: 4.4, hr: 1.6, sp: 4, tail: 2.4, coreT: 0.3 }); break;
+    case 'cot': ring('T', 0.4, 'Na⁺', 5); break;
+    case 'cell': R.circle(x, y, 8.6, { ink: 'B', w: 1, fi: 'P', ft: 0.25 }); R.circle(x, y, 3, { ink: 'B', w: 0.8, fi: 'B', ft: 0.6 }); break;
+    case 'chr': R.rrect(x - 6, y - 8, 4, 16, 2, { ink: 'B', w: 0.9, fi: 'P', ft: 0.7 }); R.rrect(x + 2, y - 8, 4, 16, 2, { ink: 'B', w: 0.9, fi: 'T', ft: 0.7 }); break;
+    case 'sel': [[-4, -2, 'Y'], [4, -3, 'B'], [-1, 5, 'B']].forEach(([dx, dy, c]) => R.ellipse(x + dx * 1.3, y + dy * 1.3, 4.6, 2.9, { ink: 'B', w: 0.8, fi: c, ft: c === 'B' ? 0.8 : 0.4, rot: dx * 9 })); break;
+    case 'div': R.text('D', x, y + 4, 11, { al: 'c', w: 1.2 }); R.circle(x, y, 9.4, { ink: 'B', w: 0.9 }); break;
+    case 'hp': ring('Y', 0.5, 'H⁺', 6); break;
+    case 'glu': R.poly(hexPts(x, y, 8.6, 0.5), { ink: 'B', w: 1, fi: 'Y', ft: 0.7 }); break;
+    case 'o2': R.circle(x, y, 9, { ink: 'B', w: 1, fi: 'P', ft: 0.5, fi2: 'Y', ft2: 0.7 }); R.text('O₂', x, y + 2.2, 6, { al: 'c' }); break;
+    case 'ab': R.antibody(x, y + 9, -PI / 2, 'tri', { s: 0.42 }); break;
+    case 'chi': R.text('χ²', x, y + 3.4, 10, { al: 'c', w: 1.2 }); R.circle(x, y, 9.6, { ink: 'B', w: 0.9 }); break;
+    case 'cal': { const g = R.graph(x - 7, y - 6, 14, 12, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, fs: 2 }).axes(); g.curve(u => u * u * 0.4 + u * 0.6, { ink: 'P', w: 1 }); break; }
+    case 'ca': ring('P', 0.35, 'Ca²⁺', 4.2); break;
+    case 'en': R.circle(x, y, 9, { ink: 'B', w: 1, fi: 'Y', ft: 0.9 }); for (let k = 0; k < 8; k++) { const a = k * TAU / 8; R.line(x + Math.cos(a) * 10.5, y + Math.sin(a) * 10.5, x + Math.cos(a) * 14, y + Math.sin(a) * 14, { ink: 'Y', w: 1.4, taper: 'none' }); } break;
+    default: ring('T', 0.3, '');
+  }
+}
+PATH_DRAW = function (R) {
+  for (let i = 0; i < PATH_LIST.length; i++) {
+    const [ia, ib, kind] = PATH_LIST[i], A = SCENE_BY_ID[ia], B = SCENE_BY_ID[ib]; if (!A || !B) continue;
+    const dx = B.cx - A.cx, dy = B.cy - A.cy, edge = (S, dxs, dys) => {      // point on the facing edge of window S, and the outward unit vector
+      const hw = S.w / 2 + 6, hh = S.h / 2 + 6;
+      if (Math.abs(dxs) * hh > Math.abs(dys) * hw) return dxs > 0 ? [S.cx + hw, S.cy + clamp(dys * 0.0, -hh * 0.6, hh * 0.6), 1, 0] : [S.cx - hw, S.cy, -1, 0];
+      return dys > 0 ? [S.cx, S.cy + hh, 0, 1] : [S.cx, S.cy - hh, 0, -1];
+    };
+    const e1 = edge(A, dx, dy), e2 = edge(B, -dx, -dy), dist = Math.hypot(dx, dy), k = Math.min(420, Math.max(110, dist * 0.35));
+    // stagger the attachment point a little so routes that share a window do not coincide
+    const jx = ((i * 37) % 11 - 5) * 7;
+    const p0 = [e1[0] + (e1[2] ? 0 : jx), e1[1] + (e1[2] ? jx : 0)], p3 = [e2[0] + (e2[2] ? 0 : jx), e2[1] + (e2[2] ? jx : 0)];
+    const c1 = [p0[0] + e1[2] * k, p0[1] + e1[3] * k], c2 = [p3[0] + e2[2] * k, p3[1] + e2[3] * k];
+    R.bez(p0, c1, c2, p3, { ink: 'T', w: 3.2, dash: [1.6, 6.4], taper: 'none', wob: 0.8, t: 0.85 });
+    R.bez(p0, c1, c2, p3, { ink: 'B', w: 0.6, dash: [1, 11], taper: 'none', wob: 0.4, t: 0.7 });
+    pathGlyph(R, kind, p0[0] + e1[2] * 6, p0[1] + e1[3] * 6); pathGlyph(R, kind, p3[0] + e2[2] * 6, p3[1] + e2[3] * 6);
+  }
+};
+
+/* ===================== 99b COVERAGE: spec statements, required practicals, skills; machine check ===================== */
+/* Every content statement of AQA 7402 section 3 (v1.6), numbered s1, s2 ... in specification order inside each section.
+   A scene claims a statement by listing its id (for example '3.2.3.s7') in `covers`. */
+const SPEC = {
+  '3.1.1': ['biochemical basis of life is similar for all living things', 'monomers are the smaller units', 'polymers are made of many monomers', 'monosaccharides, amino acids, nucleotides are monomers', 'condensation reaction releases water', 'hydrolysis uses water'],
+  '3.1.2': ['monosaccharides: glucose, galactose, fructose', 'condensation forms a glycosidic bond', 'disaccharides: maltose, sucrose, lactose', 'alpha and beta glucose isomers', 'polysaccharides: glycogen, starch (alpha), cellulose (beta)', 'structure and function of glycogen, starch, cellulose', 'structure relates to function in animal and plant cells', 'Benedict’s test for reducing sugars', 'Benedict’s test for non-reducing sugars', 'iodine test for starch'],
+  '3.1.3': ['triglycerides and phospholipids', 'triglyceride: glycerol + three fatty acids', 'ester bond formed by condensation', 'saturated and unsaturated R-groups', 'phospholipid: one fatty acid replaced by phosphate group', 'properties relate to structure', 'emulsion test for lipids'],
+  '3.1.4.1': ['amino acids are the monomers; general structure', 'twenty amino acids differ in side group', 'peptide bond by condensation', 'dipeptides and polypeptides', 'a functional protein may have several polypeptides', 'hydrogen, ionic bonds and disulfide bridges', 'primary to quaternary structure and function', 'biuret test for proteins'],
+  '3.1.4.2': ['enzymes lower activation energy', 'induced-fit model', 'active site tertiary structure; enzyme-substrate complex', 'specificity of enzymes', 'effect of enzyme concentration', 'effect of substrate concentration', 'competitive and non-competitive inhibitors', 'effect of pH', 'effect of temperature', 'how models of enzyme action have changed', 'enzymes catalyse intracellular and extracellular reactions'],
+  '3.1.5.1': ['DNA and RNA are information-carrying molecules', 'ribosomes formed from RNA and protein', 'nucleotide: pentose, base, phosphate', 'DNA nucleotide components (A, C, G, T)', 'RNA nucleotide components (A, C, G, U)', 'phosphodiester bond', 'DNA double helix; complementary base pairs; hydrogen bonds', 'RNA is a relatively short polynucleotide', 'simplicity of DNA led scientists to doubt it carried the code'],
+  '3.1.5.2': ['semi-conservative replication ensures genetic continuity', 'unwinding of the double helix', 'hydrogen bonds between bases break', 'DNA helicase', 'new nucleotides attracted; base pairing', 'DNA polymerase joins nucleotides', 'evaluate work validating the Watson-Crick model'],
+  '3.1.6': ['structure of ATP', 'hydrolysis to ADP and Pi by ATP hydrolase', 'hydrolysis coupled to energy-requiring reactions', 'Pi can phosphorylate other compounds', 'ATP resynthesised by condensation (ATP synthase)'],
+  '3.1.7': ['water is a major component of cells', 'metabolite', 'solvent', 'high heat capacity', 'high latent heat of vaporisation', 'strong cohesion; surface tension'],
+  '3.1.8': ['ions occur in solution at varied concentrations', 'each ion has a specific role', 'hydrogen ions and pH', 'iron ions in haemoglobin', 'sodium ions in co-transport', 'phosphate ions in DNA and ATP'],
+  '3.2.1.1': ['cell-surface membrane', 'nucleus: chromosomes, nucleoli', 'mitochondria', 'chloroplasts', 'Golgi apparatus and vesicles', 'lysosomes', 'ribosomes', 'rough and smooth endoplasmic reticulum', 'cell wall', 'cell vacuole', 'specialised cells, tissues, organs, systems; adaptations'],
+  '3.2.1.2': ['prokaryotes much smaller than eukaryotes', 'cytoplasm lacks membrane-bound organelles', 'smaller ribosomes', 'circular DNA free in cytoplasm; no nucleus', 'murein cell wall', 'plasmids, capsule, flagella', 'viruses: acellular, non-living; genetic material, capsid, attachment protein'],
+  '3.2.1.3': ['optical, TEM and SEM: principles and limitations', 'measuring the size of an object under the optical microscope', 'magnification versus resolution', 'magnification = image size / real size', 'cell fractionation and ultracentrifugation', 'artefacts versus organelles'],
+  '3.2.2': ['not all cells retain the ability to divide; cell cycle', 'DNA replication in interphase; mitosis gives identical daughter cells', 'chromosome behaviour in each stage; spindle fibres', 'cytokinesis', 'recognise stages; explain appearance', 'mitosis is controlled; tumours, cancers, treatments', 'binary fission in prokaryotes', 'viruses do not divide; host replicates them', 'RP2: stained squash, microscope, mitotic index', 'measure apparent size; calculate actual size'],
+  '3.2.3': ['membrane structure is the same in all membranes', 'fluid-mosaic model', 'cholesterol restricts movement', 'simple diffusion', 'facilitated diffusion', 'osmosis in terms of water potential', 'active transport', 'co-transport in the ileum', 'adaptations for rapid transport', 'explain adaptations of specialised cells', 'surface area, proteins and gradients affect rate'],
+  '3.2.4': ['surface molecules identify cells', 'antigen definition; antigen variability', 'phagocytosis; lysozymes', 'cellular response of T lymphocytes', 'antigen-presenting cells', 'helper T cells stimulate TC cells, B cells, phagocytes', 'humoral response: B cells, clonal selection', 'definition of antibody', 'antibody structure', 'antigen-antibody complex: agglutination, phagocytosis', 'plasma and memory cells; primary and secondary responses', 'vaccines; herd immunity', 'active and passive immunity', 'HIV structure and replication', 'HIV and AIDS; antibiotics ineffective against viruses', 'monoclonal antibodies: targeting medication', 'monoclonal antibodies: diagnosis', 'ethical issues of vaccines and monoclonal antibodies', 'ELISA test', 'discuss ethical issues', 'evaluate methodology, evidence and data'],
+  '3.3.1': ['size and surface area to volume ratio', 'body shape and systems as adaptations', 'surface area to volume ratio and metabolic rate'],
+  '3.3.2': ['single-celled organisms: body surface', 'insects: tracheae, tracheoles, spiracles', 'fish gills and counter-current principle', 'dicotyledonous leaves: mesophyll and stomata', 'compromises: insects and xerophytes', 'gross structure of the human gas exchange system', 'alveolar epithelium', 'ventilation: diaphragm and intercostal muscles', 'effects of lung disease', 'effects of pollution and smoking', 'risk factors and incidence of lung disease', 'data leading to statutory restrictions', 'correlations and causal relationships'],
+  '3.3.3': ['digestion hydrolyses large molecules', 'carbohydrates: amylases, membrane-bound disaccharidases', 'lipids: lipase and bile salts', 'proteins: endopeptidases, exopeptidases, dipeptidases', 'absorption by co-transport: amino acids', 'absorption by co-transport: monosaccharides', 'micelles and lipid absorption'],
+  '3.3.4.1': ['haemoglobin: group of molecules; quaternary structure', 'oxygen loading, transport, unloading; dissociation curve; cooperative binding', 'carbon dioxide and the Bohr effect', 'different haemoglobins in different animals', 'general pattern of circulation; named vessels', 'gross structure of the heart', 'cardiac cycle: pressure, volume, valves', 'arteries, arterioles, veins', 'capillaries and capillary beds', 'tissue fluid formation and return', 'analyse cardiac cycle data', 'risk factors and cardiovascular disease data', 'evaluate conflicting evidence', 'correlations and causal relationships'],
+  '3.3.4.2': ['xylem transports water', 'cohesion-tension theory', 'phloem transports organic substances', 'mass flow hypothesis', 'tracers and ringing experiments', 'interpret evidence; evaluate mass flow', 'correlations and causal relationships'],
+  '3.4.1': ['prokaryotic DNA: short, circular, no proteins', 'eukaryotic DNA: long, linear, histones; chromosome', 'mitochondrial and chloroplast DNA', 'gene codes for polypeptide or functional RNA', 'gene occupies a locus', 'triplet code: universal, non-overlapping, degenerate', 'non-coding DNA: exons and introns'],
+  '3.4.2': ['genome and proteome', 'structure of mRNA and tRNA', 'transcription and RNA polymerase', 'prokaryotes: mRNA directly', 'eukaryotes: pre-mRNA spliced to mRNA', 'translation: ribosomes, tRNA, ATP', 'relate base sequence to amino acid sequence', 'interpret experimental data on nucleic acids'],
+  '3.4.3': ['gene mutations: deletion and substitution during replication', 'degenerate code: not all substitutions change the amino acid', 'mutagenic agents increase mutation rate', 'chromosome non-disjunction in meiosis', 'meiosis: two divisions, four haploid cells', 'independent segregation of homologous chromosomes', 'crossing over', 'complete diagrams of chromosome content', 'explain different outcomes of mitosis and meiosis', 'recognise meiosis in an unfamiliar life cycle', 'random fertilisation increases variation'],
+  '3.4.4': ['genetic diversity = number of different alleles', 'diversity enables natural selection', 'principles of natural selection', 'directional selection: antibiotic resistance', 'stabilising selection: human birth weight', 'anatomical, physiological, behavioural adaptation', 'use unfamiliar information; interpret selection data; adaptation and diversity'],
+  '3.4.5': ['same species: fertile offspring', 'courtship and species recognition', 'phylogenetic classification', 'taxon hierarchy', 'binomial names', 'immunology and genome sequencing clarify relationships'],
+  '3.4.6': ['biodiversity from local habitat to the Earth', 'species richness', 'index of diversity', 'calculate index of diversity d = N(N-1)/Σn(n-1)', 'farming reduces biodiversity; conservation balance'],
+  '3.4.7': ['compare observable characteristics', 'compare base sequences of DNA and mRNA', 'compare amino acid sequences; interpret data', 'collect data from random samples', 'mean and standard deviation', 'interpret means and standard deviations'],
+  '3.5': ['life depends on energy transfers', 'photosynthesis: light absorbed, ATP produced', 'respiration: substrates, ATP produced', 'ATP synthase and proton gradient', 'photosynthesis and respiration are common to organisms', 'biological molecules consumed by other organisms', 'energy transfers are not 100% efficient'],
+  '3.5.1': ['chlorophyll absorbs light; photoionisation', 'energy conserved in ATP and reduced NADP', 'electron transfer chain, chemiosmosis, ATP synthase', 'photolysis of water', 'light-independent reaction overview', 'CO2 + RuBP -> 2 GP (rubisco)', 'GP reduced to triose phosphate', 'triose phosphate regenerates RuBP', 'triose phosphate to useful organic substances', 'environmental factors limiting photosynthesis', 'evaluate agricultural practices'],
+  '3.5.2': ['respiration produces ATP; glycolysis in cytoplasm', 'stages of glycolysis', 'net gain of ATP and reduced NAD', 'anaerobic respiration: ethanol or lactate; NAD regenerated', 'pyruvate enters the matrix by active transport', 'link reaction: acetate, acetylcoenzyme A', 'acetylcoenzyme A enters the Krebs cycle', 'Krebs cycle: reduced coenzymes, ATP, CO2', 'oxidative phosphorylation, electron transfer chain, ATP synthase', 'other respiratory substrates: lipids, amino acids'],
+  '3.5.3': ['plants synthesise organic compounds from CO2', 'sugars used in respiration; rest forms biomass', 'measuring biomass; calorimetry', 'gross primary production', 'net primary production = GPP - R', 'net production of consumers N = I - (F + R)', 'primary and secondary productivity (rates)', 'farming: simplifying food webs', 'farming: reducing respiratory losses'],
+  '3.5.4': ['nutrient cycles: nitrogen and phosphorus', 'microorganisms recycle elements', 'saprobionts and decomposition', 'mycorrhizae', 'bacteria in the nitrogen cycle', 'natural and artificial fertilisers', 'leaching', 'eutrophication'],
+  '3.6': ['stimulus, receptor, coordinator, effector', 'receptors are specific to one stimulus', 'nerve impulses: rapid, short-lived, localised', 'hormones: slow, long-lasting, widespread', 'plant growth substances'],
+  '3.6.1.1': ['responding increases survival', 'growth factors move to tissues in plants', 'IAA, cell elongation; gravitropism and phototropism', 'taxes and kineses', 'protective three-neurone reflex'],
+  '3.6.1.2': ['receptors respond to specific stimuli', 'generator potential', 'Pacinian corpuscle structure; stretch-mediated sodium channels', 'human retina: rods and cones'],
+  '3.6.1.3': ['myogenic stimulation; SAN, AVN, Purkyne tissue', 'chemoreceptors and pressure receptors', 'autonomic nervous system and effectors'],
+  '3.6.2.1': ['structure of a myelinated motor neurone', 'resting potential', 'depolarisation and the action potential', 'all-or-nothing principle', 'passage of an action potential along axons', 'refractory period', 'speed: myelination, axon diameter, temperature'],
+  '3.6.2.2': ['structure of a synapse and a neuromuscular junction', 'sequence at a cholinergic synapse', 'unidirectionality', 'temporal and spatial summation', 'inhibition by inhibitory synapses', 'comparison with the neuromuscular junction', 'predict and explain effects of drugs'],
+  '3.6.3': ['antagonistic pairs against an incompressible skeleton', 'gross and microscopic structure of skeletal muscle', 'ultrastructure of a myofibril', 'roles of actin, myosin, calcium ions and ATP', 'calcium ions and tropomyosin in actinomyosin bridges', 'roles of ATP and phosphocreatine', 'slow and fast skeletal muscle fibres'],
+  '3.6.4.1': ['homeostasis keeps the internal environment within limits', 'stable core temperature and blood pH: enzymes', 'stable blood glucose: substrate and water potential', 'negative feedback restores the original level', 'separate mechanisms for departures in each direction', 'interpret negative and positive feedback'],
+  '3.6.4.2': ['factors that influence blood glucose', 'liver: glycogenesis, glycogenolysis, gluconeogenesis', 'action of insulin', 'action of glucagon', 'role of adrenaline', 'second messenger model: adenylate cyclase, cAMP, protein kinase', 'causes of type I and II diabetes; control', 'evaluate health advisers and the food industry'],
+  '3.6.4.3': ['osmoregulation: water potential of the blood', 'hypothalamus, posterior pituitary, ADH', 'structure of the nephron', 'formation of glomerular filtrate', 'PCT: reabsorption of glucose and water', 'loop of Henle: sodium ion gradient in the medulla', 'DCT and collecting ducts: water reabsorption'],
+  '3.7': ['evolution underpins biology; common ancestry', 'evidence for common ancestry', 'same genes, different alleles', 'populations; variation from genes and environment', 'genetic drift and natural selection; evolution', 'isolation, no gene flow, reproductive isolation', 'communities; competition; biotic and abiotic factors'],
+  '3.7.1': ['genotype', 'phenotype', 'many alleles of a gene', 'dominant, recessive, codominant alleles', 'homozygous and heterozygous', 'genetic diagrams: monohybrid crosses', 'genetic diagrams: dihybrid crosses', 'sex linkage, autosomal linkage, multiple alleles, epistasis', 'chi-squared test of phenotypic ratios'],
+  '3.7.2': ['species exist as populations', 'gene pool and allele frequency', 'Hardy-Weinberg principle and its conditions', 'p² + 2pq + q² = 1'],
+  '3.7.3': ['variation from genetic and environmental factors; mutation', 'meiosis and random fertilisation', 'predation, disease, competition: natural selection', 'selective advantage and reproductive success', 'stabilising, directional, disruptive selection', 'evolution is change in allele frequency', 'genetic drift in small populations', 'why drift matters only in small populations', 'reproductive separation; new species', 'allopatric and sympatric speciation', 'explain how selection and isolation form new species; diversity'],
+  '3.7.4': ['community and ecosystem', 'niche', 'carrying capacity', 'abiotic factors; competition; predation', 'randomly placed quadrats', 'belt transects', 'mark-release-recapture and its assumptions', 'ecosystems are dynamic; primary succession', 'species change the environment at each stage', 'less hostile environment; biodiversity changes', 'calculate population size by mark-release-recapture', 'conservation involves managing succession', 'conflict between human needs and conservation; sustainability', 'evaluate evidence on conservation; conflicting evidence'],
+  '3.8': ['cells regulate transcription and translation', 'same genetic information, part translated', 'external and internal factors; epigenetics', 'humans alter the epigenome, genomes, proteomes'],
+  '3.8.1': ['gene mutations: addition, deletion, substitution, inversion, duplication, translocation', 'spontaneous; mutagenic agents', 'different amino acid sequence', 'one triplet changed; degenerate code', 'frame shift'],
+  '3.8.2.1': ['totipotent cells', 'cell specialisation: only part of the DNA translated', 'totipotent cells occur only briefly in embryos', 'pluripotent, multipotent, unipotent cells', 'unipotent: cardiomyocytes', 'pluripotent stem cells in treating disorders', 'induced pluripotent stem cells', 'evaluate the use of stem cells'],
+  '3.8.2.2': ['transcription factors move to the nucleus', 'oestrogen initiates transcription', 'epigenetics: heritable change without base change', 'environmental changes inhibit transcription', 'increased methylation of DNA', 'decreased acetylation of histones', 'epigenetics, disease and cancer', 'RNA interference', 'interpret data on gene expression', 'evaluate genetic and environmental influences on phenotype'],
+  '3.8.2.3': ['benign and malignant tumours', 'tumour suppressor genes and oncogenes', 'abnormal methylation', 'increased oestrogen and breast cancer', 'evaluate genetic and environmental correlations with cancer', 'interpret oncogene and suppressor information for prevention, treatment, cure'],
+  '3.8.3': ['genome sequencing projects', 'simpler organisms: proteome, antigens for vaccines', 'complex organisms: non-coding DNA and regulatory genes', 'sequencing methods updated and automated'],
+  '3.8.4.1': ['recombinant DNA; universal code; transgenic organisms', 'mRNA to cDNA with reverse transcriptase', 'restriction enzymes cut out fragments', 'gene machine', 'PCR as an in vitro method', 'culture of transformed host cells: in vivo', 'promoter and terminator regions', 'restriction endonucleases, ligases, vectors, transformation', 'marker genes', 'interpret recombinant DNA information', 'ethical, financial and social issues; ownership', 'humanitarian benefits versus opposition', 'recombinant DNA and gene therapy'],
+  '3.8.4.2': ['labelled DNA probes and hybridisation', 'screening for conditions, drug responses, health risks', 'genetic counselling and personalised medicine', 'evaluate screening information'],
+  '3.8.4.3': ['VNTRs; very low probability of a match', 'genetic fingerprinting: PCR, relationships, variability', 'uses: forensic, medical, breeding', 'explain principles; interpret gel electrophoresis; explain uses'],
+};
+const SKILLS_REG = {
+  MS: ['0.1', '0.2', '0.3', '0.4', '0.5', '1.1', '1.2', '1.3', '1.4', '1.5', '1.6', '1.7', '1.8', '1.9', '1.10', '1.11', '2.1', '2.2', '2.3', '2.4', '2.5', '3.1', '3.2', '3.3', '3.4', '3.5', '3.6', '4.1'].map(v => 'MS ' + v),
+  AT: 'abcdefghijkl'.split('').map(v => 'AT ' + v),
+  PS: ['1.1', '1.2', '2.1', '2.2', '2.3', '2.4', '3.1', '3.2', '3.3', '4.1'].map(v => 'PS ' + v),
+  AO: ['AO1', 'AO2', 'AO3'], CPAC: [1, 2, 3, 4, 5].map(v => 'CPAC ' + v),
+  RP: Array.from({ length: 12 }, (_, i) => 'RP' + (i + 1)),
+};
+const RP_FACET_NAMES = ['principle', 'variables', 'controls', 'apparatus', 'measurement', 'calculation', 'risk', 'limitation', 'interpretation'];
+let COVERAGE_RESULT = null;
+function checkCoverage() {
+  const claimed = Object.create(null), unknown = [], bad = [];
+  for (const sc of SCENES) for (const c of (sc.covers || [])) { (claimed[c] = claimed[c] || []).push(sc.id); }
+  const stmts = []; for (const sec in SPEC) SPEC[sec].forEach((t, i) => stmts.push(sec + '.s' + (i + 1)));
+  const known = new Set(stmts); const skillIds = new Set([].concat(SKILLS_REG.MS, SKILLS_REG.AT, SKILLS_REG.PS, SKILLS_REG.AO, SKILLS_REG.CPAC, SKILLS_REG.RP, ['RP map']));
+  for (const c in claimed) if (!known.has(c) && !skillIds.has(c)) unknown.push(c);
+  const uncovered = stmts.filter(s => !claimed[s]);
+  const missingSkills = [].concat(SKILLS_REG.MS, SKILLS_REG.AT, SKILLS_REG.PS, SKILLS_REG.AO, SKILLS_REG.CPAC, SKILLS_REG.RP).filter(s => !claimed[s]);
+  const cardBad = [], dnaBad = [], rpBad = [];
+  for (const sc of SCENES) {
+    const c = sc.card || {};
+    for (const f of ['text', 'terms', 'skill', 'q', 'a']) if (!c[f] || (Array.isArray(c[f]) && !c[f].length)) cardBad.push(sc.id + ':' + f);
+    if (sc.dna !== 'bio' && sc.dna !== 'mark') dnaBad.push(sc.id);
+    if (sc.rp) for (const f of RP_FACET_NAMES) if (!(sc.rpFacets && sc.rpFacets[f])) rpBad.push(sc.id + ':' + f);
+  }
+  // tour order: scenes must appear in specification order inside each topic (registration order = tour order)
+  const order = [], sk = x => x.split('.').map(p => /^\d+$/.test(p) ? +p : p.charCodeAt(0));
+  const ids = new Set(), dup = []; for (const sc of SCENES) { if (ids.has(sc.id)) dup.push(sc.id); ids.add(sc.id); }
+  const topicOrder = SCENES.map(s => s.topic); const ranks = TOPICS.map(t => t.id); let tourBad = [];
+  for (let i = 1; i < SCENES.length; i++) { const a = ranks.indexOf(SCENES[i - 1].topic), b = ranks.indexOf(SCENES[i].topic); if (b < a) tourBad.push(SCENES[i].id); }
+  const nStm = stmts.length, nCov = nStm - uncovered.length;
+  const ok = !uncovered.length && !unknown.length && !missingSkills.length && !cardBad.length && !dnaBad.length && !rpBad.length && !dup.length && !tourBad.length;
+  const res = {
+    ok, statements: nStm, covered: nCov, uncovered, unknown, missingSkills, cardBad, dnaBad, rpBad, duplicates: dup, tourOutOfOrder: tourBad, scenes: SCENES.length,
+    stamp: [(ok ? 'PASS' : 'FAIL') + ': ' + (nStm - nCov + unknown.length + missingSkills.length) + ' omissions', nCov + ' of ' + nStm + ' spec statements drawn', '12 required practicals · each with 9 facets', 'MS 0.1 to 4.1 · AT a to l · PS 1.1 to 4.1', SCENES.length + ' scenes · tour in specification order'],
+  };
+  COVERAGE_RESULT = res; return res;
+}
+checkCoverage();
+window.AQA_COVERAGE = { check: checkCoverage, spec: SPEC, skills: SKILLS_REG, get result() { return COVERAGE_RESULT; } };
+
 /* ===================== 99 MAIN ===================== */
 (function boot() {
   initPlates(); layoutSheet(); resize();
   const fv = fitView(); cam.x = fv.x; cam.y = fv.y; cam.z = fv.z;
   Card.setEnabled(true);
   press.begin();
-  window.AQA = { setCard(b) { cardOn = b; }, cam, press, tour, TILES, JOBS, STAGE, SCENES, LAYERS, TOPICS, SHEET, checkSlots, get k() { return currentK; }, flyTo, viewFor, sceneRect, DLC, MISSING_GLYPHS,
+  window.AQA = { setCard(b) { cardOn = b; }, cam, press, tour, TILES, JOBS, STAGE, SCENES, LAYERS, TOPICS, SHEET, checkSlots, get k() { return currentK; }, get renderMs() { return renderMs; }, BAKE, get vp() { return [VW, VH, DPR]; }, flyTo, viewFor, sceneRect, DLC, MISSING_GLYPHS,
     recordAll(v = 0) { const t0 = performance.now(), rep = []; let tot = 0; for (const L of LAYERS) { const a = performance.now(); const dl = recordLayer(L, v, false); rep.push([L.id, dl.count, dl.bytes(), Math.round(performance.now() - a)]); tot += dl.bytes(); } return { ms: Math.round(performance.now() - t0), bytes: tot, missing: [...MISSING_GLYPHS], rep }; } };
   requestAnimationFrame(frame);
 })();
