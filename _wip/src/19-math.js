@@ -11,6 +11,7 @@ const MM = {
   subsup: (a, b, c) => '<msubsup>' + a + b + c + '</msubsup>',
   frac: (a, b) => '<mfrac><mrow>' + a + '</mrow><mrow>' + b + '</mrow></mfrac>',
   sqrt: a => '<msqrt>' + a + '</msqrt>',
+  over: (a, b) => '<mover>' + a + b + '</mover>',
   row: (...a) => '<mrow>' + a.join('') + '</mrow>',
   sum: () => '<mo largeop="true">∑</mo>',
   under: (a, b) => '<munder>' + a + b + '</munder>',
