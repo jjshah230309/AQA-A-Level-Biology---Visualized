@@ -44,4 +44,4 @@ Recorder.prototype.chain = function (x, y, n, dx, dy, fn, o = {}) {
   return this;
 };
 /* simple card-style callout number bubble */
-Recorder.prototype.bubble = function (x, y, r, str, o = {}) { this.circle(x, y, r, { ink: 'B', w: 1.0, fi: o.fi || 'P', ft: o.ft || 0.35 }); this.text(str, x, y + r * 0.34, r * 0.95, { ink: 'B', al: 'c' }); return this; };
+Recorder.prototype.bubble = function (x, y, r, str, o = {}) { this.circle(x, y, r, { ink: 'B', w: 1.0, fi: o.fi || 'P', ft: o.ft || 0.22 }); this.text(str, x, y + r * 0.4, r * 1.15, { ink: 'B', al: 'c' }); return this; };

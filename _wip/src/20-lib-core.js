@@ -65,3 +65,13 @@ function rectCorner(cx, cy, a, s) {
   for (let i = 0; i < 6; i += 2) out.push(cx + p[i] * c - p[i + 1] * sn, cy + p[i] * sn + p[i + 1] * c);
   return out;
 }
+/* photon: yellow wavy arrow from (x,y) heading along angle a (radians), length len */
+Recorder.prototype.photon = function (x, y, a, len = 14, i = 0) {
+  const p = [], n = Math.max(6, Math.round(len / 2));
+  for (let k = 0; k <= n; k++) { const u = k / n, w = Math.sin(u * TAU * 1.5) * 1.8; p.push(x + Math.cos(a) * len * u - Math.sin(a) * w, y + Math.sin(a) * len * u + Math.cos(a) * w); }
+  this.stroke(p, { ink: 'Y', w: 2.4, smooth: true, taper: 'start', wob: 0.15 });
+  this.stroke(p, { ink: 'B', w: 0.5, smooth: true, taper: 'start', wob: 0.15, t: 0.8 });
+  const ex = x + Math.cos(a) * len, ey = y + Math.sin(a) * len, hs = 3.4;
+  this.fill([ex + Math.cos(a) * hs, ey + Math.sin(a) * hs, ex - Math.sin(a) * hs * 0.6, ey + Math.cos(a) * hs * 0.6, ex + Math.sin(a) * hs * 0.6, ey - Math.cos(a) * hs * 0.6], { ink: 'Y', wob: 0.05 });
+  return this;
+};
