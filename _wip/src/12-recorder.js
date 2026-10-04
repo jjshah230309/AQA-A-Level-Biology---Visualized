@@ -93,7 +93,7 @@ class Recorder {
     const A = fillLattice(rng, K1, closed), B = fillLattice(rng, K2, closed), W = fillLattice(rng, K3, closed);
     const invL = 1 / L;
     const taper = closed ? 'none' : (o.taper || 'both');
-    const tl = Math.min(o.tl === undefined ? 7 : o.tl, L * 0.45);
+    const tl = Math.min(o.tl === undefined ? 7 : o.tl, L * 0.45), tm = o.tmin === undefined ? 0.25 : o.tmin;
     const L1 = new Array(n * 2), R1 = new Array(n * 2);
     for (let i = 0; i < n; i++) {
       const i0 = closed ? (i - 1 + n) % n : Math.max(0, i - 1), i1 = closed ? (i + 1) % n : Math.min(n - 1, i + 1);
@@ -105,8 +105,8 @@ class Recorder {
       let wi = w * (1 + 0.17 * lat(W, u * (closed ? K3 : K3 - 1)));
       if (taper !== 'none') {
         const s = S[i];
-        if ((taper === 'both' || taper === 'start') && s < tl) wi *= 0.25 + 0.75 * smooth(s / tl);
-        if ((taper === 'both' || taper === 'end') && L - s < tl) wi *= 0.25 + 0.75 * smooth((L - s) / tl);
+        if ((taper === 'both' || taper === 'start') && s < tl) wi *= tm + (1 - tm) * smooth(s / tl);
+        if ((taper === 'both' || taper === 'end') && L - s < tl) wi *= tm + (1 - tm) * smooth((L - s) / tl);
       }
       const px = q[i * 2] + nx * d, py = q[i * 2 + 1] + ny * d, h = wi * 0.5;
       L1[i * 2] = px + nx * h; L1[i * 2 + 1] = py + ny * h;
@@ -297,7 +297,7 @@ class Recorder {
         for (let i = 0; i < s.pts.length; i += 2) { pts[i] = cx + s.pts[i] * ks; pts[i + 1] = (s.pts[i + 1] - 7) * ks + oy; }
         if (s.pts.length === 4 && Math.hypot(s.pts[2] - s.pts[0], s.pts[3] - s.pts[1]) < 0.8) {
           this.dot((pts[0] + pts[2]) / 2, (pts[1] + pts[3]) / 2, w * 0.62, { ink });
-        } else this.stroke(pts, { ink, w: w * (t.lvl ? 0.85 : 1), wob: 0.2, smooth: s.mode > 0, closed: s.mode === 2, tl: size * 0.22, taper: 'both' });
+        } else this.stroke(pts, { ink, w: w * (t.lvl ? 0.85 : 1), wob: 0.2, smooth: s.mode > 0, closed: s.mode === 2, tl: size * 0.22, tmin: 0.55, taper: 'both' });
       }
       cx += (g.w + 1.1) * ks;
     }
