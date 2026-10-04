@@ -7304,6 +7304,1358 @@ S({
   anim(A, sc) { const p = A.ph(6); A.dot(118, 196 - p * 124, 1.6, 'T', 0.8, 1); for (let i = 0; i < 3; i++) A.dot(330 - 20 + i * 20 + (p * 6) % 6, 140 - ((p + i / 3) % 1) * 40, 1.1, 'P', 0.7, 2 + i); },
 });
 
+/* ===================== TOPIC 3.6 Organisms respond to changes in their internal and external environments ===================== */
+/* neurone: soma at (x,y) with dendrites; axon to (x+len, y); myelin sheaths in segments, terminal at the end.  o: myel (bool), nodes, term */
+function neurone(R, x, y, len, o = {}) {
+  const r = o.r || 9;
+  R.circle(x, y, r, { ink: 'B', w: 1.2, fi: 'P', ft: 0.2, wob: 0.3 }); R.circle(x - 1, y, r * 0.45, { ink: 'B', w: 0.8, fi: 'B', ft: 0.35 });
+  for (let i = 0; i < 4; i++) { const a = PI - 1.0 + i * 0.66; R.stroke([x + Math.cos(a) * r, y + Math.sin(a) * r, x + Math.cos(a) * (r + 7), y + Math.sin(a) * (r + 7), x + Math.cos(a) * (r + 15), y + Math.sin(a) * (r + 12) - 2], { ink: 'B', w: 1, smooth: true, taper: 'end' }); }
+  const ax0 = x + r, ax1 = x + len;
+  R.line(ax0, y, ax1, y, { ink: 'B', w: o.aw || 1.6, taper: 'none' });
+  if (o.myel) { const n = o.n || 4, seg = (ax1 - ax0 - 8) / n; for (let k = 0; k < n; k++) { const sx = ax0 + 4 + k * seg + 1.5; R.knock(R.rrectPts(sx, y - 5, seg - 3, 10, 4)); R.rrect(sx, y - 5, seg - 3, 10, 4, { ink: 'B', w: 1, fi: 'Y', ft: 0.5, wob: 0.15 }); } }
+  if (o.term !== false) { for (let i = -1; i <= 1; i++) { R.stroke([ax1, y, ax1 + 8, y + i * 6, ax1 + 14, y + i * 7], { ink: 'B', w: 1, smooth: true, taper: 'end' }); R.circle(ax1 + 14, y + i * 7, 2.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); } }
+}
+
+/* ---------- 3.6 overview: stimulus, receptor, coordinator, effector; nerves vs hormones ---------- */
+S({
+  id: '3.6', num: '3.6', sub: 'Stimulus, receptor, coordinator and effector; nervous and hormonal coordination', title: 'Organisms respond to changes in their internal and external environments', topic: '3.6', slot: [0, 0], span: [2, 1], dna: 'bio', ao: 1,
+  covers: ['3.6.s1', '3.6.s2', '3.6.s3', '3.6.s4', '3.6.s5'],
+  card: {
+    text: 'A <b>stimulus</b> is a change in the internal or external environment. A <b>receptor</b> detects a stimulus (receptors are specific to one type of stimulus). A <b>coordinator</b> formulates a suitable response, and an <b>effector</b> produces the response. <b>Nerve cells</b> pass electrical impulses along their length; a nerve impulse is specific to a target cell only because it releases a chemical messenger directly onto it, giving a response that is usually rapid, short-lived and localised. <b>Mammalian hormones</b> stimulate target cells via the blood; they are specific to the tertiary structure of receptors on their target cells and produce responses that are usually slow, long-lasting and widespread. <b>Plants</b> control their responses using hormone-like growth substances.',
+    terms: ['stimulus', 'receptor', 'coordinator', 'effector', 'nerve impulse', 'hormone', 'target cell', 'growth substance', 'response'],
+    skill: 'Compare mechanisms', eq: null,
+    q: 'Give two differences between a response coordinated by a nerve and one coordinated by a hormone.', a: 'Nervous: rapid, short-lived, localised. Hormonal (via blood): slower, long-lasting, widespread.'
+  },
+  draw(R, sc) {
+    R.text('from stimulus to response', 200, 14, 5, { al: 'c' });
+    const bx = [14, 108, 202, 296], t = ['stimulus', 'receptor', 'coordinator', 'effector'], sub2 = ['a change in the environment', 'detects the stimulus', 'formulates a response', 'produces the response'];
+    t.forEach((s2, i) => { R.rrect(bx[i], 30, 80, 38, 8, { ink: 'B', w: 1.2, fi: ['Y', 'P', 'T', 'TY'][i], ft: 0.22, wob: 0.2 }); R.text(s2, bx[i] + 40, 44, 4.8, { al: 'c' }); wrapText(sub2[i], 70, 3.5).forEach((ln, k) => R.text(ln, bx[i] + 40, 54 + k * 4.8, 3.5, { al: 'c' })); if (i < 3) R.arrow([bx[i] + 82, 49, bx[i + 1] - 2, 49], { ink: 'B', w: 1.3, hs: 3.4 }); });
+    R.arrow([376, 49, 396, 49], { ink: 'B', w: 1.3, hs: 3.4 }); R.text('response', 418, 52, 4.4, { al: 'c' });
+    // examples row
+    R.text('example: hot object touched', 14, 86, 4.2, { al: 'l' });
+    [['heat', 14], ['temperature', 108], ['spinal cord', 202], ['muscle', 296]].forEach(([t2, x]) => R.text(t2, x + 40, 98, 3.9, { al: 'c', ink: 'P' }));
+    R.text('specific to one type of stimulus', 148, 110, 3.5, { al: 'c' });
+    R.line(8, 120, 472, 120, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // nervous vs hormonal comparison
+    R.text('nervous coordination', 120, 132, 4.6, { al: 'c', ink: 'T' }); R.text('hormonal coordination', 354, 132, 4.6, { al: 'c', ink: 'P' });
+    neurone(R, 20, 160, 130, { myel: true, n: 3, r: 7 }); R.drop(0, 0, 0.01, { label: '' });
+    R.text('nerve cells pass electrical impulses', 120, 186, 3.9, { al: 'c' }); R.text('along their length', 120, 192, 3.9, { al: 'c' });
+    R.text('a chemical messenger released', 120, 204, 3.9, { al: 'c' }); R.text('directly onto the target cell', 120, 210, 3.9, { al: 'c' });
+    R.text('rapid, short-lived, localised', 120, 224, 4.2, { al: 'c', ink: 'T' });
+    R.line(238, 126, 238, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // hormone: gland -> blood vessel -> target cell receptors
+    R.rrect(260, 148, 50, 28, 8, { ink: 'B', w: 1.1, fi: 'P', ft: 0.2, wob: 0.2 }); R.text('gland', 285, 165, 3.9, { al: 'c' });
+    R.stroke([312, 162, 340, 158, 380, 166, 430, 160], { ink: 'P', w: 8, t: 0.4, smooth: true, taper: 'none', solid: false }); R.stroke([312, 162, 340, 158, 380, 166, 430, 160], { ink: 'B', w: 0.9, smooth: true, taper: 'none' });
+    for (let i = 0; i < 5; i++) R.circle(322 + i * 24, 162 + (i % 2) * 3, 2.2, { ink: 'B', w: 0.7, fi: 'Y', ft: 0.9 });
+    R.text('hormones carried in the blood', 360, 148, 3.8, { al: 'c' });
+    R.circle(440, 188, 14, { ink: 'B', w: 1.1, fi: 'T', ft: 0.2 }); R.recept(440 - 14, 188, PI, 'tri', { w: 6, h: 4, n: 1.8, d: 2.2, len: 1 }); R.text('target cell', 440, 212, 3.7, { al: 'c' });
+    R.text('specific to the tertiary structure of', 354, 190, 3.6, { al: 'c' }); R.text('receptors on target cells', 354, 196, 3.6, { al: 'c' });
+    R.text('slow, long-lasting, widespread', 354, 224, 4.2, { al: 'c', ink: 'P' });
+    // plants
+    R.line(480, 22, 480, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('plants', 560, 30, 4.8, { al: 'c' });
+    plantDraw(R, 560, 160, 90, { sw: 5 });
+    ['hormone-like growth', 'substances control', 'plant responses'].forEach((t2, i) => R.text(t2, 560, 192 + i * 7, 3.9, { al: 'c' }));
+  },
+  anim(A, sc) { const p = A.ph(4); for (let i = 0; i < 4; i++) A.dot(14 + 80 + i * 94 + ((p % 1) * 10), 49, 1.4, 'P', 0.8, i); A.dot(20 + 7 + (p * 120), 160, 1.6, 'Y', 0.9, 5); A.dot(312 + p * 118, 162, 1.8, 'Y', 0.9, 6); },
+});
+
+/* ---------- 3.6.1.1a Plant growth factors: IAA, tropisms ---------- */
+S({
+  id: '3.6.1.1a', num: '3.6.1.1', sub: 'Plant responses: IAA, cell elongation, phototropism and gravitropism', title: 'Survival and response', topic: '3.6', slot: [2, 0], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.1.1.s1', '3.6.1.1.s2', '3.6.1.1.s3'],
+  card: {
+    text: 'Organisms increase their chance of survival by responding to changes in their environment. In flowering plants, specific growth factors move from growing regions to other tissues, where they regulate growth in response to directional stimuli (<b>tropisms</b>). <b>Indoleacetic acid (IAA)</b> is made in the tips and moves to the shaded side of a shoot (<b>phototropism</b>) or the lower side of a horizontal shoot or root (<b>gravitropism</b>). In <b>shoots</b>, a higher IAA concentration <b>stimulates cell elongation</b>, so the shaded/lower side grows faster and the shoot bends towards light and upwards. In <b>roots</b>, a higher IAA concentration <b>inhibits</b> elongation on the lower side, so the root bends downwards.',
+    terms: ['tropism', 'indoleacetic acid (IAA)', 'cell elongation', 'phototropism', 'gravitropism', 'growth factor', 'shoot', 'root', 'concentration'],
+    skill: 'Explain opposite effects in shoot and root', eq: null,
+    q: 'Explain why a horizontal root grows downwards.', a: 'IAA accumulates on the lower side; in roots this high concentration inhibits cell elongation, so the upper side elongates faster and the root curves down.'
+  },
+  draw(R, sc) {
+    R.text('IAA and directional growth', 332, 14, 5, { al: 'c' });
+    const shoot = (x, y, light) => {
+      R.rect(x - 10, y, 20, 80, { ink: 'B', w: 1.2, fi: 'T', ft: 0.3, wob: 0.3 });
+      for (let k = 0; k < 8; k++) { R.line(x - 10, y + 6 + k * 10, x, y + 6 + k * 10, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); R.line(x, y + 6 + k * 10, x + 10, y + 6 + k * 10, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); }
+      R.ellipse(x, y - 4, 10, 6, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.5 });
+    };
+    // 1 phototropism
+    R.text('shoot: phototropism', 72, 28, 4.6, { al: 'c' });
+    shoot(80, 52, 1); R.arrow([14, 74, 60, 84], { ink: 'Y', w: 2, hs: 4 }); R.arrow([14, 88, 60, 94], { ink: 'Y', w: 2, hs: 4 }); R.text('light', 24, 66, 3.8, { al: 'c' });
+    for (let k = 0; k < 4; k++) R.dot(86, 62 + k * 14, 1.5, { ink: 'P' }); R.text('IAA on the', 112, 96, 3.6, { al: 'l', ink: 'P' }); R.text('shaded side', 112, 102, 3.6, { al: 'l', ink: 'P' });
+    R.text('more IAA → more elongation', 72, 148, 3.8, { al: 'c' }); R.text('shoot bends towards the light', 72, 156, 3.8, { al: 'c', ink: 'P' });
+    R.line(144, 22, 144, 170, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // 2 gravitropism in shoot (horizontal)
+    R.text('shoot: gravitropism', 216, 28, 4.6, { al: 'c' });
+    R.rect(166, 74, 80, 18, { ink: 'B', w: 1.2, fi: 'T', ft: 0.3, wob: 0.3 }); for (let k = 0; k < 7; k++) R.line(172 + k * 11, 74, 172 + k * 11, 92, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); R.ellipse(248, 83, 5, 9, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.5 });
+    for (let k = 0; k < 6; k++) R.dot(176 + k * 12, 88, 1.5, { ink: 'P' }); R.arrow([216, 52, 216, 70], { ink: 'B', w: 1.4, hs: 3.4 }); R.text('gravity', 216, 46, 3.8, { al: 'c' });
+    R.text('IAA collects on lower side', 216, 108, 3.7, { al: 'c', ink: 'P' });
+    R.text('lower side elongates more:', 216, 148, 3.8, { al: 'c' }); R.text('shoot grows upwards', 216, 156, 3.8, { al: 'c', ink: 'P' });
+    R.line(268, 22, 268, 170, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // 3 gravitropism in root
+    R.text('root: gravitropism', 340, 28, 4.6, { al: 'c' });
+    R.rect(290, 74, 80, 14, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.25, wob: 0.3 }); for (let k = 0; k < 7; k++) R.line(296 + k * 11, 74, 296 + k * 11, 88, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); R.ellipse(372, 81, 5, 8, { ink: 'B', w: 1.1, fi: 'P', ft: 0.3 });
+    for (let k = 0; k < 6; k++) R.dot(300 + k * 12, 84, 1.5, { ink: 'P' }); R.arrow([340, 52, 340, 70], { ink: 'B', w: 1.4, hs: 3.4 }); R.text('gravity', 340, 46, 3.8, { al: 'c' });
+    R.text('IAA collects on lower side', 340, 108, 3.7, { al: 'c', ink: 'P' });
+    R.text('high IAA inhibits elongation', 340, 148, 3.8, { al: 'c' }); R.text('root grows downwards', 340, 156, 3.8, { al: 'c', ink: 'P' });
+    R.line(396, 22, 396, 170, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // 4 graph
+    R.text('effect of IAA concentration', 520, 28, 4.6, { al: 'c' });
+    const g = R.graph(430, 38, 190, 96, { xmin: -3, xmax: 3, ymin: -10, ymax: 10, xl: 'IAA concentration (log scale)', yl: 'effect on elongation', xt: [], yt: [], fs: 3.6, xly: 12, ylx: 6 }).axes();
+    g.hline(0, { ink: 'B', w: 0.6 });
+    g.curve(x => 9 * Math.exp(-Math.pow((x - 1.1) / 1.0, 2)) - 1.2 * Math.max(0, x - 1.8) * 3, { ink: 'T', w: 1.6, from: -2.6, to: 2.8 });
+    g.curve(x => 5.5 * Math.exp(-Math.pow((x + 1.6) / 0.6, 2)) - 9 * (1 / (1 + Math.exp(-(x + 0.2) * 3))) + 0.5, { ink: 'P', w: 1.6, from: -2.8, to: 2.8 });
+    R.text('shoot', g.X(1.1), g.Y(9) + 0, 3.8, { al: 'c', ink: 'T' }); R.text('root', g.X(-1.8), g.Y(7), 3.8, { al: 'c', ink: 'P' });
+    R.text('stimulates', g.X(-2.9), g.Y(8.6), 3.4, { al: 'l' }); R.text('inhibits', g.X(-2.9), g.Y(-8.2), 3.4, { al: 'l' });
+    R.text('roots are more sensitive than shoots', 520, 152, 3.8, { al: 'c' });
+    R.line(8, 174, 656, 174, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('IAA is made in growing regions (tips) and moves to other tissues, where it regulates growth in response to light and gravity', 332, 190, 4.2, { al: 'c' });
+    R.text('shoot: high IAA → more elongation          root: high IAA → less elongation', 332, 206, 4.4, { al: 'c', ink: 'P' });
+    R.text('the same hormone has opposite effects on shoots and roots', 332, 222, 4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); for (let k = 0; k < 4; k++) A.dot(86 + 0, 62 + k * 14 + (p * 6) % 6, 1.4, 'P', 0.9, k); for (let k = 0; k < 4; k++) A.dot(176 + k * 18 + (p * 8) % 8, 88, 1.4, 'P', 0.9, 8 + k); },
+});
+
+/* ===================== 3.6.1.1 (cont.) taxes and kineses, reflex arc, RP10 ===================== */
+/* woodlouse (top view) */
+function woodlouse(R, x, y, s, rot, o = {}) {
+  R.push(x, y, rad(rot), s);
+  R.ellipse(0, 0, 9, 4.6, { ink: 'B', w: 1 / s, fi: o.fi || 'B', ft: o.ft || 0.35, wob: 0.15 });
+  for (let k = -2; k <= 2; k++) R.line(k * 3.2, -4.4, k * 3.2, 4.4, { ink: 'B', w: 0.5 / s, taper: 'none', t: 0.7 });
+  R.circle(10, 0, 2.2, { ink: 'B', w: 0.8 / s, fi: o.fi || 'B', ft: 0.5 });
+  for (let k = -2; k <= 2; k++) { R.line(k * 3.2, 4.4, k * 3.2 + 1.5, 7.6, { ink: 'B', w: 0.5 / s, taper: 'none' }); R.line(k * 3.2, -4.4, k * 3.2 + 1.5, -7.6, { ink: 'B', w: 0.5 / s, taper: 'none' }); }
+  R.pop();
+}
+
+/* ---------- 3.6.1.1b Taxes and kineses ---------- */
+S({
+  id: '3.6.1.1b', num: '3.6.1.1', sub: 'Taxes and kineses: simple responses that keep a mobile organism in a favourable environment', title: 'Survival and response', topic: '3.6', slot: [0, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.1.1.s4'],
+  card: {
+    text: '<b>Taxes</b> and <b>kineses</b> are simple responses that can maintain a mobile organism in a favourable environment. In a <b>taxis</b> the organism moves in a <b>directional</b> way towards (positive) or away from (negative) a stimulus, e.g. positive <b>phototaxis</b> of an alga towards light or negative <b>chemotaxis</b> away from a harmful chemical. In a <b>kinesis</b> the movement is <b>non-directional</b>: the rate of movement or of turning changes with the intensity of the stimulus. For example, woodlice move faster and turn more in dry air, so they are carried out of dry areas and tend to stay in humid ones where they lose less water.',
+    terms: ['taxis', 'kinesis', 'phototaxis', 'chemotaxis', 'directional', 'non-directional', 'favourable environment', 'rate of turning'],
+    skill: 'Distinguish taxis from kinesis', eq: null,
+    q: 'What is the difference between a taxis and a kinesis?', a: 'In a taxis the movement is directional (towards or away from the stimulus); in a kinesis the movement is non-directional and its rate or turning changes with stimulus intensity.'
+  },
+  draw(R, sc) {
+    R.text('taxis: directional', 80, 14, 4.8, { al: 'c' }); R.text('kinesis: not directional', 244, 14, 4.8, { al: 'c' });
+    // taxis: light source on left, organisms move toward it
+    R.circle(20, 60, 9, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.7 }); for (let i = 0; i < 8; i++) { const a = i * TAU / 8; R.line(20 + Math.cos(a) * 12, 60 + Math.sin(a) * 12, 20 + Math.cos(a) * 17, 60 + Math.sin(a) * 17, { ink: 'Y', w: 1.2, taper: 'none' }); }
+    [[60, 36], [92, 56], [120, 40], [76, 80], [112, 92], [140, 66]].forEach(([x, y], i) => { R.circle(x, y, 4, { ink: 'B', w: 0.9, fi: 'T', ft: 0.5 }); R.stroke([x + 4, y, x + 10, y + (i % 2 ? -2 : 2)], { ink: 'B', w: 0.7, taper: 'end' }); R.arrow([x - 6, y, x - 18, y + (i % 3 - 1) * 3], { ink: 'P', w: 1, hs: 2.6 }); });
+    R.text('positive phototaxis:', 80, 112, 4, { al: 'c' }); R.text('move towards the light', 80, 119, 4, { al: 'c', ink: 'P' });
+    R.line(164, 22, 164, 126, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // kinesis: woodlice in a choice chamber, humid vs dry
+    R.rect(176, 32, 76, 64, { ink: 'B', w: 1.2, fi: 'Y', ft: 0.18, wob: 0.2 }); R.rect(252, 32, 76, 64, { ink: 'B', w: 1.2, fi: 'T', ft: 0.2, wob: 0.2 });
+    R.text('dry', 214, 44, 4, { al: 'c' }); R.text('humid', 290, 44, 4, { al: 'c' });
+    R.stroke([186, 62, 196, 54, 208, 72, 220, 58, 232, 78, 244, 64], { ink: 'P', w: 1.1, smooth: true, taper: 'end' }); woodlouse(R, 246, 64, 0.8, 20); R.text('fast, frequent turns', 214, 90, 3.6, { al: 'c', ink: 'P' });
+    R.stroke([262, 70, 292, 66, 310, 72], { ink: 'T', w: 1.1, smooth: true, taper: 'end' }); woodlouse(R, 312, 72, 0.8, 5); R.text('slow, few turns', 290, 90, 3.6, { al: 'c', ink: 'T' });
+    R.text('movement changes with the humidity,', 252, 112, 3.9, { al: 'c' }); R.text('not towards or away from it', 252, 119, 3.9, { al: 'c' });
+    R.line(8, 128, 336, 128, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // more examples
+    R.text('both keep a mobile organism in a favourable environment', 172, 140, 4.4, { al: 'c', ink: 'P' });
+    const ex = [['phototaxis', 'light: moves towards / away'], ['chemotaxis', 'chemical: moves towards food'], ['kinesis', 'speed/turning depends on intensity']];
+    ex.forEach(([a, b], i) => { const x = 18 + i * 108; R.rrect(x, 150, 100, 36, 7, { ink: 'B', w: 1, fi: ['Y', 'T', 'P'][i], ft: 0.18, wob: 0.15 }); R.text(a, x + 50, 163, 4.6, { al: 'c' }); wrapText(b, 90, 3.5).forEach((ln, k) => R.text(ln, x + 50, 172 + k * 5, 3.5, { al: 'c' })); });
+    R.text('woodlice in dry air move faster and turn more,', 172, 204, 3.9, { al: 'c' }); R.text('so leave dry areas and settle in humid ones', 172, 211, 3.9, { al: 'c' });
+    R.text('(reducing water loss)', 172, 220, 3.7, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(140 - p * 40, 66 + Math.sin(p * 6) * 2, 3, 'T', 0.8, 1); A.dot(190 + p * 50, 62 + Math.sin(p * 18) * 6, 2.6, 'B', 0.7, 2); A.dot(300 + Math.sin(p * 6) * 3, 72, 2.6, 'B', 0.7, 3); },
+});
+
+/* ---------- 3.6.1.1c Simple reflex: three-neurone arc ---------- */
+S({
+  id: '3.6.1.1c', num: '3.6.1.1', sub: 'The protective effect of a simple reflex: three-neurone reflex arc', title: 'Survival and response', topic: '3.6', slot: [1, 1], dna: 'mark', ao: 1,
+  covers: ['3.6.1.1.s5'],
+  card: {
+    text: 'A <b>simple reflex</b> protects the body: it is rapid, automatic and involves no decision. In a three-neurone arc a <b>receptor</b> detects the stimulus (e.g. heat); a <b>sensory neurone</b> carries the impulse to the central nervous system; a <b>relay neurone</b> connects the sensory and motor neurones; a <b>motor neurone</b> carries the impulse to an <b>effector</b> (e.g. a muscle), which responds by withdrawing the limb. Because there are few synapses and the brain is not involved first, the response is fast, so damage is reduced. (Details of the spinal cord and dorsal and ventral roots are not required.)',
+    terms: ['reflex', 'receptor', 'sensory neurone', 'relay neurone', 'motor neurone', 'effector', 'synapse', 'central nervous system'],
+    skill: 'Sequence the pathway', eq: null,
+    q: 'Why is a reflex response faster than a voluntary one?', a: 'The pathway is short, with few synapses and without conscious decision in the brain.'
+  },
+  draw(R, sc) {
+    R.text('three-neurone reflex arc', 160, 14, 5, { al: 'c' });
+    // hand + hot object (left), spinal cord (middle), muscle in arm (bottom)
+    R.rrect(206, 38, 96, 100, 12, { ink: 'B', w: 1.1, fi: 'P', ft: 0.08, wob: 0.4 }); R.text('central nervous system', 254, 52, 3.7, { al: 'c' });
+    // receptor: skin with temperature receptor
+    R.rect(14, 150, 70, 22, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.25, wob: 0.2 }); R.text('skin', 49, 164, 3.8, { al: 'c' });
+    R.fill([26, 138, 40, 138, 34, 120], { ink: 'P', t: 0.9, wob: 0.1 }); R.fill([30, 134, 38, 134, 34, 126], { ink: 'Y', t: 0.9, wob: 0.1 }); R.text('heat', 34, 112, 3.8, { al: 'c', ink: 'P' });
+    R.circle(50, 146, 4.4, { ink: 'B', w: 0.9, fi: 'P', ft: 0.7 }); R.text('receptor', 70, 140, 3.7, { al: 'l' });
+    // sensory neurone: receptor -> into CNS
+    R.stroke([50, 150, 50, 130, 70, 110, 120, 104, 170, 100, 214, 98], { ink: 'B', w: 1.8, smooth: true, taper: 'none' });
+    R.circle(122, 104, 6, { ink: 'B', w: 1, fi: 'P', ft: 0.3 }); R.text('sensory neurone', 126, 90, 3.8, { al: 'c' });
+    // relay neurone inside CNS
+    R.stroke([214, 98, 232, 98, 250, 84, 268, 98, 290, 98], { ink: 'T', w: 2.2, smooth: true, taper: 'none' }); R.circle(250, 84, 5, { ink: 'B', w: 1, fi: 'T', ft: 0.5 }); R.text('relay neurone', 250, 72, 3.7, { al: 'c' });
+    R.circle(214, 98, 2.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.9 }); R.circle(290, 98, 2.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.9 });
+    R.text('synapse', 214, 114, 3.5, { al: 'c' }); R.text('synapse', 290, 114, 3.5, { al: 'c' });
+    // motor neurone to effector
+    R.stroke([290, 98, 290, 120, 260, 170, 200, 200, 150, 206], { ink: 'B', w: 1.8, smooth: true, taper: 'none' }); R.circle(290, 122, 6, { ink: 'B', w: 1, fi: 'P', ft: 0.3 }); R.text('motor neurone', 318, 178, 3.8, { al: 'r' });
+    // effector: muscle
+    R.stroke([60, 214, 100, 202, 150, 206], { ink: 'B', w: 0.01, taper: 'none' }); R.rrect(20, 196, 130, 22, 10, { ink: 'B', w: 1.2, fi: 'P', ft: 0.5, wob: 0.3 }); for (let k = 0; k < 8; k++) R.line(30 + k * 15, 198, 30 + k * 15, 216, { ink: 'B', w: 0.5, taper: 'none', t: 0.6 }); R.text('effector: muscle contracts', 85, 228, 3.9, { al: 'c' });
+    R.arrow([60, 194, 52, 176], { ink: 'P', w: 1.3, hs: 3 }); R.text('withdraws hand', 90, 186, 3.8, { al: 'c', ink: 'P' });
+    // numbers
+    ['1', '2', '3', '4', '5'].forEach((n, i) => R.bubble([34, 120, 250, 290, 150][i] + (i === 4 ? 0 : 0), [128, 112, 98, 138, 196][i] + (i === 0 ? 18 : 0), 4.4, n));
+    R.text('1 receptor detects heat   2 sensory neurone   3 relay neurone   4 motor neurone   5 effector', 160, 237, 3.4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(2.5); const path = [50, 150, 50, 130, 70, 110, 120, 104, 170, 100, 214, 98, 250, 84, 290, 98, 290, 120, 260, 170, 200, 200, 150, 206]; const q = A.along(path, p); A.dot(q[0], q[1], 2.6, 'Y', 0.95, 1); const q2 = A.along(path, (p + 0.5) % 1); A.dot(q2[0], q2[1], 2, 'P', 0.5, 2); },
+});
+
+/* ---------- RP10: choice chamber and chi-squared ---------- */
+rpScene({
+  id: 'RP10', num: '3.6.1.1', rp: 10, title: 'Survival and response', sub: 'Required practical 10: effect of an environmental variable on movement of an animal (choice chamber or maze)', topic: '3.6', slot: [2, 1],
+  covers: ['RP10'], at: ['h'], ms: ['MS 1.9', 'MS 0.3', 'MS 1.3'], ps: ['PS 2.2', 'PS 4.1'],
+  card: {
+    text: 'Investigate the effect of an environmental variable on the movement of an animal using a <b>choice chamber</b> or a maze. The AQA handbook’s example puts 12 woodlice (or maggots) in a choice chamber with light/dark or humid/dry halves (using anhydrous calcium chloride to dry one side, black paper to darken it) and counts how many are in each half after four minutes. Compare with a control. A <b>chi-squared test</b> compares the observed numbers with the numbers expected if there were no preference (equal in each half). Treat animals ethically; return them to their habitat. Schools may use other animals and variables.',
+    terms: ['choice chamber', 'taxis/kinesis', 'environmental variable', 'control', 'chi-squared test', 'expected', 'observed', 'degrees of freedom', 'ethical treatment'],
+    skill: 'MS 1.9: chi-squared test', eq: MATH(msup(mi('χ'), mn('2')), mo('='), mo('∑'), mfrac(msup(mpar(mi('O') + mo('−') + mi('E')), mn('2')), mi('E'))),
+    eqn: 'humid/dry: O = 1, 11; E = 6, 6 → χ² = 25/6 + 25/6 = 8.33; df = 1; critical value (p = 0.05) = 3.84',
+    q: 'Observed light/dark numbers are 2 and 10. State the expected values and whether the result is significant if χ² = 5.33.', a: 'Expected 6 and 6 (no preference). 5.33 > 3.84 (df 1, p = 0.05), so the difference is significant: reject the null hypothesis.'
+  },
+  apparatus(R, b) {
+    R.text('woodlice in a choice chamber', 92, 21, 4.4, { al: 'c' });
+    // two chambers: control, light/dark, humid/dry
+    const ch = (x, label, left, right, nl, nr) => {
+      R.rrect(x, 34, 52, 60, 6, { ink: 'B', w: 1.2, fi: 'T', ft: 0.08, wob: 0.2 }); R.rect(x, 34, 26, 60, { ink: '', w: 0, fi: left, ft: left === 'B' ? 0.35 : 0.2 }); R.rect(x + 26, 34, 26, 60, { ink: '', w: 0, fi: right, ft: right === 'B' ? 0.35 : 0.2 }); R.line(x + 26, 34, x + 26, 94, { ink: 'B', w: 0.6, taper: 'none', t: 0.7 });
+      for (let k = 0; k < nl; k++) woodlouse(R, x + 6 + (k % 2) * 12, 42 + k * 4.6, 0.38, 30 + k * 37);
+      for (let k = 0; k < nr; k++) woodlouse(R, x + 32 + (k % 2) * 12, 40 + k * 5, 0.38, 80 + k * 41);
+      R.text(label, x + 26, 108, 3.8, { al: 'c' }); R.text(nl + ' : ' + nr, x + 26, 116, 3.9, { al: 'c', ink: 'P' });
+    };
+    ch(14, 'control', 'T', 'T', 8, 4); ch(76, 'light and dark', 'Y', 'B', 2, 10); ch(138, 'humid and dry', 'T', 'Y', 11, 1);
+    R.text('12 woodlice each; counted after 4 minutes', 92, 130, 3.7, { al: 'c' });
+  },
+  results(R, b) {
+    const g = R.graph(b.x + 22, b.y + 8, 90, 72, { xmin: 0, xmax: 6, ymin: 0, ymax: 12, xl: '', yl: 'woodlice in half', xt: [], yt: [[0, '0'], [6, '6'], [12, '12']], fs: 3.6, ylx: 12 }).axes();
+    [[0.4, 8, 'T'], [1.0, 4, 'T'], [2.2, 2, 'Y'], [2.8, 10, 'B'], [4.0, 1, 'Y'], [4.6, 11, 'T']].forEach(([x, h, ink], i) => { R.rect(g.X(x), g.Y(h), 9, g.Y(0) - g.Y(h), { ink: 'B', w: 0.8, fi: ink, ft: ink === 'B' ? 0.45 : 0.4, wob: 0.1 }); });
+    g.dashed(0, 6, 6, 6, { ink: 'P', w: 0.7 }); R.text('expected 6', g.X(5.9), g.Y(6) - 3, 3.4, { al: 'r', ink: 'P' });
+    ['control', 'light/dark', 'humid/dry'].forEach((t, i) => R.text(t, g.X(0.9 + i * 2.2), g.Y(0) + 8, 3.4, { al: 'c' }));
+    R.text('χ² = 0.67 (ns)   5.33 (sig.)   8.33 (sig.)', b.x + 62, b.y + 104, 3.5, { al: 'c' });
+  },
+  vars: { iv: 'light or humidity (half of chamber)', dv: 'number of woodlice in each half', ctl: ['number and type of animal', 'time (4 min), temperature', 'chamber, same starting position'] },
+  calc: ['expected = 12 ÷ 2 = 6 per half', 'χ² = Σ (O − E)² ÷ E', '= (1 − 6)² ÷ 6 + (11 − 6)² ÷ 6', '= 8.33 > 3.84 (df 1, p = 0.05)'],
+  risks: [['bio', 'wash hands'], ['warn', 'drying agent: use forceps'], ['ethics', 'return animals to habitat']],
+  limits: ['animals disturbed by handling', 'small sample (12): repeat', 'humidity/light not perfectly separated', 'time to settle varies'],
+  interp: 'χ² above 3.84: a real preference (taxis or kinesis effect), not chance',
+  anim(A, sc) { const p = A.ph(5); A.dot(104 + Math.sin(p * 6) * 3, 60, 1.5, 'B', 0.8, 1); A.dot(40 + Math.sin(p * 9) * 4, 70 + Math.cos(p * 7) * 3, 1.5, 'B', 0.8, 2); },
+});
+
+/* ===================== 3.6.1.2 Receptors; 3.6.1.3 Control of heart rate ===================== */
+/* ---------- 3.6.1.2a Pacinian corpuscle ---------- */
+S({
+  id: '3.6.1.2a', num: '3.6.1.2', sub: 'The Pacinian corpuscle: stretch-mediated sodium ion channels and the generator potential', title: 'Receptors', topic: '3.6', slot: [2, 2], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.1.2.s1', '3.6.1.2.s2', '3.6.1.2.s3'],
+  card: {
+    text: 'The <b>Pacinian corpuscle</b> is a pressure receptor in the skin. It illustrates that receptors <b>respond only to specific stimuli</b> (pressure) and that stimulation of a receptor leads to a <b>generator potential</b>. Its structure: a sensory neurone ending (with a bare tip) wrapped in concentric rings of connective tissue separated by gel (lamellae). Pressure deforms the lamellae and stretches the neurone’s membrane, <b>deforming the stretch-mediated sodium ion channels</b>, which open. Na⁺ ions diffuse in, <b>depolarising</b> the membrane and producing a generator potential. If it reaches the threshold, an action potential is triggered in the sensory neurone.',
+    terms: ['Pacinian corpuscle', 'receptor', 'specific stimulus', 'generator potential', 'stretch-mediated sodium ion channel', 'depolarisation', 'lamellae', 'threshold', 'action potential'],
+    skill: 'MS 1.3: interpret generator potential graph', eq: null,
+    q: 'How does pressure cause a generator potential in a Pacinian corpuscle?', a: 'Pressure deforms the lamellae and stretches the sensory neurone ending, opening stretch-mediated Na⁺ channels; Na⁺ enters and depolarises the membrane.'
+  },
+  draw(R, sc) {
+    R.text('Pacinian corpuscle (pressure receptor)', 160, 14, 4.8, { al: 'c' });
+    // concentric lamellae (oval) with neurone ending in the middle
+    const cx = 100, cy = 94;
+    for (let k = 7; k >= 1; k--) { R.ellipse(cx, cy, 14 + k * 6.8, 9 + k * 4.4, { ink: 'B', w: 0.9, fi: k % 2 ? 'Y' : 'P', ft: k % 2 ? 0.2 : 0.14, wob: 0.3 }); }
+    R.rrect(cx - 38, cy - 5, 120, 10, 5, { ink: 'B', w: 1.3, fi: 'T', ft: 0.5, wob: 0.15 }); R.circle(cx - 38, cy, 6, { ink: 'B', w: 1, fi: 'T', ft: 0.5 });
+    R.rect(cx + 78, cy - 3, 100, 6, { ink: 'B', w: 1, fi: 'Y', ft: 0.5, wob: 0.1 }); R.line(cx + 180, cy, cx + 192, cy, { ink: 'B', w: 1.5, taper: 'none' });
+    leader(R, 'sensory neurone ending', cx - 30, cy, 54, 162, { size: 3.9, al: 'c' }); leader(R, 'lamellae (layers of connective tissue)', cx - 22, cy - 40, 100, 30, { size: 3.8, al: 'c' }); leader(R, 'gel between layers', cx + 12, cy + 40, 150, 148, { size: 3.8, al: 'c' });
+    R.arrow([cx - 62, cy - 62, cx - 36, cy - 44], { ink: 'P', w: 2, hs: 4.4 }); R.text('pressure', cx - 68, cy - 66, 4.2, { al: 'c', ink: 'P' });
+    R.text('myelinated axon to the CNS', cx + 126, cy - 10, 3.8, { al: 'c' });
+    R.line(312, 22, 312, 176, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // membrane close-up
+    R.text('stretch-mediated Na^+ channels', 482, 28, 4.4, { al: 'c' });
+    const mem = (x0, y, open) => {
+      R.bilayer([x0, y, x0 + 160, y], { gap: 7, hr: 2.3, sp: 5.2, tail: 3.6 });
+      const cxm = x0 + 80; R.knock([cxm - 16, y - 12, cxm + 16, y - 12, cxm + 16, y + 12, cxm - 16, y + 12]);
+      if (open) { R.rrect(cxm - 12, y - 11, 8, 22, 2, { ink: 'B', w: 1, fi: 'P', ft: 0.8 }); R.rrect(cxm + 4, y - 11, 8, 22, 2, { ink: 'B', w: 1, fi: 'P', ft: 0.8 }); }
+      else R.rrect(cxm - 9, y - 11, 18, 22, 3, { ink: 'B', w: 1, fi: 'P', ft: 0.8 });
+      return cxm;
+    };
+    const c1 = mem(402, 62, false); R.text('no pressure: channel closed', 482, 90, 3.8, { al: 'c' });
+    for (let i = 0; i < 3; i++) R.text('Na^+', 418 + i * 52, 42, 3.7, { al: 'c', ink: 'P' });
+    const c2 = mem(402, 140, true); R.text('pressure stretches the membrane:', 482, 166, 3.8, { al: 'c' }); R.text('channel opens, Na^+ enter', 482, 173, 3.8, { al: 'c', ink: 'P' });
+    for (let i = 0; i < 3; i++) R.text('Na^+', 418 + i * 52, 120, 3.7, { al: 'c', ink: 'P' }); R.arrow([c2, 126, c2, 150], { ink: 'P', w: 1.4, hs: 3 });
+    R.arrow([c1, 120, c1, 100], { ink: 'B', w: 0.001, hs: 0.1 });
+        // generator potential graph
+    R.line(8, 186, 656, 186, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const g = R.graph(40, 196, 150, 36, { xmin: 0, xmax: 10, ymin: -70, ymax: -20, xl: '', yl: 'mV', xt: [], yt: [[-70, '-70'], [-55, '-55']], fs: 3.4, ylx: 4 }).axes();
+    g.hline(-55, { ink: 'P', w: 0.6, dash: true });
+    g.curve([0, -70, 2, -70, 3, -62, 4, -48, 5, -34, 6, -56, 7, -70, 10, -70], { ink: 'T', w: 1.4 });
+    R.text('threshold', g.X(0.4), g.Y(-55) - 3, 3.4, { al: 'l', ink: 'P' });
+    R.text('bigger pressure → bigger generator potential;', 230, 214, 3.9, { al: 'l' }); R.text('if the threshold is reached → action potential', 230, 221, 3.9, { al: 'l' });
+    R.text('only pressure stimulates this receptor: receptors are specific', 230, 232, 3.9, { al: 'l', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(4); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.ion(418 + i * 52, 126 + u * 28, 'Na^+', 'P', 3, i); } A.dot(100 - 36 + p * 0, 94, 0, 'P', 0, 0); },
+});
+
+/* ---------- 3.6.1.2b Retina: rods and cones ---------- */
+S({
+  id: '3.6.1.2b', num: '3.6.1.2', sub: 'The human retina: rods and cones, sensitivity, colour and visual acuity', title: 'Receptors', topic: '3.6', slot: [0, 2], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.1.2.s4'],
+  card: {
+    text: 'The <b>retina</b> contains two types of photoreceptor. <b>Rods</b> contain the pigment <b>rhodopsin</b> and give vision in dim light (high <b>sensitivity</b>) but only in black and white; many rods share a single bipolar neurone (<b>retinal convergence</b>), so light from many rods is summed, but <b>visual acuity</b> is low. <b>Cones</b> contain <b>iodopsin</b> (three types, giving <b>colour vision</b>) and need bright light (low sensitivity); each cone usually has its own connection to the optic nerve, so <b>visual acuity</b> is high. Cones are concentrated in the <b>fovea</b>; rods are spread over the rest of the retina. Light passes through the ganglion and bipolar layers before reaching the photoreceptors.',
+    terms: ['retina', 'rod', 'cone', 'rhodopsin', 'iodopsin', 'sensitivity', 'visual acuity', 'colour vision', 'bipolar neurone', 'retinal convergence', 'fovea', 'optic nerve'],
+    skill: 'Explain differences by connections and pigments', eq: null,
+    q: 'Why do rods give high sensitivity but low visual acuity?', a: 'Many rods connect to one bipolar neurone, so their effects sum to reach threshold in dim light (sensitivity), but the brain cannot tell which rod was stimulated (low acuity).'
+  },
+  draw(R, sc) {
+    R.text('layers of the retina (light enters from the left)', 200, 14, 4.6, { al: 'c' });
+    // light arrow
+    R.arrow([8, 100, 54, 100], { ink: 'Y', w: 2.4, hs: 5 }); R.text('light', 28, 90, 4, { al: 'c' });
+    // layers: ganglion | bipolar | photoreceptors (rods/cones) | pigment epithelium
+    const L = [[66, 'ganglion cells', 'Y'], [112, 'bipolar neurones', 'P'], [168, 'rods and cones', 'T'], [232, '', 'B']];
+    R.rect(58, 30, 36, 140, { ink: 'B', w: 1, fi: 'Y', ft: 0.1, wob: 0.2 }); R.rect(104, 30, 36, 140, { ink: 'B', w: 1, fi: 'P', ft: 0.07, wob: 0.2 }); R.rect(150, 30, 78, 140, { ink: 'B', w: 1, fi: 'T', ft: 0.07, wob: 0.2 }); R.rect(232, 30, 14, 140, { ink: 'B', w: 1, fi: 'B', ft: 0.5, wob: 0.2 });
+    // cells: 3 cones (each with its own bipolar & ganglion) at top (fovea-like), 6 rods converging on one bipolar at bottom
+    // cones
+    [48, 66, 84].forEach((y, i) => { R.circle(76, y, 5.4, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.5 }); R.circle(122, y, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.5 }); R.line(81, y, 117, y, { ink: 'B', w: 0.9, taper: 'none' }); R.line(127, y, 165, y, { ink: 'B', w: 0.9, taper: 'none' }); R.poly([165, y - 4.4, 196, y - 2, 212, y, 196, y + 2, 165, y + 4.4], { ink: 'B', w: 1, fi: ['P', 'Y', 'T'][i], ft: 0.7 }); });
+    R.text('cones', 188, 36, 3.8, { al: 'c' });
+    // rods
+    const rodY = [112, 120, 128, 136, 144, 152];
+    rodY.forEach(y => { R.rrect(168, y - 3, 44, 6, 3, { ink: 'B', w: 0.8, fi: 'B', ft: 0.4, wob: 0.1 }); R.line(168, y, 144, 132, { ink: 'B', w: 0.7, taper: 'none' }); });
+    R.circle(122, 132, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.5 }); R.line(127, 132, 100, 132, { ink: 'B', w: 0.9, taper: 'none' }); R.circle(76, 132, 5.4, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.5 });
+    R.text('rods', 188, 160, 3.8, { al: 'c' });
+    R.stroke([76, 137, 76, 160, 44, 166], { ink: 'B', w: 1.4, smooth: true, taper: 'end' }); R.stroke([76, 84, 76, 102], { ink: 'B', w: 0.01, taper: 'none' });
+    ['ganglion cells', 'bipolar neurones', 'photoreceptors', 'pigment layer'].forEach((t, i) => R.text(t, [76, 122, 190, 239][i], 180 + (i % 2) * 8, 3.5, { al: i === 3 ? 'r' : 'c' }));
+    R.text('to the optic nerve', 96, 168, 3.5, { al: 'l' }); R.arrow([76, 160, 56, 168], { ink: 'B', w: 0.001, hs: 0.1 });
+    R.line(262, 22, 262, 180, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // comparison table
+    R.table(272, 34, [52, 46, 46], 15, [['', 'rods', 'cones'], ['pigment', 'rhodopsin', 'iodopsin'], ['colour', 'black/white', 'colour'], ['sensitivity', 'high', 'low'], ['acuity', 'low', 'high'], ['connection', 'many : 1', '1 : 1']], { size: 3.9, hink: 'Y' });
+    R.text('many rods share one bipolar neurone:', 340, 134, 3.9, { al: 'c' }); R.text('summation in dim light, but poor detail', 340, 141, 3.9, { al: 'c' });
+    R.text('each cone has its own pathway:', 340, 154, 3.9, { al: 'c' }); R.text('good detail and colour in bright light', 340, 161, 3.9, { al: 'c' });
+    R.line(8, 192, 420, 192, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('cones are concentrated at the fovea; rods are spread over the rest of the retina', 214, 206, 4, { al: 'c' });
+    R.text('light passes through the ganglion and bipolar layers to reach the photoreceptors', 214, 216, 3.8, { al: 'c' });
+    // right: eye
+    R.line(430, 22, 430, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.ellipse(540, 100, 56, 50, { ink: 'B', w: 1.4, fi: 'P', ft: 0.08, wob: 0.4 }); R.ellipse(540, 100, 56, 50, { ink: 'T', w: 3, t: 0.4, a0: 0.9, solid: false });
+    R.circle(492, 100, 12, { ink: 'B', w: 1.1, fi: 'T', ft: 0.2 }); R.text('lens', 478, 124, 3.7, { al: 'c' });
+    R.stroke([590, 70, 596, 100, 590, 128], { ink: 'T', w: 3, t: 0.6, smooth: true, taper: 'none' }); R.stroke([590, 70, 596, 100, 590, 128], { ink: 'B', w: 0.8, smooth: true, taper: 'none' });
+    R.circle(594, 100, 3.2, { ink: 'P', w: 1.2 }); R.text('fovea', 628, 100, 3.8, { al: 'c', ink: 'P' }); R.text('retina', 626, 66, 3.8, { al: 'c' }); R.stroke([576, 140, 586, 158, 588, 176], { ink: 'Y', w: 3, t: 0.7, smooth: true, taper: 'none' }); R.stroke([576, 140, 586, 158, 588, 176], { ink: 'B', w: 0.8, smooth: true, taper: 'none' }); R.text('optic nerve', 612, 176, 3.7, { al: 'c' });
+    R.arrow([456, 100, 484, 100], { ink: 'Y', w: 2, hs: 4 });
+  },
+  anim(A, sc) { const p = A.ph(4); A.photon(8 + p * 40, 100, 0, 8, 1); for (let i = 0; i < 4; i++) A.dot(168 + ((p + i / 4) % 1) * 0, 112 + i * 14, 0, 'P', 0, 0); A.dot(122 - p * 40 + 40, 132, 1.5, 'Y', 0.9, 2); },
+});
+
+/* ===================== 3.6.1.3 Control of heart rate ===================== */
+S({
+  id: '3.6.1.3', num: '3.6.1.3', sub: 'Control of heart rate: SAN, AVN, Purkyne tissue; chemoreceptors and pressure receptors', title: 'Control of heart rate', topic: '3.6', slot: [3, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.1.3.s1', '3.6.1.3.s2', '3.6.1.3.s3'],
+  card: {
+    text: 'Heart muscle is <b>myogenic</b>: it contracts and relaxes without nervous stimulation. The <b>sinoatrial node (SAN)</b> in the right atrial wall initiates a wave of electrical activity across the atria, making them contract. A band of fibres prevents it passing straight to the ventricles; instead the <b>atrioventricular node (AVN)</b> delays it, then it passes down the <b>bundle of His</b> and along <b>Purkyne tissue</b> in the septum, so the ventricles contract from the apex upwards. <b>Chemoreceptors</b> (aortic and carotid bodies) detect pH/CO₂ and <b>pressure receptors</b> (aortic arch, carotid sinus) detect blood pressure; the medulla’s cardiac centre changes heart rate via the <b>autonomic nervous system</b> (sympathetic raises, parasympathetic lowers) acting on the SAN (effector).',
+    terms: ['myogenic', 'sinoatrial node', 'atrioventricular node', 'bundle of His', 'Purkyne tissue', 'chemoreceptor', 'pressure receptor', 'autonomic nervous system', 'sympathetic', 'parasympathetic'],
+    skill: 'MS 2.2: cardiac output = heart rate × stroke volume', eq: MATH(mt('CO '), mo('='), mt('stroke volume'), mo('×'), mt('heart rate')),
+    eqn: '70 cm³ × 75 beats min⁻¹ = 5250 cm³ min⁻¹',
+    q: 'Why is there a delay between atrial and ventricular contraction?', a: 'The AVN delays the wave of excitation so the atria empty completely before the ventricles contract.'
+  },
+  draw(R, sc) {
+    R.text('electrical control of the heart', 160, 14, 4.8, { al: 'c' });
+    // heart outline with SAN, AVN, bundle of His, Purkyne tissue
+    const outer = [74, 40, 130, 34, 168, 44, 178, 90, 172, 130, 150, 162, 120, 176, 94, 160, 78, 120, 68, 76];
+    R.fill(outer, { ink: 'P', t: 0.12, smooth: true, wob: 0.4 }); R.poly(outer, { ink: 'B', w: 1.6, smooth: true, wob: 0.5 });
+    R.line(72, 82, 176, 82, { ink: 'B', w: 1.2, taper: 'none', t: 0.8 }); R.text('atria', 150, 66, 3.8, { al: 'c' }); R.text('ventricles', 150, 104, 3.8, { al: 'c' });
+    R.line(122, 82, 122, 164, { ink: 'B', w: 2, taper: 'none' });
+    R.circle(88, 48, 5, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.8 }); R.text('SAN', 88, 36, 3.8, { al: 'c', ink: 'P' });
+    R.circle(120, 86, 4.6, { ink: 'B', w: 1.1, fi: 'P', ft: 0.8 }); R.text('AVN', 98, 94, 3.8, { al: 'r', ink: 'P' });
+    R.stroke([120, 88, 122, 120], { ink: 'T', w: 2.4, taper: 'none' }); R.text('bundle of His', 100, 112, 3.6, { al: 'r' });
+    [[122, 120, 90, 150], [122, 120, 156, 146]].forEach(([a, b, c, d]) => R.arrow([a, b, c, d], { ink: 'T', w: 1.6, hs: 3, smooth: true })); R.text('Purkyne tissue', 150, 150, 3.6, { al: 'l', ink: 'T' });
+    // waves: atria then ventricles
+    R.stroke([90, 54, 100, 64, 110, 74], { ink: 'Y', w: 2, smooth: true, taper: 'end', t: 0.9 }); R.stroke([158, 60, 140, 66, 130, 72], { ink: 'Y', w: 2, smooth: true, taper: 'end', t: 0.9 });
+    // numbers
+    R.bubble(76, 36, 3.8, '1'); R.bubble(104, 72, 3.8, '2'); R.bubble(108, 92, 3.8, '3'); R.bubble(98, 140, 3.8, '4');
+    ['1 SAN starts a wave across the atria', '2 atria contract', '3 AVN delays, then bundle of His', '4 Purkyne tissue: ventricles contract'].forEach((t, i) => R.text(t, 196, 36 + i * 11, 3.8, { al: 'l' }));
+    R.text('heart muscle is myogenic', 252, 90, 4, { al: 'c', ink: 'P' });
+    R.text('(it contracts without a nerve impulse)', 252, 97, 3.4, { al: 'c' });
+    R.line(8, 184, 312, 184, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // control loop
+    R.text('detect → coordinate → act', 160, 196, 4.4, { al: 'c' });
+    const bx = [[14, 'chemoreceptors', 'pH / CO_2 (aortic and carotid bodies)'], [112, 'pressure receptors', '(aortic arch, carotid sinus)']];
+    R.rrect(14, 202, 76, 26, 6, { ink: 'B', w: 1, fi: 'Y', ft: 0.2, wob: 0.15 }); R.text('chemoreceptors', 52, 212, 3.7, { al: 'c' }); R.text('(pH, CO_2)', 52, 220, 3.4, { al: 'c' });
+    R.rrect(96, 202, 76, 26, 6, { ink: 'B', w: 1, fi: 'Y', ft: 0.2, wob: 0.15 }); R.text('pressure receptors', 134, 212, 3.7, { al: 'c' }); R.text('(blood pressure)', 134, 220, 3.4, { al: 'c' });
+    R.arrow([172, 215, 190, 215], { ink: 'B', w: 1, hs: 2.4 }); R.rrect(192, 202, 58, 26, 6, { ink: 'B', w: 1, fi: 'T', ft: 0.25, wob: 0.15 }); R.text('medulla', 221, 212, 3.8, { al: 'c' }); R.text('(cardiac centre)', 221, 220, 3.3, { al: 'c' });
+    R.arrow([250, 215, 266, 215], { ink: 'B', w: 1, hs: 2.4 }); R.rrect(268, 202, 44, 26, 6, { ink: 'B', w: 1, fi: 'P', ft: 0.25, wob: 0.15 }); R.text('SAN', 290, 212, 3.8, { al: 'c' }); R.text('(effector)', 290, 220, 3.3, { al: 'c' });
+    R.text('sympathetic raises heart rate; parasympathetic lowers it', 160, 237, 3.7, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(2); const a1 = p < 0.3 ? p / 0.3 : 1; A.dot(88 + a1 * 30, 50 + a1 * 24, 2.4, 'Y', p < 0.4 ? 0.95 : 0, 1); if (p > 0.4) { const q = (p - 0.4) / 0.6; A.dot(121, 88 + q * 30, 2.4, 'Y', 0.95, 2); A.dot(121 - q * 30, 120 + q * 26, 2.2, 'Y', 0.9, 3); A.dot(121 + q * 34, 120 + q * 24, 2.2, 'Y', 0.9, 4); } },
+});
+
+/* ===================== 3.6.2 Nervous coordination ===================== */
+/* ---------- 3.6.2.1a Myelinated motor neurone and the resting potential ---------- */
+S({
+  id: '3.6.2.1a', num: '3.6.2.1', sub: 'Structure of a myelinated motor neurone; the resting potential', title: 'Nerve impulses', topic: '3.6', slot: [0, 3], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.2.1.s1', '3.6.2.1.s2'],
+  card: {
+    text: 'A <b>myelinated motor neurone</b> has a cell body (with nucleus), dendrites, a long <b>axon</b> insulated by a <b>myelin sheath</b> made by Schwann cells, with gaps called <b>nodes of Ranvier</b>, and axon terminals. The <b>resting potential</b> (about −70 mV inside relative to outside) is established by differential membrane permeability and electrochemical gradients: the <b>sodium–potassium pump</b> actively transports 3 Na⁺ out and 2 K⁺ in; the membrane is far more permeable to K⁺ (open K⁺ channels, so K⁺ diffuses out) than to Na⁺ (Na⁺ channels closed), so the inside is negative.',
+    terms: ['motor neurone', 'axon', 'myelin sheath', 'Schwann cell', 'node of Ranvier', 'resting potential', 'sodium–potassium pump', 'differential permeability', 'electrochemical gradient'],
+    skill: 'Describe the maintenance of −70 mV', eq: null,
+    q: 'Explain how the resting potential is established.', a: 'The Na⁺/K⁺ pump moves 3 Na⁺ out and 2 K⁺ in; K⁺ diffuses out through open channels while the membrane is largely impermeable to Na⁺, leaving the inside more negative (about −70 mV).'
+  },
+  draw(R, sc) {
+    R.text('myelinated motor neurone', 332, 14, 5, { al: 'c' });
+    neurone(R, 40, 60, 520, { myel: true, n: 8, r: 13, aw: 1.8 });
+    leader(R, 'cell body (nucleus)', 40, 60, 44, 108, { size: 4, al: 'c' }); leader(R, 'dendrites', 14, 48, 26, 26, { size: 4, al: 'c' });
+    leader(R, 'axon', 106, 60, 112, 30, { size: 4, al: 'c' }); leader(R, 'myelin sheath', 190, 55, 210, 30, { size: 4, al: 'c' }); leader(R, 'node of Ranvier', 262, 60, 298, 100, { size: 4, al: 'c' });
+    leader(R, 'axon terminals', 574, 60, 540, 100, { size: 4, al: 'c' });
+    R.text('Schwann cell wrapped round the axon', 410, 26, 4, { al: 'c' }); R.line(410, 29, 380, 52, { ink: 'B', w: 0.5, taper: 'end', t: 0.8 });
+    R.line(8, 118, 656, 118, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // membrane at rest (full width)
+    const ym = 168;
+    R.fill([8, 128, 656, 128, 656, ym - 8, 8, ym - 8], { ink: 'T', t: 0.07, wob: 0.3 }); R.fill([8, ym + 8, 656, ym + 8, 656, 228, 8, 228], { ink: 'P', t: 0.07, wob: 0.3 });
+    R.text('outside the axon: more positive', 14, 140, 4, { al: 'l' }); R.text('inside the axon: about −70 mV', 648, 140 + 90, 4, { al: 'r', ink: 'P' });
+    R.bilayer([8, ym, 656, ym], { gap: 7, hr: 2.2, sp: 5.2, tail: 3.6 });
+    const bl = (x, w) => R.knock([x - w / 2, ym - 12, x + w / 2, ym - 12, x + w / 2, ym + 12, x - w / 2, ym + 12]);
+    // sodium-potassium pump
+    bl(120, 34); R.rrect(106, ym - 11, 28, 22, 3, { ink: 'B', w: 1, fi: 'P', ft: 0.8 }); R.text('pump', 120, ym + 2.4, 3.6, { al: 'c' });
+    R.arrow([114, ym + 10, 114, ym - 40], { ink: 'P', w: 1.4, hs: 3 }); R.text('3 Na^+ out', 124, ym - 40, 3.9, { al: 'l', ink: 'P' });
+    R.arrow([126, ym - 10, 126, ym + 40], { ink: 'P', w: 1.4, hs: 3 }); R.text('2 K^+ in', 134, ym + 40, 3.9, { al: 'l', ink: 'P' });
+    R.circle(88, ym + 30, 6, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.9 }); R.text('ATP', 88, ym + 31.6, 4.6, { al: 'c' });
+    R.text('sodium–potassium pump:', 120, ym + 52, 3.9, { al: 'c' }); R.text('active transport', 120, ym + 58, 3.9, { al: 'c' });
+    // K+ channel open (K+ out)
+    bl(332, 30); R.rrect(320, ym - 11, 9, 22, 2, { ink: 'B', w: 1, fi: 'Y', ft: 0.9 }); R.rrect(336, ym - 11, 9, 22, 2, { ink: 'B', w: 1, fi: 'Y', ft: 0.9 }); R.arrow([332, ym + 30, 332, ym - 38], { ink: 'P', w: 1.6, hs: 3.4 });
+    R.text('K^+ channels open:', 332, ym + 46, 3.9, { al: 'c' }); R.text('K^+ diffuses out', 332, ym + 53, 3.9, { al: 'c', ink: 'P' });
+    // Na+ channel closed
+    bl(520, 30); R.rrect(508, ym - 11, 24, 22, 3, { ink: 'B', w: 1, fi: 'T', ft: 0.8 }); cross(R, 520, ym - 26, 3.4); R.text('Na^+', 520, ym - 38, 3.9, { al: 'c', ink: 'P' });
+    R.text('Na^+ channels closed:', 520, ym + 46, 3.9, { al: 'c' }); R.text('very little Na^+ enters', 520, ym + 53, 3.9, { al: 'c' });
+    R.text('membrane much more permeable to K^+ than to Na^+: inside negative', 332, 237, 4, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(4); A.ion(332, 202 - p * 56, 'K^+', 'P', 3.2, 1); A.ion(114, 162 - p * 36, 'Na^+', 'T', 3.2, 2); A.ion(126, 172 + p * 26, 'K^+', 'P', 3.2, 3); },
+});
+
+/* ---------- 3.6.2.1b The action potential ---------- */
+S({
+  id: '3.6.2.1b', num: '3.6.2.1', sub: 'Depolarisation, repolarisation and hyperpolarisation: the action potential and the all-or-nothing principle', title: 'Nerve impulses', topic: '3.6', slot: [2, 3], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.6.2.1.s3', '3.6.2.1.s4'],
+  card: {
+    text: 'A stimulus that raises the membrane potential to the <b>threshold</b> (about −55 mV) opens <b>voltage-gated sodium ion channels</b>: Na⁺ floods in, causing <b>depolarisation</b> (the inside becomes positive, about +40 mV) — positive feedback. Then the Na⁺ channels close and <b>voltage-gated potassium ion channels</b> open: K⁺ leaves, causing <b>repolarisation</b>. K⁺ channels are slow to close, so the potential overshoots below the resting potential (<b>hyperpolarisation</b>) before the sodium–potassium pump and leak channels restore −70 mV. The <b>all-or-nothing principle</b>: a stimulus below threshold produces no action potential; above threshold all action potentials are the same size — a stronger stimulus increases frequency, not size.',
+    terms: ['action potential', 'threshold', 'depolarisation', 'repolarisation', 'hyperpolarisation', 'voltage-gated sodium channel', 'voltage-gated potassium channel', 'all-or-nothing principle', 'resting potential'],
+    skill: 'MS 1.3: interpret an action potential trace', eq: null,
+    q: 'What does the all-or-nothing principle mean?', a: 'Either the threshold is reached and a full-size action potential results, or it is not reached and there is none; the size does not vary with stimulus strength, only the frequency.'
+  },
+  draw(R, sc) {
+    R.text('one action potential', 200, 14, 5, { al: 'c' });
+    const g = R.graph(46, 30, 360, 160, { xmin: 0, xmax: 6, ymin: -90, ymax: 50, xl: 'time / ms', yl: 'membrane potential / mV', xt: [[0, '0'], [1, '1'], [2, '2'], [3, '3'], [4, '4'], [5, '5'], [6, '6']], yt: [[-70, '-70'], [-55, '-55'], [0, '0'], [40, '+40']], fs: 3.8, xly: 12, ylx: 16 }).axes();
+    g.hline(-70, { ink: 'B', w: 0.6, t: 0.6 }); g.hline(-55, { ink: 'P', w: 0.8, dash: true });
+    const ap = [0, -70, 0.45, -70, 0.7, -66, 0.9, -55, 1.05, -25, 1.2, 20, 1.35, 38, 1.5, 30, 1.7, -5, 1.95, -50, 2.2, -78, 2.55, -84, 3, -80, 3.6, -74, 4.2, -71, 5, -70, 6, -70];
+    g.curve(ap, { ink: 'T', w: 1.8 });
+    // stimulus mark
+    R.arrow([g.X(0.55), g.Y(46), g.X(0.55), g.Y(-62)], { ink: 'B', w: 1, hs: 2.6 }); R.text('stimulus', g.X(0.55), g.Y(46) - 5, 3.8, { al: 'c' });
+    // failed initial
+    g.curve([0.2, -70, 0.3, -64, 0.4, -70], { ink: 'B', w: 1, t: 0.8 });
+    R.text('threshold ≈ −55 mV', g.X(5.95), g.Y(-55) - 4, 3.8, { al: 'r', ink: 'P' });
+    leader(R, 'depolarisation: Na^+ in', g.X(1.14), g.Y(2), g.X(2.0), g.Y(42), { size: 3.8, al: 'l' });
+    leader(R, 'repolarisation: K^+ out', g.X(1.8), g.Y(-28), g.X(2.6), g.Y(10), { size: 3.8, al: 'l' });
+    leader(R, 'hyperpolarisation', g.X(2.6), g.Y(-84), g.X(3.4), g.Y(-52), { size: 3.8, al: 'l' });
+    R.text('resting potential ≈ −70 mV', g.X(5.95), g.Y(-80), 3.8, { al: 'r' });
+    // phases below
+    R.line(422, 22, 422, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('channels during the action potential', 540, 28, 4.4, { al: 'c' });
+    const ph = [['1 stimulus reaches threshold', 'Na^+ channels open'], ['2 Na^+ rush in: depolarisation', 'positive feedback'], ['3 Na^+ close, K^+ open', 'K^+ leave: repolarisation'], ['4 K^+ close slowly', 'hyperpolarisation, then −70 mV']];
+    ph.forEach(([a, b], i) => { const y = 44 + i * 36; R.rrect(432, y, 216, 30, 6, { ink: 'B', w: 1, fi: ['Y', 'T', 'P', 'TY'][i], ft: 0.1, wob: 0.15 }); R.text(a, 540, y + 12, 4, { al: 'c' }); R.text(b, 540, y + 23, 3.8, { al: 'c' }); });
+    R.line(8, 202, 416, 202, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('all-or-nothing: below threshold no action potential; above it, always the same size.', 212, 214, 3.9, { al: 'c' });
+    R.text('a stronger stimulus raises the frequency of impulses, not their size', 212, 224, 3.9, { al: 'c', ink: 'P' });
+    R.text('(values approximate)', 212, 233, 3.3, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); const t = p * 6; const ap = [0, -70, 0.45, -70, 0.7, -66, 0.9, -55, 1.05, -25, 1.2, 20, 1.35, 38, 1.5, 30, 1.7, -5, 1.95, -50, 2.2, -78, 2.55, -84, 3, -80, 3.6, -74, 4.2, -71, 5, -70, 6, -70]; let v = -70; for (let i = 0; i < ap.length - 2; i += 2) if (t >= ap[i] && t <= ap[i + 2]) v = ap[i + 1] + (ap[i + 3] - ap[i + 1]) * (t - ap[i]) / (ap[i + 2] - ap[i]); A.dot(46 + t / 6 * 360, 30 + 160 - (v + 90) / 140 * 160, 2.6, 'P', 0.95, 1); },
+});
+
+/* ---------- 3.6.2.1c Local circuits, saltatory conduction, speed of conductance, refractory period ---------- */
+S({
+  id: '3.6.2.1c', num: '3.6.2.1', sub: 'Passage of an action potential; saltatory conduction; refractory period; factors affecting speed', title: 'Nerve impulses', topic: '3.6', slot: [0, 4], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.6.2.1.s5', '3.6.2.1.s6', '3.6.2.1.s7'],
+  card: {
+    text: 'In a <b>non-myelinated</b> axon, depolarisation at one point causes <b>local circuits</b>: Na⁺ diffuse sideways inside the axon, depolarising the next region to threshold, so the action potential travels as a wave. In a <b>myelinated</b> axon the myelin is an electrical insulator, so depolarisation occurs only at the <b>nodes of Ranvier</b> and the impulse “jumps” from node to node: <b>saltatory conduction</b>, which is much faster. The <b>refractory period</b> (when voltage-gated Na⁺ channels are inactive and the membrane cannot be stimulated) ensures impulses are <b>discrete</b>, travel in one direction and limits the <b>frequency</b> of impulses (maximum frequency = 1 ÷ refractory period). Speed is greater with <b>myelination</b>, a larger <b>axon diameter</b> and a higher <b>temperature</b> (up to a point).',
+    terms: ['local circuit', 'non-myelinated axon', 'myelinated axon', 'node of Ranvier', 'saltatory conduction', 'refractory period', 'discrete impulses', 'axon diameter', 'temperature', 'speed of conductance'],
+    skill: 'MS 0.2: maximum frequency = 1 ÷ refractory period', eq: MATH(mt('maximum frequency '), mo('='), mfrac(mn('1'), mt('refractory period'))),
+    eqn: 'refractory period 4 ms = 0.004 s → 1 ÷ 0.004 = 250 impulses per second',
+    q: 'Explain why a myelinated neurone conducts impulses faster than a non-myelinated one.', a: 'Myelin insulates the axon, so depolarisation occurs only at nodes of Ranvier and the impulse jumps between them (saltatory conduction) instead of travelling along the whole membrane.'
+  },
+  draw(R, sc) {
+    // non-myelinated
+    R.text('non-myelinated axon: local circuits', 200, 14, 4.8, { al: 'c' });
+    R.rrect(14, 34, 400, 36, 14, { ink: 'B', w: 1.2, fi: 'T', ft: 0.08, wob: 0.3 });
+    for (let i = 0; i < 18; i++) { const x = 34 + i * 21.4, dep = x > 150 && x < 258; R.text(dep ? '+' : '−', x, 62, 7.5, { al: 'c', ink: dep ? 'P' : 'B', w: 1.2 }); R.text(dep ? '−' : '+', x, 30, 7.5, { al: 'c', ink: dep ? 'B' : 'P', w: 1.2 }); }
+    R.arrow([150, 49, 76, 49], { ink: 'P', w: 1.3, hs: 3.4 }); R.arrow([258, 49, 338, 49], { ink: 'P', w: 1.3, hs: 3.4 });
+    R.text('local circuits', 112, 44, 3.5, { al: 'c', ink: 'P' }); R.text('local circuits', 300, 44, 3.5, { al: 'c', ink: 'P' });
+    R.text('Na^+ diffuse sideways inside the axon', 204, 82, 3.9, { al: 'c' }); R.text('depolarised region', 204, 90, 3.9, { al: 'c', ink: 'P' });
+    R.arrow([356, 90, 396, 90], { ink: 'B', w: 1.2, hs: 3 }); R.text('impulse travels', 346, 93, 3.6, { al: 'r' });
+    R.line(8, 100, 422, 100, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // myelinated
+    R.text('myelinated axon: saltatory conduction', 200, 112, 4.8, { al: 'c' });
+    R.line(14, 150, 410, 150, { ink: 'B', w: 4.4, t: 0.5, taper: 'none' });
+    [[40, 86], [140, 86], [240, 86], [340, 76]].forEach(([x, w], i) => { R.knock(R.rrectPts(x, 138, w, 24, 8)); R.rrect(x, 138, w, 24, 8, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.5, wob: 0.15 }); });
+    [126, 226, 326].forEach(x => R.text('node', x, 178, 3.5, { al: 'c' }));
+    [[126, 'P'], [226, 'P'], [326, 'P']].forEach(([x], i) => R.circle(x, 150, 6 + 0, { ink: 'P', w: 1.2, wob: 0.1, st: 0.8 }));
+    [[134, 214], [234, 314]].forEach(([a, b]) => R.arrow([a, 130, b, 130], { ink: 'P', w: 1.3, hs: 3, smooth: false }));
+    R.text('myelin: electrical insulator', 100, 128, 3.7, { al: 'c' }); R.text('the impulse jumps from node to node', 260, 122, 3.9, { al: 'c', ink: 'P' });
+    R.text('depolarisation only at the nodes of Ranvier → much faster', 200, 196, 4, { al: 'c' });
+    R.line(8, 206, 422, 206, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('refractory period: Na^+ channels cannot reopen → impulses are discrete,', 200, 218, 3.9, { al: 'c' }); R.text('one-directional, with a maximum frequency = 1 ÷ refractory period', 200, 226, 3.9, { al: 'c', ink: 'P' });
+    R.line(436, 22, 436, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // speed factors
+    R.text('factors that affect speed', 548, 28, 4.6, { al: 'c' });
+    // myelination chart bars
+    R.text('myelination', 480, 50, 4, { al: 'c' }); R.rect(466, 56, 30, 8, { ink: 'B', w: 0.9, fi: 'T', ft: 0.4 }); R.text('no myelin ~ 1 m/s', 534, 62, 3.6, { al: 'l' }); R.rect(466, 70, 74 * 0.9, 8, { ink: 'B', w: 0.9, fi: 'P', ft: 0.5 }); R.text('myelin ~ 100 m/s', 536, 76, 3.6, { al: 'l' });
+    R.text('axon diameter', 480, 100, 4, { al: 'c' }); R.circle(474, 114, 5, { ink: 'B', w: 1, fi: 'Y', ft: 0.5 }); R.circle(504, 114, 12, { ink: 'B', w: 1, fi: 'Y', ft: 0.5 }); R.text('wider axon: less resistance, faster', 586, 116, 3.7, { al: 'c' });
+    R.text('temperature', 480, 148, 4, { al: 'c' }); R.thermometer(470, 156, 24, { level: 0.35 }); R.thermometer(498, 156, 24, { level: 0.75 }); R.text('warmer: faster (ions diffuse faster,', 590, 164, 3.7, { al: 'c' }); R.text('enzymes work faster) until denaturing', 590, 171, 3.7, { al: 'c' });
+    R.text('speed of conductance depends on myelination,', 548, 204, 3.8, { al: 'c', ink: 'P' }); R.text('axon diameter and temperature', 548, 211, 3.8, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) { const p = A.ph(4); A.ring(24 + p * 360, 45, 6, 'P', 1.1, 0.9); const nodes = [126, 226, 326]; const k = Math.min(2, Math.floor(p * 3)); A.ring(nodes[k], 150, 5 + ((p * 3) % 1) * 4, 'P', 1.1, 1 - ((p * 3) % 1) * 0.5); },
+});
+
+/* ===================== 3.6.2.2 Synaptic transmission ===================== */
+/* ACh molecule token and receptor helpers */
+function achTok(R, x, y, s = 1) { R.circle(x, y, 2.2 * s, { ink: 'B', w: 0.6, fi: 'Y', ft: 0.9 }); }
+function synVesicle(R, x, y, r, n) { R.circle(x, y, r, { ink: 'B', w: 0.9, fi: 'P', ft: 0.2 }); for (let i = 0; i < n; i++) achTok(R, x + Math.cos(i * 2.4) * r * 0.45, y + Math.sin(i * 2.4) * r * 0.45, 0.8); }
+
+/* ---------- 3.6.2.2a Cholinergic synapse ---------- */
+S({
+  id: '3.6.2.2a', num: '3.6.2.2', sub: 'Transmission across a cholinergic synapse: sequence of events and unidirectionality', title: 'Synaptic transmission', topic: '3.6', slot: [2, 4], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.2.2.s1', '3.6.2.2.s2', '3.6.2.2.s3'],
+  card: {
+    text: 'Sequence at a <b>cholinergic synapse</b>: (1) an action potential arrives at the <b>presynaptic knob</b>; (2) <b>voltage-gated calcium ion channels</b> open and Ca²⁺ ions diffuse in; (3) Ca²⁺ causes <b>synaptic vesicles</b> to fuse with the presynaptic membrane and release <b>acetylcholine (ACh)</b> by exocytosis; (4) ACh diffuses across the <b>synaptic cleft</b> and binds to <b>receptors</b> on the postsynaptic membrane; (5) <b>sodium ion channels</b> open, Na⁺ enter and depolarise the membrane; if the <b>threshold</b> is reached an action potential starts; (6) <b>acetylcholinesterase</b> hydrolyses ACh to choline and ethanoate, which are reabsorbed and recycled (using ATP from the many mitochondria). <b>Unidirectional</b>: neurotransmitter is released only from the presynaptic neurone and receptors are only on the postsynaptic membrane.',
+    terms: ['cholinergic synapse', 'presynaptic knob', 'voltage-gated calcium ion channel', 'synaptic vesicle', 'acetylcholine', 'synaptic cleft', 'receptor', 'acetylcholinesterase', 'unidirectional', 'postsynaptic membrane'],
+    skill: 'Sequence of events', eq: null,
+    q: 'Why does a synapse transmit impulses in one direction only?', a: 'Neurotransmitter vesicles and the calcium channels are only in the presynaptic knob, and the receptors are only on the postsynaptic membrane.'
+  },
+  draw(R, sc) {
+    R.text('cholinergic synapse', 332, 14, 5, { al: 'c' });
+    // presynaptic knob (top), cleft, postsynaptic membrane (bottom)
+    const knob = [120, 40, 160, 28, 360, 28, 400, 40, 410, 70, 396, 100, 360, 108, 160, 108, 128, 100, 112, 70];
+    R.fill(knob, { ink: 'P', t: 0.1, smooth: true, wob: 0.4 }); R.poly(knob, { ink: 'B', w: 1.6, smooth: true, wob: 0.5 });
+    R.rect(250, 28, 20, 0.01, {}); R.stroke([240, 28, 240, 12], { ink: 'B', w: 1.6, taper: 'none' }); R.stroke([280, 28, 280, 12], { ink: 'B', w: 1.6, taper: 'none' });
+    R.text('action potential arrives', 160, 20, 3.9, { al: 'c', ink: 'P' }); R.arrow([196, 24, 238, 26], { ink: 'P', w: 1, hs: 2.6 });
+    R.mito(160, 58, 34, 18, 20, { plain: true }); R.mito(364, 56, 34, 18, -15, { plain: true });
+    R.text('mitochondria (ATP)', 160, 86, 3.6, { al: 'c' });
+    // Ca channels on presynaptic membrane (bottom of knob y~105)
+    [200, 300].forEach(x => { R.rrect(x - 7, 100, 14, 12, 2, { ink: 'B', w: 1, fi: 'T', ft: 0.8 }); });
+    [190, 224, 288, 312].forEach((x, i) => R.text('Ca^{2+}', x, i % 2 ? 92 : 126, 3.6, { al: 'c', ink: 'P' }));
+    // vesicles
+    synVesicle(R, 228, 62, 10, 4); synVesicle(R, 266, 78, 10, 4); synVesicle(R, 306, 60, 10, 4); synVesicle(R, 334, 86, 9, 4);
+    // a vesicle fusing at the membrane and releasing
+    R.arrow([312, 80, 306, 98], { ink: 'B', w: 0.9, hs: 2.4 }); R.text('vesicle fuses, ACh released', 380, 100, 3.6, { al: 'l' });
+    for (let i = 0; i < 9; i++) achTok(R, 252 + (i % 5) * 14, 126 + Math.floor(i / 5) * 14 + (i % 2) * 4, 1);
+    R.text('ACh diffuses across', 360, 130, 3.9, { al: 'l' }); R.text('the synaptic cleft', 360, 137, 3.9, { al: 'l' });
+    // cleft
+    R.fill([120, 108, 400, 108, 400, 168, 120, 168], { ink: 'T', t: 0.06, wob: 0.2 });
+    R.text('synaptic cleft', 150, 148, 4, { al: 'l' });
+    // postsynaptic membrane with receptors + Na channels, below y=168
+    R.stroke([108, 168, 160, 168, 400, 168, 420, 168], { ink: 'B', w: 1.8, taper: 'none' });
+    const post = [108, 172, 128, 238, 404, 238, 424, 172]; R.fill(post, { ink: 'P', t: 0.1, wob: 0.3 }); R.poly([108, 172, 108, 236, 424, 236, 424, 172], { ink: 'B', w: 1.2, wob: 0.3 });
+    R.text('postsynaptic neurone', 266, 200, 4.2, { al: 'c' });
+    [200, 248, 296, 344].forEach((x, i) => { R.knock([x - 10, 164, x + 10, 164, x + 10, 178, x - 10, 178]); R.rrect(x - 9, 164, 18, 12, 2, { ink: 'B', w: 1, fi: i % 2 ? 'T' : 'P', ft: 0.8 }); R.recept(x, 164, -PI / 2, 'tri', { w: 8, h: 4, n: 1.8, d: 2.2, len: 0 }); });
+    R.text('Na^+', 248, 190, 3.6, { al: 'c', ink: 'P' }); R.arrow([248, 180, 248, 196], { ink: 'P', w: 1.1, hs: 2.4 });
+    R.text('Na^+', 344, 190, 3.6, { al: 'c', ink: 'P' }); R.arrow([344, 180, 344, 196], { ink: 'P', w: 1.1, hs: 2.4 });
+    leader(R, 'ACh receptor', 296, 170, 296, 220, { size: 3.9, al: 'c' });
+    // acetylcholinesterase
+    R.ellipse(380, 154, 6.4, 4.6, { ink: 'B', w: 0.9, fi: 'T', ft: 0.8 }); leader(R, 'acetylcholinesterase', 380, 154, 450, 156, { size: 3.9, al: 'l' });
+    R.text('breaks ACh into', 450, 166, 3.5, { al: 'l' }); R.text('choline + ethanoate', 450, 172, 3.5, { al: 'l' });
+    // recycle arrow
+    R.stroke([404, 148, 436, 138, 440, 100, 412, 76], { ink: 'B', w: 1, smooth: true, taper: 'end' }); R.text('reabsorbed', 424, 126, 3.6, { al: 'l' }); R.text('and recycled', 424, 132, 3.6, { al: 'l' });
+    // legend numbers
+    [[124, 20, '1'], [186, 96, '2'], [322, 96, '3'], [226, 146, '4'], [270, 178, '5'], [352, 150, '6']].forEach(([x, y, n]) => R.bubble(x, y, 4, n));
+    // right: list
+    R.line(500, 24, 500, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    ['1 action potential arrives', '2 Ca^{2+} channels open: Ca^{2+} in', '3 vesicles fuse: ACh released', '4 ACh crosses the cleft, binds', '5 Na^+ channels open: depolarisation', '6 acetylcholinesterase removes ACh'].forEach((t, i) => R.text(t, 510, 40 + i * 14, 3.9, { al: 'l', ink: i === 5 ? 'P' : 'B' }));
+    R.text('unidirectional:', 580, 140, 4.4, { al: 'c', ink: 'P' }); R.text('vesicles and Ca^{2+} channels only presynaptic;', 580, 150, 3.5, { al: 'c' }); R.text('receptors only postsynaptic', 580, 157, 3.5, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); for (let i = 0; i < 5; i++) { const u = (p + i / 5) % 1; A.dot(252 + (i % 5) * 14 + Math.sin(i) * 3, 112 + u * 56, 1.6, 'Y', 0.95, i); } A.ion(208, 96 + p * 12, 'Ca^{2+}', 'P', 3.6, 9); },
+});
+
+/* ---------- 3.6.2.2b Summation, inhibition, neuromuscular junction, drugs ---------- */
+S({
+  id: '3.6.2.2b', num: '3.6.2.2', sub: 'Summation, inhibitory synapses, the neuromuscular junction and the effect of drugs', title: 'Synaptic transmission', topic: '3.6', slot: [0, 5], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.6.2.2.s4', '3.6.2.2.s5', '3.6.2.2.s6', '3.6.2.2.s7'],
+  card: {
+    text: '<b>Summation</b>: one impulse may not release enough neurotransmitter to reach threshold. <b>Temporal summation</b>: several impulses in quick succession at one presynaptic neurone release enough ACh to reach threshold. <b>Spatial summation</b>: impulses from several presynaptic neurones together release enough. <b>Inhibition</b>: at an inhibitory synapse the neurotransmitter opens <b>chloride ion channels</b> (Cl⁻ in) and <b>potassium ion channels</b> (K⁺ out), making the postsynaptic membrane more negative (<b>hyperpolarisation</b>) so an action potential is less likely. The <b>neuromuscular junction (NMJ)</b>: between a motor neurone and muscle, always excitatory (ACh), with a folded postsynaptic membrane with more receptors and ACh in a large amount; the response is an action potential in the muscle fibre. <b>Drugs</b> can block receptors, inhibit acetylcholinesterase, or mimic/stimulate neurotransmitter release; students predict and explain their effects from information given.',
+    terms: ['temporal summation', 'spatial summation', 'threshold', 'inhibitory synapse', 'chloride ion channel', 'hyperpolarisation', 'neuromuscular junction', 'motor end plate', 'drug', 'receptor'],
+    skill: 'Predict effects of a drug', eq: null,
+    q: 'Describe how temporal summation can bring a postsynaptic neurone to threshold.', a: 'Several action potentials arrive close together at one presynaptic knob, so enough ACh accumulates in the cleft to open enough Na⁺ channels and reach the threshold.'
+  },
+  draw(R, sc) {
+    // summation traces
+    R.text('summation', 100, 14, 4.8, { al: 'c' });
+    const gt = (x, y, title, f) => { const g = R.graph(x, y, 116, 58, { xmin: 0, xmax: 10, ymin: -75, ymax: -45, xl: '', yl: 'mV', xt: [], yt: [[-70, '-70'], [-55, '-55']], fs: 3.3, ylx: 3 }).axes(); g.hline(-55, { ink: 'P', w: 0.7, dash: true }); g.curve(f, { ink: 'T', w: 1.5, n: 80 }); R.text(title, x + 58, y - 4, 4, { al: 'c' }); return g; };
+    const tail = (t0, a, t) => t < t0 ? 0 : a * Math.exp(-(t - t0) / 1.6);
+    const g1 = gt(30, 34, 'one impulse: below threshold', t => -70 + tail(1, 7, t));
+    const g2 = gt(30, 112, 'temporal summation: threshold reached', t => -70 + tail(1, 7, t) + tail(2.2, 7, t) + tail(3.4, 7, t) + tail(4.6, 7, t) + tail(5.6, 7, t));
+    [1, 2.2, 3.4, 4.6, 5.6].forEach(t => R.arrow([g2.X(t), g2.Y(-47) - 3, g2.X(t), g2.Y(-47) + 8], { ink: 'P', w: 0.8, hs: 2 }));
+    R.text('spatial summation: impulses from several neurones add up', 100, 200, 3.9, { al: 'c' });
+    [0, 1, 2].forEach(i => { R.circle(40 + i * 0, 212 + i * 8, 3, { ink: 'B', w: 0.8, fi: 'P', ft: 0.6 }); R.line(44, 212 + i * 8, 84, 222, { ink: 'B', w: 0.9, taper: 'none' }); });
+    R.circle(92, 222, 7, { ink: 'B', w: 1, fi: 'T', ft: 0.5 }); R.text('postsynaptic', 128, 220, 3.5, { al: 'l' }); R.text('neurone', 128, 226, 3.5, { al: 'l' });
+    R.line(184, 22, 184, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // inhibition
+    R.text('inhibitory synapse', 258, 14, 4.8, { al: 'c' });
+    R.rrect(194, 28, 128, 34, 10, { ink: 'B', w: 1.2, fi: 'P', ft: 0.12, wob: 0.3 }); synVesicle(R, 220, 44, 8, 3); synVesicle(R, 252, 46, 8, 3);
+    R.fill([194, 62, 322, 62, 322, 98, 194, 98], { ink: 'T', t: 0.06, wob: 0.2 });
+    R.bilayer([194, 98, 322, 98], { gap: 6, hr: 2, sp: 5, tail: 3.2 }); R.knock([248, 88, 268, 88, 268, 108, 248, 108]); R.rrect(250, 89, 16, 18, 2, { ink: 'B', w: 1, fi: 'Y', ft: 0.7 }); R.knock([286, 88, 304, 88, 304, 108, 286, 108]); R.rrect(288, 89, 14, 18, 2, { ink: 'B', w: 1, fi: 'P', ft: 0.7 });
+    R.text('Cl^-', 258, 78, 3.8, { al: 'c', ink: 'P' }); R.arrow([258, 82, 258, 120], { ink: 'P', w: 1.2, hs: 2.6 }); R.text('K^+', 296, 128, 3.8, { al: 'c', ink: 'P' }); R.arrow([296, 118, 296, 80], { ink: 'P', w: 1.2, hs: 2.6 });
+    R.text('Cl^- in, K^+ out:', 258, 146, 4, { al: 'c' }); R.text('hyperpolarisation', 258, 153, 4, { al: 'c', ink: 'P' }); R.text('(less likely to reach threshold)', 258, 160, 3.6, { al: 'c' });
+    R.line(190, 168, 410, 168, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    // NMJ
+    R.text('neuromuscular junction', 300, 178, 4.8, { al: 'c' });
+    R.rrect(206, 184, 90, 24, 8, { ink: 'B', w: 1.1, fi: 'P', ft: 0.12, wob: 0.2 }); R.text('motor neurone', 251, 198, 3.7, { al: 'c' });
+    R.stroke([200, 216, 216, 212, 232, 220, 248, 212, 264, 220, 280, 212, 296, 220, 312, 212, 328, 220, 344, 214, 372, 218], { ink: 'B', w: 1.4, smooth: true, taper: 'none' }); R.rrect(196, 224, 192, 10, 4, { ink: 'B', w: 1.1, fi: 'P', ft: 0.2, wob: 0.2 });
+    R.text('muscle fibre: folded membrane, many receptors', 292, 241, 3.4, { al: 'c' });
+    R.text('always excitatory', 340, 190, 3.9, { al: 'l' }); R.text('ACh → muscle action potential', 340, 198, 3.7, { al: 'l', ink: 'P' });
+    // right: comparison + drugs
+    R.line(414, 22, 414, 232, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    R.text('synapse vs neuromuscular junction', 534, 14, 4.4, { al: 'c' });
+    R.table(424, 22, [66, 72, 72], 14, [['', 'synapse', 'NMJ'], ['between', 'neurones', 'neurone + muscle'], ['transmitter', 'ACh, others', 'ACh only'], ['effect', 'excite or inhibit', 'excitatory only'], ['membrane', 'smooth', 'folded, more receptors'], ['response', 'new impulse', 'muscle action potential']], { size: 3.5, hink: 'Y' });
+    R.text('drugs can change synaptic transmission', 534, 126, 4.4, { al: 'c' });
+    const dr = [['blocks receptors', 'less ACh binding: transmission falls'], ['inhibits acetylcholinesterase', 'ACh stays: more stimulation'], ['mimics ACh / more release', 'transmission rises']];
+    dr.forEach(([a, b], i) => { const y = 142 + i * 28; R.rrect(430, y, 208, 24, 6, { ink: 'B', w: 1, fi: ['P', 'Y', 'T'][i], ft: 0.12, wob: 0.15 }); R.text(a, 534, y + 10, 3.9, { al: 'c' }); R.text(b, 534, y + 19, 3.6, { al: 'c' }); });
+    R.text('(names of individual drugs are not required)', 534, 230, 3.4, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(5); A.dot(258, 80 + p * 36, 1.5, 'P', 0.9, 1); A.dot(296, 118 - p * 36, 1.5, 'P', 0.9, 2); },
+});
+
+/* ===================== 3.6.3 Skeletal muscles ===================== */
+/* sarcomere drawing: x0 Z-line left, width W (Z to Z), height H; contraction c in 0..1 (0 relaxed, 1 contracted).
+   thin filaments (actin, pink) attached to Z lines; thick filaments (myosin, teal) with heads in the centre. */
+function sarcomere(R, x0, y0, W, H, c, o = {}) {
+  const thick = o.thick || W * 0.52, cx = x0 + W / 2, tx0 = cx - thick / 2, tx1 = cx + thick / 2;
+  const rows = 4, dy = H / (rows + 1);
+  R.rect(x0 - 1.4, y0, 2.8, H, { ink: 'B', w: 1.0, fi: 'B', ft: 0.7, wob: 0.1 }); R.rect(x0 + W - 1.4, y0, 2.8, H, { ink: 'B', w: 1.0, fi: 'B', ft: 0.7, wob: 0.1 });
+  for (let r = 0; r < rows; r++) {
+    const y = y0 + dy * (r + 1) + (r % 2 ? 1.2 : -1.2);
+    // thin filaments from both Z lines
+    const len = o.thinLen || W * 0.4;
+    R.line(x0, y, x0 + len, y, { ink: 'P', w: 1.1, taper: 'none' }); R.line(x0 + W, y, x0 + W - len, y, { ink: 'P', w: 1.1, taper: 'none' });
+  }
+  // thick filaments in the middle, between thin rows
+  const tys = [y0 + dy * 1.5, y0 + dy * 2.5, y0 + dy * 3.5];
+  tys.forEach(y => { R.rect(tx0, y - 1.7, thick, 3.4, { ink: 'B', w: 0.8, fi: 'T', ft: 0.75, wob: 0.1 }); for (let k = 0; k < 7; k++) { const hx = tx0 + 3 + (thick - 6) * k / 6; if (Math.abs(hx - cx) < thick * 0.06) continue; R.line(hx, y - 1.7, hx + (hx < cx ? 1.6 : -1.6), y - 5, { ink: 'B', w: 0.6, taper: 'none' }); R.line(hx, y + 1.7, hx + (hx < cx ? 1.6 : -1.6), y + 5, { ink: 'B', w: 0.6, taper: 'none' }); } });
+  R.line(cx, y0, cx, y0 + H, { ink: 'B', w: 0.7, t: 0.8, taper: 'none' });
+  return { cx, tx0, tx1, x1: x0 + W, y0, H };
+}
+
+/* ---------- 3.6.3a Muscles in antagonistic pairs; gross and microscopic structure ---------- */
+S({
+  id: '3.6.3a', num: '3.6.3', sub: 'Antagonistic pairs; skeletal muscle from muscle to myofibril', title: 'Skeletal muscles', topic: '3.6', slot: [2, 5], span: [2, 1], dna: 'mark', ao: 1,
+  covers: ['3.6.3.s1', '3.6.3.s2'],
+  card: {
+    text: 'Skeletal muscles act in <b>antagonistic pairs</b> against an incompressible <b>skeleton</b>: when one contracts the other relaxes, e.g. the biceps (flexor) and triceps (extensor) at the elbow; tendons attach muscle to bone. <b>Gross structure</b>: a muscle is made of bundles of <b>muscle fibres</b> (long multinucleate cells, whose cell membrane is the <b>sarcolemma</b> and cytoplasm the <b>sarcoplasm</b>, with many mitochondria and sarcoplasmic reticulum). Each fibre contains many <b>myofibrils</b>, bundles of the protein filaments <b>actin</b> (thin) and <b>myosin</b> (thick), arranged in repeating units called <b>sarcomeres</b> that give the muscle its striped appearance.',
+    terms: ['skeletal muscle', 'antagonistic pair', 'tendon', 'muscle fibre', 'sarcolemma', 'sarcoplasm', 'myofibril', 'sarcomere', 'actin', 'myosin'],
+    skill: 'MS 1.8: magnification of a micrograph', eq: null,
+    q: 'Why must skeletal muscles work in antagonistic pairs?', a: 'A muscle can only pull when it contracts, so a second muscle is needed to pull the bone back the other way; the skeleton is incompressible so provides a firm lever.'
+  },
+  draw(R, sc) {
+    R.text('from muscle to myofibril', 332, 14, 5, { al: 'c' });
+    // arm: humerus, forearm (flexed), biceps above and triceps below
+    R.line(22, 118, 122, 118, { ink: 'B', w: 6, t: 0.55, taper: 'none', solid: false }); R.line(22, 118, 122, 118, { ink: 'B', w: 1.2, taper: 'none' });
+    R.line(122, 118, 192, 82, { ink: 'B', w: 6, t: 0.55, taper: 'none', solid: false }); R.line(122, 118, 192, 82, { ink: 'B', w: 1.2, taper: 'none' });
+    R.circle(122, 118, 5, { ink: 'B', w: 1, fi: 'Y', ft: 0.7 }); R.text('elbow joint', 130, 134, 3.7, { al: 'l' }); R.text('humerus', 30, 130, 3.7, { al: 'c' }); R.text('radius and ulna', 206, 113, 3.7, { al: 'r' });
+    R.ellipse(88, 98, 40, 11, { ink: 'B', w: 1.2, fi: 'P', ft: 0.5, rot: -6, wob: 0.3 }); R.line(46, 104, 36, 114, { ink: 'B', w: 1.2, taper: 'none' }); R.stroke([128, 92, 150, 92, 166, 92], { ink: 'B', w: 1.4, smooth: true, taper: 'none' }); R.line(166, 92, 160, 98, { ink: 'B', w: 1.2, taper: 'none' });
+    R.text('biceps (flexor)', 86, 78, 3.8, { al: 'c' }); R.text('tendon', 148, 82, 3.6, { al: 'c' });
+    R.ellipse(76, 136, 34, 8, { ink: 'B', w: 1.2, fi: 'T', ft: 0.45, rot: 4, wob: 0.3 }); R.stroke([108, 138, 120, 132, 124, 124], { ink: 'B', w: 1.4, smooth: true, taper: 'none' }); R.text('triceps (extensor)', 76, 154, 3.8, { al: 'c' });
+    R.arrow([88, 108, 88, 100], { ink: 'P', w: 0.001, hs: 0.1 }); R.arrow([200, 94, 207, 70], { ink: 'P', w: 1.3, hs: 3.4 }); R.text('forearm lifts', 196, 62, 3.7, { al: 'r', ink: 'P' });
+    R.text('biceps contracts, triceps relaxes:', 112, 172, 3.8, { al: 'c', ink: 'P' }); R.text('arm bends. Antagonistic pair acting', 112, 179, 3.8, { al: 'c' }); R.text('against an incompressible skeleton', 112, 186, 3.8, { al: 'c' });
+    R.line(212, 22, 212, 196, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // muscle -> fibres -> myofibril -> sarcomere
+    R.text('muscle', 266, 28, 4, { al: 'c' });
+    R.ellipse(266, 62, 40, 26, { ink: 'B', w: 1.3, fi: 'P', ft: 0.2, wob: 0.4 }); for (let i = 0; i < 7; i++) R.line(236 + i * 10, 62 - 24 + Math.abs(i - 3) * 2, 236 + i * 10, 62 + 24 - Math.abs(i - 3) * 2, { ink: 'B', w: 0.7, taper: 'both', t: 0.7 });
+    R.text('bundles of muscle fibres', 266, 100, 3.6, { al: 'c' });
+    R.arrow([312, 62, 332, 62], { ink: 'B', w: 1, hs: 2.4 });
+    R.text('muscle fibre', 380, 28, 4, { al: 'c' });
+    R.rrect(344, 52, 76, 22, 8, { ink: 'B', w: 1.2, fi: 'P', ft: 0.2, wob: 0.2 }); for (let k = 0; k < 6; k++) R.line(354 + k * 12, 56, 354 + k * 12, 70, { ink: 'B', w: 0.6, taper: 'none', t: 0.7 });
+    [356, 392].forEach(x => R.circle(x, 63, 3.2, { ink: 'B', w: 0.8, fi: 'B', ft: 0.5 })); R.text('many nuclei', 380, 86, 3.6, { al: 'c' }); R.text('sarcolemma = cell membrane; sarcoplasm = cytoplasm', 380, 94, 3.3, { al: 'c' });
+    R.arrow([424, 62, 444, 62], { ink: 'B', w: 1, hs: 2.4 });
+    R.text('myofibrils', 500, 28, 4, { al: 'c' });
+    for (let k = 0; k < 4; k++) { const y = 46 + k * 9; R.rect(448, y, 104, 6, { ink: 'B', w: 0.8, fi: 'P', ft: 0.25, wob: 0.1 }); for (let j = 0; j < 8; j++) R.line(454 + j * 13, y, 454 + j * 13, y + 6, { ink: 'B', w: 0.7, taper: 'none' }); }
+    R.text('each fibre has many myofibrils', 500, 94, 3.6, { al: 'c' });
+    R.line(212, 112, 656, 112, { ink: 'B', w: 0.01, taper: 'none' });
+    R.arrow([500, 100, 500, 132], { ink: 'B', w: 1, hs: 2.4 });
+    // sarcomere large
+    R.text('sarcomere: the repeating unit of a myofibril', 436, 140, 4.4, { al: 'c' });
+    const sx = sarcomere(R, 340, 158, 192, 52, 0);
+    R.text('Z line', 340, 224, 3.6, { al: 'c' }); R.text('Z line', 532, 224, 3.6, { al: 'c' });
+    R.text('actin (thin)', 384, 153, 3.8, { al: 'c', ink: 'P' }); R.text('myosin (thick)', 488, 153, 3.8, { al: 'c', ink: 'T' });
+    R.text('dark and light bands give the striped look', 436, 234, 3.7, { al: 'c' });
+    // left: micrograph style stripes
+    R.rect(228, 158, 92, 52, { ink: 'B', w: 1, fi: 'P', ft: 0.12, wob: 0.2 }); for (let k = 0; k < 9; k++) R.rect(234 + k * 10, 160, 5, 48, { ink: 'B', w: 0, fi: 'B', ft: 0.45 });
+    R.text('striped (striated) muscle', 274, 222, 3.7, { al: 'c' });
+  },
+  anim(A, sc) { const p = A.ph(4); A.dot(88 + Math.sin(p * TAU) * 26, 98 - Math.abs(Math.sin(p * TAU)) * 2, 1.5, 'P', 0.9, 1); },
+});
+
+/* ---------- 3.6.3b Ultrastructure of a myofibril: bands ---------- */
+S({
+  id: '3.6.3b', num: '3.6.3', sub: 'Ultrastructure of a myofibril: sarcomere bands in relaxed and contracted muscle', title: 'Skeletal muscles', topic: '3.6', slot: [0, 6], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.6.3.s2'],
+  card: {
+    text: 'A sarcomere runs from one <b>Z line</b> to the next. <b>Actin</b> (thin) filaments are attached to the Z lines; <b>myosin</b> (thick) filaments lie in the middle, held at the <b>M line</b>. The <b>A band</b> is the length of the myosin filaments (dark) and does not change on contraction. The <b>I band</b> is the region with actin only (light) and gets <b>shorter</b>. The <b>H zone</b> is the part of the A band with myosin only and gets <b>shorter</b> (may disappear). The sarcomere itself shortens as the actin filaments slide between the myosin filaments (<b>sliding filament theory</b>): the filaments do not shorten.',
+    terms: ['sarcomere', 'Z line', 'M line', 'A band', 'I band', 'H zone', 'actin', 'myosin', 'sliding filament', 'ultrastructure'],
+    skill: 'MS 1.8: measure sarcomere length', eq: null,
+    q: 'Which bands get shorter when a sarcomere contracts and which stays the same?', a: 'The I band and the H zone shorten (and the sarcomere); the A band stays the same length because myosin filaments do not shorten.'
+  },
+  draw(R, sc) {
+    R.text('relaxed', 150, 14, 4.8, { al: 'c' }); R.text('contracted', 150, 120, 4.8, { al: 'c' });
+    const W1 = 190, W2 = 150, thin = 80, H = 34, thick = 98;
+    const s1 = sarcomere(R, 40, 24, W1, H, 0, { thinLen: thin, thick }), s2 = sarcomere(R, 40, 134, W2, H, 1, { thinLen: thin, thick });
+    const bandRow = (s, W, y) => {
+      const zL = 40, zR = 40 + W, cx = s.cx, tL = s.tx0, tR = s.tx1;
+      R.arrow([tL, y, tR, y], { ink: 'T', w: 1, hs: 2.4, both: true }); R.text('A band', cx, y + 7.5, 3.8, { al: 'c', ink: 'T' });
+      R.arrow([zL, y + 11, tL, y + 11], { ink: 'P', w: 1, hs: 2.4, both: true }); R.text('I band', (zL + tL) / 2, y + 18.5, 3.6, { al: 'c', ink: 'P' });
+      R.arrow([tR, y + 11, zR, y + 11], { ink: 'P', w: 1, hs: 2.4, both: true }); R.text('I band', (tR + zR) / 2, y + 18.5, 3.6, { al: 'c', ink: 'P' });
+      const hL = zL + thin, hR = zR - thin;
+      if (hR > hL + 2) { R.arrow([hL, y + 22, hR, y + 22], { ink: 'B', w: 1, hs: 2.4, both: true }); R.text('H zone', cx, y + 29.5, 3.8, { al: 'c' }); } else R.text('H zone: gone', cx, y + 26.5, 3.8, { al: 'c' });
+      R.arrow([zL, y + 33, zR, y + 33], { ink: 'B', w: 1, hs: 2.4, both: true }); R.text('sarcomere', cx, y + 40.5, 3.8, { al: 'c' });
+    };
+    bandRow(s1, W1, 66); bandRow(s2, W2, 178);
+    R.text('Z', 40, 22, 3.8, { al: 'c' }); R.text('Z', 40 + W1, 22, 3.8, { al: 'c' }); R.text('M', s1.cx, 22, 3.8, { al: 'c' });
+    R.text('Z', 40, 132, 3.8, { al: 'c' }); R.text('Z', 40 + W2, 132, 3.8, { al: 'c' }); R.text('M', s2.cx, 132, 3.8, { al: 'c' });
+    R.line(268, 22, 268, 238, { ink: 'B', w: 0.5, t: 0.5, taper: 'none' });
+    // table of bands
+    R.text('what changes on contraction', 440, 28, 4.8, { al: 'c' });
+    R.table(280, 36, [70, 60, 100], 13, [['band / zone', 'length', 'because'], ['A band', 'same', 'myosin does not shorten'], ['I band', 'shorter', 'actin slides in'], ['H zone', 'shorter', 'actin slides in'], ['sarcomere', 'shorter', 'Z lines pulled together']], { size: 3.9, hink: 'Y' });
+    R.text('sliding filament theory', 440, 120, 4.4, { al: 'c', ink: 'P' });
+    ['the actin filaments slide between', 'the myosin filaments, pulling the', 'Z lines towards each other', 'neither set of filaments shortens'].forEach((t, i) => R.text(t, 440, 134 + i * 8, 4, { al: 'c' }));
+    R.text('legend', 440, 178, 3.8, { al: 'c' }); R.line(300, 188, 320, 188, { ink: 'P', w: 1.6, taper: 'none' }); R.text('actin (thin)', 326, 190, 3.8, { al: 'l', ink: 'P' }); R.rect(396, 186, 20, 4, { ink: 'B', w: 0.8, fi: 'T', ft: 0.75 }); R.text('myosin (thick)', 422, 190, 3.8, { al: 'l', ink: 'T' });
+    R.rect(300, 198, 4, 12, { ink: 'B', w: 0.8, fi: 'B', ft: 0.7 }); R.text('Z line', 308, 207, 3.8, { al: 'l' });
+  },
+  anim(A, sc) { const p = A.ph(5); const k = 0.5 - 0.5 * Math.cos(p * TAU); const W = 190 - 40 * k; A.dot(40 + W, 42, 2.4, 'P', 0.8, 1); A.dot(40 + 190 - W + 0, 42, 0, 'P', 0, 2); },
+});
+
+/* ===================== 3.6.3 (cont.) Contraction cycle, ATP / phosphocreatine, fibre types ===================== */
+/* one frame of the actinomyosin cycle.  st: 0 resting, 1 bound, 2 power stroke, 3 detached (ATP), 4 re-cocked.
+   Actin (pink) hangs above the myosin filament (teal); the myosin head is a pear on a flexible neck. */
+function crossFrame(R, x0, st) {
+  const fw = 78, ay = 44, by = 92, bx = x0 + 30;
+  R.rrect(x0, 20, fw, 84, 5, { ink: 'B', w: 0.7, fi: 'Y', ft: 0.05, t: 0.8, wob: 0.3 });
+  // actin shifted left by 16.8 once the power stroke has happened
+  const sh = st >= 2 ? -16.8 : 0, sites = [14, 40, 66].map(v => x0 + v + sh).filter(v => v > x0 + 3 && v < x0 + fw - 3);
+  R.line(x0 + 2, ay, x0 + fw - 2, ay, { ink: 'P', w: 2.6, taper: 'none', wob: 0.1 });
+  sites.forEach(sx => R.rect(sx - 2, ay + 1.6, 4, 3.2, { ink: 'B', w: 0.5, fi: 'Y', ft: 0.9, wob: 0.05 }));
+  // tropomyosin: blocks the sites when resting, pulled aside when Ca2+ has bound
+  const ty = st === 0 ? ay + 6.6 : ay - 5, tp = [];
+  for (let k = 0; k <= 9; k++) tp.push(x0 + 4 + k * 7.8 + (st >= 2 ? sh * 0.0 : 0), ty + Math.sin(k * 1.3 + st) * 1.1);
+  R.stroke(tp, { ink: 'T', w: 1.7, smooth: true, taper: 'none', wob: 0.1 });
+  if (st >= 1) R.circle(x0 + 14, ty, 2.0, { ink: 'B', w: 0.6, fi: 'P', ft: 0.9 });   // the protein attached to tropomyosin that Ca2+ binds
+  // myosin thick filament
+  R.rect(x0 + 2, by, fw - 4, 7, { ink: 'B', w: 0.9, fi: 'T', ft: 0.75, wob: 0.1 });
+  // head
+  const px = bx, py = st === 3 ? 70 : 66, phi = [-45, -60, -110, -105, -45][st];
+  R.line(px, by, px, py, { ink: 'B', w: 1.4, taper: 'none', wob: 0.1 });
+  const hx = px + Math.cos(rad(phi)) * 10, hy = py + Math.sin(rad(phi)) * 10;
+  R.ellipse(hx, hy, 10, 4.2, { ink: 'B', w: 1.0, fi: 'P', ft: 0.6, rot: phi, wob: 0.1 });
+  R.circle(px, py, 1.5, { ink: 'B', w: 0.6, fi: 'B', ft: 0.8 });
+  if (st === 3) tok(R, hx + 12, hy + 7, 'ATP', { r: 5.2, fi: 'Y', ft: 0.9, size: 3.6 });
+  if (st === 1) { tok(R, x0 + 14, 28, 'Ca^{2+}', { r: 5.6, fi: 'P', ft: 0.45, size: 3.4 }); R.arrow([x0 + 14, 34, x0 + 14, ty - 3.6], { ink: 'B', w: 0.6, hs: 1.8 }); }
+  if (st === 2) R.arrow([x0 + 70, ay - 8, x0 + 52, ay - 8], { ink: 'P', w: 1.2, hs: 2.8 });
+  if (st === 4) R.arrow([hx + 7, hy - 3, x0 + 49, ay + 8], { ink: 'B', w: 0.8, hs: 2 });
+  if (st === 0) R.text('Ca^{2+} absent', x0 + fw / 2, 31, 3.3, { al: 'c' });
+}
+
+/* ---------- 3.6.3c Actinomyosin cycle; ATP and phosphocreatine; slow and fast fibres ---------- */
+S({
+  id: '3.6.3c', num: '3.6.3', sub: 'Cross-bridge cycle, ATP and phosphocreatine, slow and fast fibres', title: 'Skeletal muscles', topic: '3.6', slot: [2, 6], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.3.s3', '3.6.3.s4', '3.6.3.s5', '3.6.3.s6'],
+  card: {
+    text: 'In resting muscle <b>tropomyosin</b> blocks the myosin-binding sites on <b>actin</b>. When an action potential reaches the muscle, <b>calcium ions</b> are released into the sarcoplasm; they bind to a protein on tropomyosin, which moves and exposes the binding sites. A <b>myosin head</b> binds to actin forming an <b>actinomyosin bridge</b>, then bends (<b>power stroke</b>), pulling the actin filament along. <b>ATP</b> binds to the head so it detaches; ATP hydrolysis (by ATPase, activated by Ca²⁺) provides energy to return the head to its original position so it can bind further along. The cycle repeats while Ca²⁺ is present; Ca²⁺ is actively transported back into the sarcoplasmic reticulum using ATP. <b>Phosphocreatine</b> stores a phosphate that can rapidly regenerate ATP from ADP, anaerobically and without lactate, but only for a few seconds. <b>Slow</b> fibres (posture, endurance) are rich in mitochondria, capillaries and myoglobin; <b>fast</b> fibres (sprinting, power) have few mitochondria and capillaries, little myoglobin, and stores of glycogen and phosphocreatine; they fatigue quickly.',
+    terms: ['actinomyosin bridge', 'tropomyosin', 'calcium ions', 'ATP', 'phosphocreatine', 'power stroke', 'sarcoplasmic reticulum', 'slow fibre', 'fast fibre', 'myoglobin'],
+    skill: 'AT h: investigate muscle fatigue (repeated contractions)', eq: MATH(mt('ADP + phosphocreatine '), mo('→'), mt(' ATP + creatine')),
+    q: 'Why do muscles stay relaxed when calcium ion concentration in the sarcoplasm is low?', a: 'Tropomyosin covers the myosin-binding sites on actin, so myosin heads cannot attach and no actinomyosin bridges form.'
+  },
+  draw(R, sc) {
+    const names = ['resting', 'cross bridge forms', 'power stroke', 'ATP: head detaches', 're-cocked, rebinds'];
+    const caps = [
+      ['tropomyosin blocks the', 'binding sites on actin'],
+      ['Ca^{2+} binds a protein on', 'tropomyosin; sites exposed;', 'head (ADP + P_i) binds'],
+      ['head bends, pulling actin', 'towards the sarcomere', 'centre; ADP + P_i released'],
+      ['new ATP binds the head;', 'the cross bridge breaks'],
+      ['ATP hydrolysed: energy', 'returns head to start;', 'it binds further along'],
+    ];
+    for (let i = 0; i < 5; i++) {
+      const x0 = 8 + i * 86;
+      R.text(names[i], x0 + 39, 14, 3.6, { al: 'c', ink: i === 2 ? 'P' : 'B' });
+      crossFrame(R, x0, i);
+      caps[i].forEach((t, j) => R.text(t, x0 + 39, 112 + j * 5.2, 3.3, { al: 'c' }));
+      if (i < 4) R.arrow([x0 + 79, 62, x0 + 85, 62], { ink: 'B', w: 0.8, hs: 2 });
+    }
+    R.text('actin', 12, 39, 3.4, { al: 'l', ink: 'P' });
+    R.text('cycle repeats while Ca^{2+} is present', 220, 132, 3.7, { al: 'c', ink: 'P' });
+    // where the calcium comes from
+    const boxes = [['action potential', 'depolarises the', 'sarcolemma'], ['spreads down', 'T-tubules to the', 'sarcoplasmic reticulum'], ['SR releases', 'Ca^{2+} into the', 'sarcoplasm'], ['Ca^{2+} present:', 'bridges keep', 'cycling, muscle shortens'], ['stimulation stops:', 'Ca^{2+} pumped into SR', '(active transport, ATP)']];
+    boxes.forEach((b, i) => { const x0 = 8 + i * 86; R.rrect(x0, 138, 78, 28, 4, { ink: 'B', w: 0.8, fi: i === 2 ? 'P' : i === 4 ? 'T' : 'Y', ft: 0.12, wob: 0.3 }); b.forEach((t, j) => R.text(t, x0 + 39, 146 + j * 6.2, 3.3, { al: 'c' })); if (i < 4) R.arrow([x0 + 79, 152, x0 + 85, 152], { ink: 'B', w: 0.8, hs: 2 }); });
+    // ATP and phosphocreatine
+    R.rrect(8, 174, 206, 60, 5, { ink: 'B', w: 0.9, fi: 'Y', ft: 0.12, wob: 0.3 });
+    tok(R, 22, 188, 'ATP', { r: 6, fi: 'Y', ft: 0.9, size: 4 });
+    R.text('ATP is needed to:', 34, 190, 4.2, { al: 'l' });
+    ['bend the head (power stroke)', 'detach the head from actin', 'pump Ca^{2+} back into the SR'].forEach((t, i) => { R.dot(18, 200.5 + i * 10, 0.9, { ink: 'P' }); R.text(t, 23, 202 + i * 10, 4, { al: 'l' }); });
+    R.rrect(222, 174, 208, 60, 5, { ink: 'B', w: 0.9, fi: 'P', ft: 0.1, wob: 0.3 });
+    R.text('phosphocreatine (PCr)', 326, 186, 4.4, { al: 'c', ink: 'P' });
+    R.text('ADP + PCr  →  ATP + Cr', 326, 199, 4.8, { al: 'c' });
+    ['store in muscle: regenerates ATP very quickly', 'anaerobic, no lactate', 'runs out after a few seconds'].forEach((t, i) => R.text(t, 326, 210.5 + i * 7.2, 3.7, { al: 'c' }));
+    // slow versus fast fibres
+    R.line(436, 12, 436, 236, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('slow and fast skeletal muscle fibres', 548, 14, 4.4, { al: 'c' });
+    R.table(444, 20, [48, 84, 76], 12.6, [['', 'slow', 'fast'], ['speed', 'contract slowly', 'contract quickly'], ['fatigue', 'slowly', 'quickly'], ['use', 'endurance, posture', 'short bursts, power'], ['ATP from', 'aerobic respiration', 'glycolysis, PCr'], ['mitochondria', 'many', 'few'], ['capillaries', 'many', 'few'], ['myoglobin', 'lots (red)', 'little (pale)'], ['found in', 'back, calves', 'legs, arms, eyes']], { size: 3.5, hink: 'Y' });
+    // fibre drawings
+    const fibre = (x, y, slow) => {
+      R.rrect(x, y, 92, 30, 9, { ink: 'B', w: 1.1, fi: 'P', ft: slow ? 0.38 : 0.06, wob: 0.3 });
+      const n = slow ? 9 : 2;
+      for (let k = 0; k < n; k++) { const mx = x + 10 + (slow ? k * 9 : 20 + k * 40), my = (k % 2 ? y + 7 : y + 23); R.ellipse(mx, my, 3.6, 2.2, { ink: 'B', w: 0.6, fi: 'T', ft: 0.7, wob: 0.1 }); }
+      if (!slow) R.scatter(x + 46, y + 15, 34, 6, 18, 0.5, { ink: 'B', t: 0.7 });
+      if (slow) { R.circle(x + 22, y + 36, 3.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.circle(x + 66, y + 36, 3.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); }
+    };
+    R.text('slow twitch fibre', 492, 144, 3.8, { al: 'c' }); R.text('fast twitch fibre', 598, 144, 3.8, { al: 'c' });
+    fibre(446, 150, true); fibre(552, 150, false);
+    R.ellipse(458, 212, 3.6, 2.2, { ink: 'B', w: 0.6, fi: 'T', ft: 0.7 }); R.text('mitochondrion', 464, 213.5, 3.5, { al: 'l' });
+    R.circle(536, 212, 3.2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.7 }); R.text('capillary', 542, 213.5, 3.5, { al: 'l' });
+    R.scatter(594, 212, 5, 3, 8, 0.5, { ink: 'B', t: 0.7 }); R.text('glycogen', 602, 213.5, 3.5, { al: 'l' });
+    R.text('slow: red, aerobic, endurance. fast: pale, stores for short bursts', 548, 228, 3.5, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let i = 0; i < 3; i++) { const u = (p + i / 3) % 1; A.ion(94 + 40 + i * 13, 24 + u * 9, 'Ca^{2+}', 'P', 2.9, i); }
+    A.atp(22, 188 + Math.sin(p * TAU) * 1.2, 5.2, 7);
+  },
+});
+
+/* ===================== 3.6.4.1 Principles of homeostasis and negative feedback ===================== */
+const TEMP_F = x => 37 + 0.45 * Math.sin(x * 1.5 + 0.6);
+S({
+  id: '3.6.4.1', num: '3.6.4.1', sub: 'Principles of homeostasis and negative feedback', title: 'Principles of homeostasis and negative feedback', topic: '3.6', slot: [0, 7], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.4.1.s1', '3.6.4.1.s2', '3.6.4.1.s3', '3.6.4.1.s4', '3.6.4.1.s5', '3.6.4.1.s6'],
+  card: {
+    text: '<b>Homeostasis</b> is the maintenance of a stable internal environment within restricted limits by physiological control systems. A stable <b>core temperature</b> and <b>blood pH</b> matter because they affect <b>enzyme</b> activity (too hot or too far from the optimum pH and enzymes are <b>denatured</b>; too cold and reactions are slow). A stable <b>blood glucose</b> concentration matters because glucose is the <b>respiratory substrate</b> and because it affects the <b>water potential</b> of the blood. <b>Negative feedback</b> (receptor → communication by nervous or hormonal system → effector) <b>restores</b> a system to its original level. Having <b>separate mechanisms</b> for departures in each direction gives greater control. <b>Positive feedback</b> amplifies a change away from the original level, so it is not part of homeostasis (e.g. platelets activating more platelets).',
+    terms: ['homeostasis', 'negative feedback', 'positive feedback', 'receptor', 'effector', 'core temperature', 'blood pH', 'enzyme activity', 'water potential', 'respiratory substrate'],
+    skill: 'MS 0.5: pH is a log scale; each pH unit is a tenfold change in [H⁺]', eq: MATH(mt('pH '), mo('='), mo('−'), msub(mt('log'), mn(10)), mo('['), msup(mr('H'), mo('+')), mo(']')),
+    q: 'Why does having two separate negative feedback mechanisms give better control than one?', a: 'One mechanism can only be switched on or off, so the level can be corrected in one direction only; two opposing mechanisms can actively raise or lower the level, giving faster and finer control.'
+  },
+  draw(R, sc) {
+    const box = (x, y, w, h, lines, fi, ft = 0.14) => { R.rrect(x, y, w, h, 4, { ink: 'B', w: 0.9, fi, ft, wob: 0.3 }); lines.forEach((t, i) => R.text(t, x + w / 2, y + h / 2 + 1.3 - (lines.length - 1) * 3.2 + i * 6.4, 3.6, { al: 'c' })); };
+    // ---- A: negative feedback loop ----
+    R.text('negative feedback', 111, 14, 4.8, { al: 'c' });
+    box(12, 26, 88, 26, ['level departs', 'from normal'], 'Y'); box(120, 26, 88, 26, ['receptors detect', 'the change'], 'T');
+    box(120, 90, 88, 26, ['communication:', 'nervous or hormonal'], 'B', 0.1); box(12, 90, 88, 26, ['effectors respond', 'to oppose it'], 'P');
+    R.arrow([101, 39, 119, 39], { ink: 'B', w: 1, hs: 2.6 }); R.arrow([164, 53, 164, 89], { ink: 'B', w: 1, hs: 2.6 });
+    R.arrow([119, 103, 101, 103], { ink: 'B', w: 1, hs: 2.6 }); R.arrow([56, 89, 56, 53], { ink: 'B', w: 1, hs: 2.6 });
+    R.text('level brought back', 110, 67, 3.8, { al: 'c', ink: 'P' }); R.text('towards normal', 110, 73.5, 3.8, { al: 'c', ink: 'P' });
+    // positive feedback (not homeostasis)
+    R.line(12, 124, 208, 124, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('positive feedback: amplifies the change', 111, 133, 4, { al: 'c', ink: 'P' });
+    const gp = R.graph(26, 144, 82, 70, { xmin: 0, xmax: 1, ymin: 0, ymax: 1, xl: 'time', yl: 'level', fs: 3.4, xly: 9, ylx: 4 }).axes();
+    gp.hline(0.35, { dash: true, t: 0.7 }); gp.label('normal', 0.5, 0.35, { dy: 6, size: 3.2 });
+    gp.curve(x => x < 0.3 ? 0.35 + 0.03 * Math.sin(x * 40) : 0.35 + 0.65 * (Math.exp(5 * (x - 0.3)) - 1) / (Math.exp(3.5) - 1), { ink: 'P', w: 1.5, n: 50 });
+    ['e.g. blood clotting:', 'activated platelets', 'release a chemical that', 'activates more platelets', '', 'e.g. hypothermia:', 'shivering stops as', 'temperature falls'].forEach((t, i) => { if (t) R.text(t, 120, 150 + i * 6, 3.4, { al: 'l', ink: i === 0 || i === 5 ? 'P' : 'B' }); });
+    R.line(220, 14, 220, 230, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // ---- B: temperature trace and two mechanisms ----
+    R.text('body temperature: kept within about 0.5 °C of 37 °C', 330, 14, 4.2, { al: 'c' });
+    const g = R.graph(258, 30, 168, 84, { xmin: 0, xmax: 10, ymin: 36.2, ymax: 37.8, xl: 'time', yl: 'temperature / °C', yt: [[37, '37']], fs: 3.8, xly: 10, ylx: 17 }).axes();
+    R.rect(g.x, g.Y(37.5), g.w, g.Y(36.5) - g.Y(37.5), { ink: 'T', w: 0, fi: 'T', ft: 0.1, wob: 0.1 });
+    g.hline(37, { dash: true, t: 0.8 }); g.curve(TEMP_F, { ink: 'P', w: 1.6, n: 70 });
+        R.arrow([g.X(4.84) + 4, g.Y(37.4), g.X(5.55), g.Y(37.12)], { ink: 'B', w: 0.8, hs: 2.2 }); R.text('too high:', g.X(4.84) - 2, g.Y(37.55) - 5.5, 3.5, { al: 'c' }); R.text('effectors lower it', g.X(4.84) + 1, g.Y(37.55), 3.5, { al: 'c', ink: 'P' });
+    R.arrow([g.X(6.93) + 3, g.Y(36.62), g.X(7.55), g.Y(36.92)], { ink: 'B', w: 0.8, hs: 2.2 }); R.text('too low:', g.X(6.93) - 6, g.Y(36.42) + 1, 3.5, { al: 'c' }); R.text('effectors raise it', g.X(6.93) + 2, g.Y(36.42) + 6.5, 3.5, { al: 'c', ink: 'T' });
+    R.line(232, 132, 436, 132, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('separate mechanisms for each direction', 334, 142, 4.1, { al: 'c' });
+    R.rrect(250, 150, 18, 78, 5, { ink: 'B', w: 0.9, fi: 'T', ft: 0.08, wob: 0.3 }); R.line(246, 189, 272, 189, { ink: 'B', w: 1.4, taper: 'none' }); R.text('normal', 244, 191, 3.4, { al: 'r' });
+    R.arrow([282, 156, 282, 183], { ink: 'P', w: 1.6, hs: 3.6 }); R.arrow([282, 226, 282, 195], { ink: 'T', w: 1.6, hs: 3.6 });
+    ['mechanism that', 'decreases the level'].forEach((t, i) => R.text(t, 290, 164 + i * 6.4, 3.8, { al: 'l', ink: 'P' })); ['mechanism that', 'increases the level'].forEach((t, i) => R.text(t, 290, 208 + i * 6.4, 3.8, { al: 'l', ink: 'T' }));
+    ['two opposing mechanisms:', 'level can be pushed back', 'actively from either side', 'greater control'].forEach((t, i) => R.text(t, 366, 164 + i * 6.6, 3.6, { al: 'l', ink: i === 3 ? 'P' : 'B' }));
+    ['one mechanism only:', 'can only be switched', 'on or off: slower', 'response, less control'].forEach((t, i) => R.text(t, 366, 202 + i * 6.6, 3.6, { al: 'l' }));
+    R.line(444, 14, 444, 230, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // ---- C: why it matters ----
+    R.text('why a stable internal environment matters', 550, 14, 4.2, { al: 'c' });
+    const gt = R.graph(468, 34, 70, 48, { xmin: 0, xmax: 60, ymin: 0, ymax: 1.05, xl: 'temperature / °C', yl: 'enzyme rate', xt: [[37, '37']], fs: 3.6, xly: 14, ylx: 4 }).axes();
+    gt.curve(T => Math.exp(-Math.pow((T - 38) / (T < 38 ? 14 : 4.5), 2)), { ink: 'P', w: 1.4, n: 60 }); gt.vdrop(38, 1, { t: 0.7 });
+    R.text('denatured', gt.X(52), gt.Y(0.62), 3.3, { al: 'c' });
+    const gh = R.graph(572, 34, 70, 48, { xmin: 2, xmax: 12, ymin: 0, ymax: 1.05, xl: 'pH', yl: 'enzyme rate', xt: [[7.4, '7.4']], fs: 3.6, xly: 14, ylx: 4 }).axes();
+    gh.curve(p => Math.exp(-Math.pow((p - 7.4) / 1.5, 2)), { ink: 'P', w: 1.4, n: 60 }); gh.vdrop(7.4, 1, { t: 0.7 });
+        R.text('too hot / wrong pH: bonds that hold the', 550, 104, 3.5, { al: 'c' }); R.text('enzyme shape break: active site changes', 550, 110, 3.5, { al: 'c' });
+    R.line(450, 115, 654, 115, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const blood = (x, n, y) => {
+      R.rrect(x, 128, 94, 22, 4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.12, wob: 0.3 });
+      for (let i = 0; i < n; i++) glucTok(R, x + 8 + (i % 7) * 12.5, 134 + Math.floor(i / 7) * 10, 3.4);
+    };
+    R.text('blood glucose too high', 501, 124, 3.8, { al: 'c' }); R.text('blood glucose too low', 605, 124, 3.8, { al: 'c' });
+    blood(454, 12); blood(558, 2);
+    // cell, shrunk (left) and with few resources (right)
+    const shr = [501, 176, 16, 11];
+    R.ellipse(shr[0], shr[1], shr[2], shr[3], { ink: 'B', w: 1.2, fi: 'T', ft: 0.12, wob: 0.8 });
+    R.circle(shr[0] - 3, shr[1], 4, { ink: 'B', w: 0.8, fi: 'B', ft: 0.4 });
+    [-8, 0, 8].forEach(dx => R.drop(501 + dx * 1.6, 158, 2.8, { label: false, ft: 0.6 })); R.arrow([492, 160, 492, 150], { ink: 'T', w: 1, hs: 2.4 }); R.arrow([510, 160, 510, 150], { ink: 'T', w: 1, hs: 2.4 });
+    ['water potential of blood falls:', 'water leaves the cells by osmosis'].forEach((t, i) => R.text(t, 501, 202 + i * 6.2, 3.4, { al: 'c' })); R.text('cells shrivel', 501, 219, 3.5, { al: 'c', ink: 'P' });
+    R.circle(605, 176, 18, { ink: 'B', w: 1.2, fi: 'T', ft: 0.12, wob: 0.5 });
+    R.mito(598, 180, 18, 8, 0); R.circle(612, 168, 3.6, { ink: 'B', w: 0.8, fi: 'B', ft: 0.4 });
+    ['not enough respiratory substrate', 'for respiration: little ATP'].forEach((t, i) => R.text(t, 605, 202 + i * 6.2, 3.4, { al: 'c' })); R.text('cells cannot function', 605, 219, 3.5, { al: 'c', ink: 'P' });
+  },
+  anim(A, sc) {
+    const p = A.ph(6), seg = Math.floor(p * 4), u = p * 4 - seg, P = [[100, 39, 120, 39], [164, 52, 164, 90], [120, 103, 100, 103], [56, 90, 56, 52]][seg];
+    A.dot(P[0] + (P[2] - P[0]) * u, P[1] + (P[3] - P[1]) * u, 1.9, seg % 2 ? 'P' : 'Y', 0.95, 1);
+    const x = p * 10; A.dot(258 + x * 16.8, 30 + 84 - (TEMP_F(x) - 36.2) / 1.6 * 84, 2.1, 'B', 0.9, 2);
+  },
+});
+
+/* ===================== 3.6.4.2 Control of blood glucose concentration ===================== */
+const gaus = (t, c, a, b) => Math.exp(-Math.pow((t - c) / (t < c ? a : b), 2));
+const GLC = t => 0.45 + 0.36 * gaus(t, 3, 0.6, 1.1) - 0.24 * gaus(t, 8, 0.8, 1.2);
+const INS = t => 0.2 + 0.55 * gaus(t, 3.4, 0.7, 1.2) - 0.12 * gaus(t, 8, 0.9, 0.9);
+const GLG = t => 0.25 + 0.45 * gaus(t, 8.2, 0.8, 1.3) - 0.12 * gaus(t, 3.2, 1, 1);
+
+S({
+  id: '3.6.4.2a', num: '3.6.4.2', sub: 'Blood glucose: factors, pancreas, liver and the two feedback loops', title: 'Control of blood glucose concentration', topic: '3.6', slot: [2, 7], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.4.2.s1', '3.6.4.2.s2', '3.6.4.2.s3', '3.6.4.2.s4', '3.6.4.2.s5'],
+  card: {
+    text: 'Blood glucose concentration is raised by <b>carbohydrate in the diet</b>, <b>glycogenolysis</b> and <b>gluconeogenesis</b>, and lowered by <b>respiration</b> and by cells taking glucose up. The <b>liver</b> carries out <b>glycogenesis</b> (glucose → glycogen), <b>glycogenolysis</b> (glycogen → glucose) and <b>gluconeogenesis</b> (making glucose from non-carbohydrates, e.g. glycerol and amino acids). When glucose rises, <b>β cells</b> in the <b>islets of Langerhans</b> secrete <b>insulin</b>; when it falls, <b>α cells</b> secrete <b>glucagon</b>; <b>adrenaline</b> also raises blood glucose. Each hormone binds to <b>receptors</b> on the surface of its target cells and activates enzymes. Two opposing hormones give <b>negative feedback</b> control in both directions.',
+    terms: ['blood glucose', 'islets of Langerhans', 'β cell', 'α cell', 'insulin', 'glucagon', 'adrenaline', 'glycogenesis', 'glycogenolysis', 'gluconeogenesis', 'negative feedback'],
+    skill: 'MS 3.1: interpret hormone and glucose traces after a meal', eq: null,
+    q: 'Name the process that makes glucose from glycerol and amino acids and the hormone that activates it.', a: 'Gluconeogenesis, activated by glucagon.'
+  },
+  draw(R, sc) {
+    const box = (x, y, lines, fi, ft = fi === 'T' ? 0.07 : fi === 'P' ? 0.09 : 0.13) => { R.rrect(x, y, 78, 38, 4, { ink: 'B', w: 0.8, fi, ft, wob: 0.3 }); lines.forEach((t, i) => R.text(t, x + 39, y + 19 - (lines.length - 1) * 3 + 1.2 + i * 6, 3.25, { al: 'c' })); };
+    const rows = [
+      { y: 22, tag: 'glucose too high (e.g. after a meal)', ink: 'T', b: [[['blood glucose', 'concentration', 'rises'], 'Y'], [['beta cells of the', 'islets of Langerhans', 'detect the rise'], 'P'], [['beta cells secrete', 'insulin'], 'P'], [['liver and muscle:', 'glycogenesis,', 'more glucose uptake'], 'T'], [['blood glucose', 'falls to normal'], 'Y']] },
+      { y: 80, tag: 'glucose too low (e.g. exercise, fasting)', ink: 'P', b: [[['blood glucose', 'concentration', 'falls'], 'Y'], [['alpha cells of the', 'islets of Langerhans', 'detect the fall'], 'T'], [['alpha cells secrete', 'glucagon; adrenaline', 'also released'], 'T'], [['liver: glycogenolysis', 'and gluconeogenesis'], 'P'], [['blood glucose', 'rises to normal'], 'Y']] },
+    ];
+    rows.forEach(r => { R.text(r.tag, 8, r.y - 4, 3.9, { al: 'l', ink: r.ink }); r.b.forEach((b, i) => { box(8 + i * 86, r.y, b[0], b[1]); if (i < 4) R.arrow([8 + i * 86 + 79, r.y + 19, 8 + i * 86 + 85, r.y + 19], { ink: 'B', w: 0.8, hs: 2 }); }); });
+    // processes in the liver
+    R.table(8, 130, [62, 84, 64, 46], 12.4, [['process', 'converts', 'activated by', 'inhibited by'], ['glycogenesis', 'glucose → glycogen', 'insulin', 'adrenaline'], ['glycogenolysis', 'glycogen → glucose', 'glucagon, adrenaline', 'none'], ['gluconeogenesis', 'glycerol, amino acids → glucose', 'glucagon', 'none']], { size: 3.2, hink: 'Y' });
+    R.text('all three happen in the liver;', 132, 190, 3.5, { al: 'c' }); R.text('hormones bind to receptors on target cells', 132, 196.5, 3.5, { al: 'c' });
+    // islet of Langerhans
+    R.ellipse(375, 168, 54, 30, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.12, wob: 0.6 });
+    R.stroke([325, 178, 350, 172, 375, 176, 400, 166, 426, 170], { ink: 'B', w: 6, smooth: true, taper: 'none', wob: 0.2, t: 0.0 });
+    R.stroke([325, 178, 350, 172, 375, 176, 400, 166, 426, 170], { ink: 'P', w: 4.4, smooth: true, taper: 'none', wob: 0.2, t: 0.5 });
+    [[360, 160], [372, 158], [384, 160], [366, 150], [380, 150], [392, 152], [354, 152], [374, 142]].forEach(([x, y]) => R.circle(x, y, 4.2, { ink: 'B', w: 0.7, fi: 'P', ft: 0.55, wob: 0.1 }));
+    [[342, 163], [348, 150], [404, 162], [398, 148], [362, 188], [392, 186]].forEach(([x, y]) => R.circle(x, y, 3.8, { ink: 'B', w: 0.7, fi: 'T', ft: 0.7, wob: 0.1 }));
+    leader(R, 'beta cells: insulin', 355, 153, 326, 150, { size: 3.4, al: 'r', ink: 'P' }); leader(R, 'alpha cells: glucagon', 362, 188, 372, 214, { size: 3.4, al: 'r', ink: 'T' }); leader(R, 'blood capillary', 421, 169, 426, 224, { size: 3.4, al: 'r' });
+    R.text('islet of Langerhans (in the pancreas)', 375, 133, 3.5, { al: 'c' });
+    // traces
+    R.line(448, 14, 448, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('after a meal, then exercise', 552, 14, 4.2, { al: 'c' });
+    const g = R.graph(470, 26, 170, 98, { xmin: 0, xmax: 10, ymin: 0, ymax: 1, xl: 'time', yl: 'concentration (arbitrary)', fs: 3.4, xly: 10, ylx: 6 }).axes();
+    g.curve(GLC, { ink: 'P', w: 1.7, n: 70 }); g.curve(INS, { ink: 'T', w: 1.5, n: 70 }); g.curve(GLG, { ink: 'B', w: 1.1, n: 70 });
+    R.arrow([g.X(2.2), g.Y(0.99), g.X(2.2), g.Y(0.9)], { ink: 'B', w: 0.8, hs: 2.2 }); R.text('meal', g.X(2.2), g.Y(1.02), 3.4, { al: 'c' });
+    R.arrow([g.X(7.2), g.Y(0.99), g.X(7.2), g.Y(0.9)], { ink: 'B', w: 0.8, hs: 2.2 }); R.text('exercise', g.X(7.2), g.Y(1.02), 3.4, { al: 'c' });
+    R.line(470, 142, 484, 142, { ink: 'P', w: 1.7, taper: 'none' }); R.text('blood glucose', 489, 143.4, 3.4, { al: 'l' });
+    R.line(470, 150, 484, 150, { ink: 'T', w: 1.5, taper: 'none' }); R.text('insulin', 489, 151.4, 3.4, { al: 'l' });
+    R.line(470, 158, 484, 158, { ink: 'B', w: 1.1, taper: 'none' }); R.text('glucagon', 489, 159.4, 3.4, { al: 'l' });
+    // factors
+    R.text('raises blood glucose', 590, 138, 3.7, { al: 'l', ink: 'P' }); R.arrow([583, 145, 583, 134], { ink: 'P', w: 1.3, hs: 3 });
+    ['carbohydrate in the diet', 'glycogenolysis', 'gluconeogenesis'].forEach((t, i) => R.text(t, 590, 146 + i * 6.2, 3.4, { al: 'l' }));
+    R.text('lowers blood glucose', 590, 172, 3.7, { al: 'l', ink: 'T' }); R.arrow([583, 164, 583, 175], { ink: 'T', w: 1.3, hs: 3 });
+    ['respiration', 'glycogenesis', 'uptake of glucose by cells'].forEach((t, i) => R.text(t, 590, 180 + i * 6.2, 3.4, { al: 'l' }));
+  },
+  anim(A, sc) {
+    const p = A.ph(8), x = p * 10; A.dot(470 + x * 17, 26 + 98 - GLC(x) * 98, 2.1, 'P', 0.95, 1);
+    for (let i = 0; i < 3; i++) { const u = (p * 2 + i / 3) % 1; A.dot(340 + u * 70, 178 - Math.sin(u * 5 + i) * 1.2 - u * 8 + 4 * u, 1.4, 'P', 0.9, 3 + i); }
+  },
+});
+
+/* ---------- 3.6.4.2b How the hormones act at the target cell ---------- */
+S({
+  id: '3.6.4.2b', num: '3.6.4.2', sub: 'Insulin; adrenaline and glucagon with the second messenger cAMP', title: 'Control of blood glucose concentration', topic: '3.6', slot: [0, 8], span: [2, 1], dna: 'mark', ao: 1,
+  covers: ['3.6.4.2.s3', '3.6.4.2.s4', '3.6.4.2.s5', '3.6.4.2.s6'],
+  card: {
+    text: '<b>Insulin</b> attaches to <b>receptors</b> on the surface of target cells. It controls glucose uptake by regulating the inclusion of <b>channel proteins</b> in the surface membrane, and activates <b>enzymes</b> that convert glucose to glycogen. <b>Glucagon</b> attaches to receptors on liver cells and activates enzymes that convert glycogen to glucose and glycerol and amino acids to glucose. <b>Adrenaline</b> attaches to receptors and activates the enzymes that convert glycogen to glucose. In the <b>second messenger model</b>, the hormone (first messenger) binding to its receptor activates <b>adenylate cyclase</b> on the inside of the membrane; this converts <b>ATP</b> to <b>cyclic AMP (cAMP)</b>, the second messenger, which activates <b>protein kinase</b>; protein kinase activates the enzymes that bring about the response.',
+    terms: ['receptor', 'channel protein', 'second messenger', 'adenylate cyclase', 'cyclic AMP', 'protein kinase', 'first messenger', 'target cell'],
+    skill: 'AO1: describe the sequence of the second messenger model', eq: MATH(mt('ATP '), mo('→'), mt(' cAMP + 2P'), msub(mr(''), mr('i'))),
+    q: 'Why does adrenaline, which does not enter the liver cell, still activate enzymes inside it?', a: 'Binding to its receptor activates adenylate cyclase, which makes cAMP; cAMP (the second messenger) activates protein kinase, which activates the enzymes.'
+  },
+  draw(R, sc) {
+    // ---- insulin ----
+    R.text('insulin at a liver or muscle cell', 165, 13, 4.5, { al: 'c' });
+    const x0 = 12, x1 = 318, my = 100, bl = tMemb(R, x0, x1, my);
+    R.text('blood (outside)', 20, 24, 3.4, { al: 'l', ink: 'T' }); R.text('cell (inside)', 20, 174, 3.4, { al: 'l', ink: 'T' });
+    tProt(R, bl, x0, x1, 60, 'receptor', { hw: 5 });
+    R.poly(polyPts(60, 72, 4.5, 5), { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); R.arrow([60, 78, 60, 86], { ink: 'B', w: 0.8, hs: 2 }); R.text('insulin', 60, 62, 3.5, { al: 'c', ink: 'P' });
+    R.poly(polyPts(104, 44, 4.5, 5), { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); R.poly(polyPts(116, 30, 4.5, 5), { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 });
+    // vesicle with channel proteins, fusing
+    R.circle(142, 140, 11, { ink: 'B', w: 1, fi: 'T', ft: 0.12 }); [[137, 140], [147, 140]].forEach(([x, y]) => { R.rrect(x - 2.5, y - 4, 2, 8, 0.8, { ink: 'B', w: 0.7, fi: 'P', ft: 0.8 }); R.rrect(x + 0.5, y - 4, 2, 8, 0.8, { ink: 'B', w: 0.7, fi: 'P', ft: 0.8 }); });
+    R.arrow([150, 128, 178, 112], { ink: 'B', w: 0.9, hs: 2.4 });
+    tProt(R, bl, x0, x1, 200, 'channel', { hw: 5.2 }); tProt(R, bl, x0, x1, 262, 'channel', { hw: 5.2 });
+    [[200, 56], [262, 62], [232, 38], [290, 44]].forEach(([x, y]) => glucTok(R, x, y, 3.6));
+    R.arrow([200, 68, 200, 94], { ink: 'B', w: 0.9, hs: 2.4 }); R.arrow([262, 74, 262, 94], { ink: 'B', w: 0.9, hs: 2.4 });
+    [[200, 126], [262, 122], [232, 132]].forEach(([x, y]) => glucTok(R, x, y, 3.6));
+    // enzymes and glycogen
+    R.ellipse(222, 164, 15, 8, { ink: 'B', w: 1, fi: 'P', ft: 0.14, wob: 0.3 }); R.text('enzymes', 222, 166, 3.4, { al: 'c' });
+    R.arrow([236, 140, 232, 154], { ink: 'B', w: 0.8, hs: 2.2 });
+    [[274, 164], [282, 158], [290, 164], [282, 170], [298, 158], [298, 170]].forEach(([x, y]) => R.circle(x, y, 3.6, { ink: 'B', w: 0.7, fi: 'Y', ft: 0.9 })); R.text('glycogen', 288, 184, 3.5, { al: 'c' });
+    R.arrow([240, 164, 268, 164], { ink: 'P', w: 1.2, hs: 3 });
+    R.bubble(76, 88, 4, '1', {}); R.bubble(166, 122, 4, '2', {}); R.bubble(236, 92, 4, '3', {}); R.bubble(250, 156, 4, '4', {});
+    ['1 insulin binds to its receptor on the cell surface', '2 vesicles bring channel proteins to the surface membrane', '3 more glucose enters through the extra channel proteins', '4 enzymes activated: glucose is converted to glycogen'].forEach((t, i) => R.text(t, 14, 198 + i * 8.2, 3.6, { al: 'l' }));
+    R.line(326, 14, 326, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    // ---- second messenger ----
+    R.text('adrenaline and glucagon: second messenger model', 490, 13, 4.5, { al: 'c' });
+    const y0 = 340, y1 = 470, my2 = 66, bl2 = tMemb(R, y0, y1, my2);
+    R.text('outside', 346, 26, 3.4, { al: 'l', ink: 'T' }); R.text('inside the cell', 346, 83, 3.4, { al: 'l', ink: 'T' });
+    tProt(R, bl2, y0, y1, 400, 'receptor', { hw: 5 });
+    R.poly(polyPts(400, 42, 4.5, 6), { ink: 'B', w: 0.8, fi: 'Y', ft: 0.9 }); R.arrow([400, 48, 400, 56], { ink: 'B', w: 0.8, hs: 2 });
+    R.text('adrenaline or glucagon', 400, 30, 3.4, { al: 'c' });
+    R.ellipse(400, 90, 21, 8, { ink: 'B', w: 1, fi: 'P', ft: 0.14, wob: 0.3 }); R.text('adenylate cyclase', 400, 91.4, 3.3, { al: 'c' });
+    R.arrow([400, 76, 400, 80], { ink: 'P', w: 0.001, hs: 0.1 });
+    tok(R, 366, 112, 'ATP', { r: 6, fi: 'Y', ft: 0.9, size: 3.6 }); R.arrow([373, 106, 387, 98], { ink: 'B', w: 0.8, hs: 2.2 });
+    R.poly(hexPts(436, 112, 8.4, 0.5), { ink: 'B', w: 0.9, fi: 'T', ft: 0.1 }); R.text('cAMP', 436, 113.4, 3.6, { al: 'c' }); R.arrow([414, 97, 430, 105], { ink: 'B', w: 0.8, hs: 2.2 });
+    R.arrow([436, 120, 436, 138], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.ellipse(436, 150, 22, 9, { ink: 'B', w: 1, fi: 'P', ft: 0.14, wob: 0.3 }); R.text('protein kinase', 436, 152, 3.5, { al: 'c' });
+    R.arrow([436, 160, 436, 174], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.ellipse(436, 184, 22, 8, { ink: 'B', w: 1, fi: 'P', ft: 0.12, wob: 0.3 }); R.text('enzymes', 436, 186, 3.5, { al: 'c' });
+    R.arrow([436, 193, 436, 204], { ink: 'B', w: 0.9, hs: 2.4 });
+    [[404, 218], [412, 212], [420, 218], [412, 224]].forEach(([x, y]) => R.circle(x, y, 3.4, { ink: 'B', w: 0.7, fi: 'Y', ft: 0.9 })); R.text('glycogen', 412, 233, 3.3, { al: 'c' });
+    R.arrow([428, 216, 450, 216], { ink: 'P', w: 1.2, hs: 3 }); glucTok(R, 460, 216, 4); glucTok(R, 472, 216, 4); R.text('glucose', 466, 228, 3.4, { al: 'c' });
+    [[388, 50, '1'], [414, 80, '2'], [452, 98, '3'], [466, 150, '4'], [466, 184, '5']].forEach(([x, y, t]) => R.bubble(x, y, 4, t, {}));
+    const steps = ['hormone (first messenger) binds to the receptor on the cell surface', 'receptor activates adenylate cyclase on the inside of the membrane', 'adenylate cyclase converts ATP to cAMP, the second messenger', 'cAMP activates protein kinase', 'protein kinase activates the enzymes that convert glycogen to glucose'];
+    const sy = [38, 76, 108, 148, 184];
+    steps.forEach((t, i) => { wrapText(t, 142, 3.6).forEach((ln, j) => R.text(ln, 502, sy[i] + j * 6.2, 3.6, { al: 'l' })); R.bubble(494, sy[i] - 1.2, 3.4, String(i + 1), {}); });
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let k = 0; k < 2; k++) { const u = (p + k / 2) % 1; A.dot(200 + k * 62, 62 + u * 56, 2.9, 'Y', 0.9, k); }
+    A.dot(436, 124 + p * 12, 1.8, 'T', 0.95, 5);
+  },
+});
+
+/* ---------- 3.6.4.2c Diabetes, and evaluating the responses to type II ---------- */
+S({
+  id: '3.6.4.2c', num: '3.6.4.2', sub: 'Type I and type II diabetes; health advisers and the food industry', title: 'Control of blood glucose concentration', topic: '3.6', slot: [2, 8], span: [2, 1], dna: 'mark', ao: 3,
+  covers: ['3.6.4.2.s7', '3.6.4.2.s8'],
+  card: {
+    text: 'In <b>type I diabetes</b> the immune system destroys the <b>β cells</b>, so little or no insulin is made; blood glucose stays high and is controlled by <b>insulin injections</b> and by managing the diet. In <b>type II diabetes</b> the target cells respond poorly to insulin (their receptors respond less) and/or too little insulin is made; it is linked to <b>obesity</b>, a diet high in sugar and fat, inactivity, age and family history, and is controlled by <b>diet</b>, exercise and weight loss, sometimes with medication or insulin. You should be able to <b>evaluate</b> the positions of <b>health advisers</b> (educate, regulate labelling and advertising) and the <b>food industry</b> (reformulate products, but profit and consumer demand matter) in relation to the rising incidence of type II diabetes.',
+    terms: ['type I diabetes', 'type II diabetes', 'insulin injection', 'obesity', 'diet', 'hyperglycaemia', 'health adviser', 'food industry'],
+    skill: 'MS 3.1: interpret a glucose tolerance curve; correlation is not causation', eq: null,
+    q: 'Why is insulin injection a treatment for type I diabetes but often not the first choice for type II?', a: 'Type I has too little insulin, so insulin replaces it. In type II the cells respond poorly, so diet, exercise and weight loss are used first to restore the response.'
+  },
+  draw(R, sc) {
+    R.text('type I', 110, 14, 4.8, { al: 'c', ink: 'P' }); R.text('type II', 242, 14, 4.8, { al: 'c', ink: 'T' });
+    // type I: islet attacked by lymphocytes
+    R.ellipse(98, 58, 40, 24, { ink: 'B', w: 1.1, fi: 'Y', ft: 0.12, wob: 0.6 });
+    [[84, 52], [96, 48], [108, 52], [90, 64], [104, 64], [118, 60]].forEach(([x, y], i) => { R.circle(x, y, 4.4, { ink: 'B', w: 0.7, fi: 'P', ft: i < 4 ? 0.55 : 0.2, wob: 0.1 }); if (i < 4) cross(R, x, y, 2.4); });
+    R.lymphocyte(36, 40, 8.4, {}); R.lymphocyte(42, 72, 8, {}); R.arrow([46, 44, 62, 50], { ink: 'B', w: 0.9, hs: 2.4 }); R.arrow([50, 70, 66, 64], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.text('immune system', 36, 88, 3.4, { al: 'c' }); R.text('attacks beta cells', 40, 94, 3.4, { al: 'c' });
+    R.text('islet of Langerhans', 98, 90, 3.4, { al: 'c' });
+    // type II: cells with poorly responding receptors
+    const x0 = 172, x1 = 312, my = 62, bl = tMemb(R, x0, x1, my);
+    [196, 242, 288].forEach(x => { tProt(R, bl, x0, x1, x, 'receptor', { hw: 5 }); });
+    [196, 242].forEach((x, i) => { R.poly(polyPts(x + (i ? 8 : 0), 40, 4, 5), { ink: 'B', w: 0.8, fi: 'P', ft: 0.8 }); cross(R, x, 52, 2.4); });
+    [[214, 32], [262, 36], [276, 28], [300, 44]].forEach(([x, y]) => glucTok(R, x, y, 3.3));
+    R.text('insulin present, but', 242, 92, 3.4, { al: 'c' }); R.text('cells respond poorly', 242, 98, 3.4, { al: 'c' });
+    R.text('glucose stays high', 242, 80, 3.4, { al: 'c', ink: 'P' });
+    R.line(166, 22, 166, 168, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('cause', 14, 114, 3.8, { al: 'l', ink: 'P' });
+    ['immune system destroys the', 'beta cells: little or no insulin'].forEach((t, i) => R.text(t, 14, 121 + i * 6.2, 3.4, { al: 'l' }));
+    R.text('control', 14, 148, 3.8, { al: 'l', ink: 'T' });
+    ['insulin injections', 'regular meals, control sugar intake'].forEach((t, i) => R.text(t, 14, 155 + i * 6.2, 3.4, { al: 'l' }));
+    R.text('cause', 172, 114, 3.8, { al: 'l', ink: 'P' });
+    ['cells respond poorly to insulin and/or', 'too little insulin; linked to obesity,', 'poor diet, inactivity, age'].forEach((t, i) => R.text(t, 172, 121 + i * 6.2, 3.4, { al: 'l' }));
+    R.text('control', 172, 148, 3.8, { al: 'l', ink: 'T' });
+    ['healthy diet, exercise, weight loss;', 'medication; insulin if needed'].forEach((t, i) => R.text(t, 172, 155 + i * 6.2, 3.4, { al: 'l' }));
+    R.line(8, 176, 322, 176, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('glucose in the urine when blood glucose is too high for the kidney to reabsorb it', 165, 186, 3.4, { al: 'c' });
+    R.text('too much insulin: blood glucose falls too low (hypoglycaemia)', 165, 194, 3.4, { al: 'c' });
+    R.text('hyperglycaemia = high blood glucose', 165, 202, 3.4, { al: 'c' });
+    // glucose tolerance
+    R.line(330, 14, 330, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('after a glucose drink', 408, 14, 4.4, { al: 'c' });
+    const g = R.graph(354, 26, 132, 108, { xmin: 0, xmax: 4, ymin: 0, ymax: 1, xl: 'time / h', yl: 'blood glucose', xt: [0, 1, 2, 3, 4], fs: 3.4, xly: 13, ylx: 6 }).axes();
+    g.curve(t => 0.42 + 0.3 * gaus(t, 0.8, 0.45, 0.7), { ink: 'T', w: 1.6, n: 50 }); g.curve(t => 0.62 + 0.34 * gaus(t, 1.3, 0.7, 1.7), { ink: 'P', w: 1.6, n: 50 });
+    g.hline(0.45, { dash: true, t: 0.6 });
+    R.text('with diabetes', g.X(3.1), g.Y(0.95), 3.5, { al: 'c', ink: 'P' }); R.text('without diabetes', g.X(3.0), g.Y(0.3), 3.5, { al: 'c', ink: 'T' });
+    R.text('slower return', g.X(3.0), g.Y(0.6), 3.3, { al: 'c' }); R.text('to normal', g.X(3.0), g.Y(0.54), 3.3, { al: 'c' });
+    // rising incidence
+    R.text('incidence of type II diabetes', 408, 168, 3.8, { al: 'c' });
+    [8, 11, 15, 21, 29].forEach((h, i) => R.rect(358 + i * 24, 214 - h * 1.35, 16, h * 1.35, { ink: 'B', w: 0.8, fi: 'P', ft: 0.2 + i * 0.12 }));
+    R.arrow([356, 176, 470, 176], { ink: 'B', w: 0, hs: 0.1, noHead: true }); R.text('time', 414, 222, 3.4, { al: 'c' });
+    R.text('rising, with obesity, poor diet, inactivity', 408, 230, 3.3, { al: 'c' });
+    // evaluating the positions
+    R.line(496, 14, 496, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.text('evaluate the positions', 576, 14, 4.4, { al: 'c' });
+    R.line(576, 24, 576, 40, { ink: 'B', w: 1.2, taper: 'none' }); R.line(540, 24, 612, 24, { ink: 'B', w: 1.4, taper: 'none' }); R.line(540, 24, 534, 36, { ink: 'B', w: 0.7, taper: 'none' }); R.line(540, 24, 546, 36, { ink: 'B', w: 0.7, taper: 'none' }); R.line(612, 24, 606, 36, { ink: 'B', w: 0.7, taper: 'none' }); R.line(612, 24, 618, 36, { ink: 'B', w: 0.7, taper: 'none' });
+    R.ellipse(540, 37, 8, 2.4, { ink: 'B', w: 0.8, fi: 'T', ft: 0.4 }); R.ellipse(612, 37, 8, 2.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.4 });
+    R.text('health advisers', 536, 50, 3.9, { al: 'c', ink: 'T' }); R.text('food industry', 616, 50, 3.9, { al: 'c', ink: 'P' });
+    ['educate: diet low in fat,', 'sugar and salt; exercise;', 'weight loss', 'press for clearer', 'labelling, less advertising', 'of junk food to children', 'aim: fewer people', 'develop type II diabetes'].forEach((t, i) => R.text(t, 502, 62 + i * 6.4, 3.3, { al: 'l' }));
+    ['reduce sugar, fat and', 'salt; use sweeteners;', 'clearer labels', 'but profit matters, and', 'unhealthy products still', 'sell: change may follow', 'consumer demand slowly'].forEach((t, i) => R.text(t, 574, 62 + i * 6.4, 3.3, { al: 'l' }));
+    R.line(570, 54, 570, 150, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    R.rrect(502, 164, 150, 60, 4, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.12, wob: 0.3 });
+    R.text('weigh up:', 577, 174, 3.9, { al: 'c', ink: 'P' });
+    ['evidence for each claim', 'who gains (health, profit)', 'short and long term effects', 'correlation is not causation'].forEach((t, i) => R.text(t, 577, 183 + i * 7.6, 3.5, { al: 'c' }));
+  },
+  anim(A, sc) {
+    const p = A.ph(4); A.dot(36 + 16 * p + 4, 44 + 6 * p, 1.6, 'P', 0.9, 1); A.dot(42 + 20 * p, 72 - 8 * p, 1.6, 'P', 0.9, 2);
+    const x = p * 4; A.dot(354 + x * 33, 26 + 108 - (0.62 + 0.34 * gaus(x, 1.3, 0.7, 1.7)) * 108, 2.1, 'P', 0.95, 3);
+  },
+});
+
+/* ===================== RP11 Glucose calibration with colorimetry ===================== */
+const RP11_DATA = [0, 0, 2, 0.76, 4, 1.0, 6, 1.15, 8, 1.22, 10, 1.39];
+rpScene({
+  id: 'RP11', num: '3.6.4.2', rp: 11, title: 'Control of blood glucose concentration', sub: 'Required practical 11: dilution series and calibration curve to find glucose in a “urine” sample', topic: '3.6', slot: [0, 9],
+  covers: ['RP11'], at: ['b', 'c', 'f'], ms: ['MS 0.2', 'MS 3.1', 'MS 3.2'], ps: ['PS 2.2', 'PS 3.1', 'PS 3.3'],
+  card: {
+    text: 'Make a <b>dilution series</b> of a glucose solution, react each with <b>Benedict’s solution</b> in a hot water bath and measure the <b>absorbance</b> with a <b>colorimeter</b> to draw a <b>calibration curve</b>; then use the curve to find the concentration of glucose in an unknown “urine” sample. Glucose in urine can be an early sign of diabetes. In the AQA handbook’s example a 10 mmol dm⁻³ standard is diluted with water to 0, 2, 4, 6, 8 and 10 mmol dm⁻³; 2 cm³ of Benedict’s is added to 2 cm³ of each; tubes are heated together at about 90 °C for four minutes; the 0.0 tube sets the colorimeter to zero absorbance (qualitative Benedict’s, orange/red filter, about 600 nm). Other schools use quantitative Benedict’s, where the blue colour is lost instead. This is one example method; schools may vary it.',
+    terms: ['dilution series', 'calibration curve', 'colorimeter', 'absorbance', 'Benedict’s solution', 'blank', 'unknown sample'],
+    skill: 'MS 3.1 / PS 3.1: read an unknown from a calibration curve', eq: MATH(mt('volume of standard '), mo('='), mfrac(mt('required concentration'), mt('standard concentration')), mo('×'), mt('final volume')),
+    eqn: 'Volume of 10 mmol dm⁻³ standard for 2.0 cm³ of 4.0 mmol dm⁻³: (4 ÷ 10) × 2.0 = 0.8 cm³',
+    q: 'Why is the 0.0 mmol dm⁻³ tube, heated with Benedict’s, used to zero the colorimeter?', a: 'It is a blank: it contains everything except glucose, so any absorbance it shows comes from the reagent and tube, not the glucose, and is subtracted from every reading.'
+  },
+  apparatus(R, b) {
+    R.text('glucose / mmol dm⁻³  (U = unknown “urine”)', 92, 21, 3.9, { al: 'c' });
+    const xs = i => 36 + i * 16;
+    R.waterBath(26, 38, 118, 54, {});
+    ['0', '2', '4', '6', '8', '10', 'U'].forEach((c, i) => {
+      const o = i === 0 ? { ink: 'T', t: 0.5, ink2: 'B', t2: 0.12 } : { ink: 'Y', t: 0.6, ink2: 'P', t2: i === 6 ? 0.4 : 0.1 + 0.11 * i };
+      R.tube(xs(i), 30, 8.4, 52, Object.assign({ level: 0.72 }, o));
+      R.text(c, xs(i), 28, 3.8, { al: 'c', ink: i === 6 ? 'P' : 'B' });
+    });
+    R.thermometer(156, 40, 36, { level: 0.9 }); R.text('90 °C', 156, 90, 3.5, { al: 'c' }); R.text('4 min', 156, 96, 3.3, { al: 'c' });
+    R.text('water', 20, 104, 3.2, { al: 'r' }); R.text('std', 20, 110, 3.2, { al: 'r' });
+    [2.0, 1.6, 1.2, 0.8, 0.4, 0.0].forEach((v, i) => { R.text(v.toFixed(1), xs(i), 104, 3.2, { al: 'c' }); R.text((2 - v).toFixed(1), xs(i), 110, 3.2, { al: 'c' }); });
+    R.text('cm³', 150, 104, 3.2, { al: 'l' });
+    // colorimeter
+    R.rrect(96, 114, 56, 22, 3, { ink: 'B', w: 1.2, fi: 'B', ft: 0.1 }); R.cuvette(108, 117, 8, 14, { ink: 'P', t: 0.5, ink2: 'Y' });
+    R.line(98, 124, 107, 124, { ink: 'P', w: 1.5, taper: 'none' }); R.line(117, 124, 124, 124, { ink: 'P', w: 1.5, taper: 'none' });
+    R.rect(128, 118, 20, 9, { ink: 'B', w: 0.7, fi: 'T', ft: 0.15 }); R.text('1.08', 138, 125, 3.9, { al: 'c' });
+    R.text('orange filter, 600 nm', 60, 124, 3.4, { al: 'c' }); R.text('zero with the 0.0 tube', 60, 131, 3.3, { al: 'c' });
+  },
+  results(R, b) {
+    const g = R.graph(b.x + 24, b.y + 8, 90, 82, { xmin: 0, xmax: 10.5, ymin: 0, ymax: 1.5, xl: 'glucose / mmol dm⁻³', yl: 'absorbance', xt: [[0, '0'], [2, '2'], [4, '4'], [6, '6'], [8, '8'], [10, '10']], yt: [[0, '0'], [0.5, '0.5'], [1, '1.0'], [1.5, '1.5']], fs: 3.6, xly: 14, ylx: 12, paper: 0 }).axes();
+    g.curve(RP11_DATA, { ink: 'P', w: 1.3 }); g.dots(RP11_DATA, { ink: 'B', r: 1.5 });
+    g.hdrop(5.1, 1.08, { ink: 'T', w: 0.9 }); g.vdrop(5.1, 1.08, { ink: 'T', w: 0.9 });
+    R.circle(g.X(5.1), g.Y(1.08), 2.2, { ink: 'T', w: 1 });
+    g.label('unknown A = 1.08', 5.5, 0.55, { size: 3.3 }); R.text('≈ 5 mmol dm⁻³', g.X(5.5) + 1, g.Y(0.55) + 5.6, 3.3, { al: 'l', ink: 'T' });
+  },
+  vars: { iv: 'known glucose concentration', dv: 'absorbance of the mixture', ctl: ['volumes of sample and Benedict’s', 'heating time and temperature', 'same colorimeter and filter'] },
+  calc: ['volume of standard =', '(c ÷ 10) × 2.0 cm³', 'e.g. 4 mmol dm⁻³: 0.8 cm³', 'unknown A = 1.08 lies between', '4.0 (1.00) and 6.0 (1.15):', 'c ≈ 4.0 + 2.0 × 0.08/0.15', '≈ 5.1 mmol dm⁻³'],
+  risks: [['goggles', 'eye protection'], ['hot', 'hot water bath and tubes'], ['warn', 'handle glass with care']],
+  limits: ['curve is read approximately', 'dilution errors add along the series', 'precipitate can block light', 'colour depends on heating time'],
+  interp: 'more glucose → more orange precipitate → higher absorbance',
+  anim(A, sc) { const p = A.ph(5); for (let i = 0; i < 6; i++) A.dot(36 + i * 16 + Math.sin(p * TAU + i) * 1.3, 66 - ((p * (1 + i * 0.1)) % 1) * 24, 0.8, 'Y', 0.7, i); },
+});
+
+/* ===================== 3.6.4.3 Control of blood water potential ===================== */
+const ADH_PATH = [112, 141, 112, 156, 138, 168, 190, 176];
+S({
+  id: '3.6.4.3a', num: '3.6.4.3', sub: 'Osmoregulation: hypothalamus, posterior pituitary and ADH', title: 'Control of blood water potential', topic: '3.6', slot: [1, 9], span: [2, 1], dna: 'mark', ao: 2,
+  covers: ['3.6.4.3.s1', '3.6.4.3.s2'],
+  card: {
+    text: '<b>Osmoregulation</b> is the control of the <b>water potential</b> of the blood. <b>Osmoreceptors</b> in the <b>hypothalamus</b> detect changes in blood water potential. If it falls (dehydration), the osmoreceptor cells lose water by osmosis, the <b>posterior pituitary</b> releases more <b>antidiuretic hormone (ADH)</b> into the blood, and ADH makes the walls of the <b>distal convoluted tubule</b> and <b>collecting duct</b> more permeable to water (<b>aquaporins</b> are inserted into the membrane). More water is reabsorbed by osmosis, producing a small volume of concentrated urine. If water potential rises, less ADH is released, the walls are less permeable, and a large volume of dilute urine is produced. This is <b>negative feedback</b>.',
+    terms: ['osmoregulation', 'hypothalamus', 'osmoreceptor', 'posterior pituitary', 'ADH', 'aquaporin', 'distal convoluted tubule', 'collecting duct', 'concentrated urine'],
+    skill: 'AO2: apply negative feedback to unfamiliar data on urine volume', eq: null,
+    q: 'Explain why a person who has sweated heavily produces a small volume of concentrated urine.', a: 'Blood water potential falls; osmoreceptors detect it; the posterior pituitary releases more ADH; the DCT and collecting duct become more permeable to water, so more water is reabsorbed by osmosis.'
+  },
+  draw(R, sc) {
+    // head and brain
+    R.ellipse(112, 74, 70, 44, { ink: 'B', w: 1.3, fi: 'P', ft: 0.06, wob: 0.7 });
+    [[62, 56, 80, 44, 100, 48], [96, 42, 120, 40, 140, 46], [72, 80, 90, 72, 108, 78], [118, 68, 140, 62, 156, 72]].forEach(p => R.stroke(p, { ink: 'B', w: 0.7, smooth: true, taper: 'both', wob: 0.3, t: 0.6 }));
+    R.ellipse(112, 92, 15, 9, { ink: 'B', w: 1, fi: 'P', ft: 0.5, wob: 0.3 });
+    [[106, 91], [112, 94], [118, 91]].forEach(([x, y]) => R.circle(x, y, 2.4, { ink: 'B', w: 0.6, fi: 'T', ft: 0.6 }));
+    R.line(112, 101, 112, 122, { ink: 'B', w: 2.6, taper: 'none', t: 0.5 }); R.line(112, 101, 112, 122, { ink: 'B', w: 0.9, taper: 'none' });
+    R.ellipse(112, 130, 11, 8, { ink: 'B', w: 1, fi: 'Y', ft: 0.7, wob: 0.3 });
+    leader(R, 'hypothalamus (osmoreceptors)', 104, 90, 20, 22, { size: 3.6, al: 'l' });
+    leader(R, 'posterior pituitary', 122, 130, 150, 120, { size: 3.6, al: 'l' });
+    R.chain2(ADH_PATH, 3.4, 'P', 0.6, { smooth: true });
+    [[112, 154], [126, 164], [158, 172]].forEach(([x, y]) => tok(R, x, y - 6, 'ADH', { r: 6, fi: 'T', ft: 0.1, size: 3.4 }));
+    R.text('ADH travels in the blood', 112, 196, 3.7, { al: 'c', ink: 'T' });
+    R.ellipse(216, 180, 20, 28, { ink: 'B', w: 1.2, fi: 'P', ft: 0.2, rot: 20, wob: 0.4 }); R.circle(198, 176, 7, { ink: 'B', w: 0.9, wob: 0.3 });
+    R.text('kidney: DCT and', 176, 218, 3.7, { al: 'l' }); R.text('collecting duct respond', 176, 225, 3.7, { al: 'l' });
+    // two cases
+    R.line(252, 14, 252, 232, { ink: 'B', w: 0.4, t: 0.5, taper: 'none' });
+    const boxes = (x0, ink, head, list) => {
+      R.text(head, x0 + 93, 14, 4.1, { al: 'c', ink });
+      list.forEach((t, i) => {
+        const y = 22 + i * 41; R.rrect(x0, y, 186, 34, 4, { ink: 'B', w: 0.8, fi: i === 4 ? ink : 'Y', ft: i === 4 ? (ink === 'T' ? 0.05 : 0.1) : i === 2 ? 0.2 : 0.09, wob: 0.3 });
+        const ls = wrapText(t, 176, 3.9); ls.forEach((ln, j) => R.text(ln, x0 + 93, y + 17 - (ls.length - 1) * 3.6 + 1.4 + j * 7.2, 3.9, { al: 'c' }));
+        if (i < 4) R.arrow([x0 + 93, y + 35, x0 + 93, y + 41], { ink: 'B', w: 0.8, hs: 2 });
+      });
+    };
+    boxes(262, 'P', 'blood water potential falls (dehydrated)', ['water potential of the blood falls (e.g. sweating, not drinking)', 'osmoreceptors in the hypothalamus detect it: they lose water by osmosis', 'posterior pituitary releases more ADH into the blood', 'DCT and collecting duct walls more permeable to water (aquaporins)', 'more water reabsorbed: a little concentrated urine; water potential back to normal']);
+    boxes(466, 'T', 'blood water potential rises (hydrated)', ['water potential of the blood rises (e.g. drinking a lot)', 'osmoreceptors in the hypothalamus detect it', 'posterior pituitary releases less ADH', 'DCT and collecting duct walls less permeable to water', 'less water reabsorbed: a lot of dilute urine; water potential back to normal']);
+  },
+  anim(A, sc) {
+    const p = A.ph(5); for (let k = 0; k < 3; k++) { const u = (p + k / 3) % 1, seg = u * 3, i = Math.min(2, Math.floor(seg)), t = seg - i; const P = ADH_PATH; A.dot(P[i * 2] + (P[i * 2 + 2] - P[i * 2]) * t, P[i * 2 + 1] + (P[i * 2 + 3] - P[i * 2 + 1]) * t - 5, 2.2, 'T', 0.85, k); }
+  },
+});
+
+/* ---------- 3.6.4.3c The nephron: structure and function by region (big scene) ---------- */
+const NEPH = {
+  prox: [100, 118, 118, 126, 104, 138, 124, 146, 110, 158, 134, 164, 152, 154, 168, 168, 176, 190],
+  desc: [176, 190, 176, 300, 176, 400, 182, 416, 190, 420],
+  asc: [190, 420, 198, 416, 204, 400, 204, 300, 204, 200],
+  dct: [204, 200, 220, 186, 236, 198, 252, 176, 272, 186, 288, 160, 306, 150, 340, 150],
+  cd: [340, 112, 340, 300, 340, 462],
+};
+S({
+  id: '3.6.4.3c', num: '3.6.4.3', sub: 'The nephron: filtration, reabsorption and the loop of Henle', title: 'Control of blood water potential', topic: '3.6', slot: [0, 10], span: [2, 2], dna: 'mark', ao: 1,
+  covers: ['3.6.4.3.s3', '3.6.4.3.s4', '3.6.4.3.s5', '3.6.4.3.s6', '3.6.4.3.s7'],
+  card: {
+    text: 'Each <b>nephron</b> begins in the <b>cortex</b> with the <b>glomerulus</b> (a knot of capillaries) inside the <b>Bowman’s capsule</b>. High blood pressure forces water and small molecules through the capillary wall, the basement membrane and the capsule lining to form the <b>glomerular filtrate</b>; proteins and blood cells stay in the blood. In the <b>proximal convoluted tubule (PCT)</b> glucose is reabsorbed (and much water). The <b>loop of Henle</b> dips into the <b>medulla</b>: the ascending limb is impermeable to water and actively transports Na⁺ out, maintaining a <b>gradient of sodium ions</b> (low water potential) in the medulla; the descending limb is permeable to water, which leaves by osmosis. The <b>distal convoluted tubule (DCT)</b> and the <b>collecting duct</b> reabsorb water by osmosis, the amount depending on <b>ADH</b>. Urine passes to the ureter.',
+    terms: ['nephron', 'glomerulus', 'Bowman’s capsule', 'glomerular filtrate', 'proximal convoluted tubule', 'loop of Henle', 'distal convoluted tubule', 'collecting duct', 'cortex', 'medulla', 'sodium ion gradient'],
+    skill: 'AO1/AO2: relate each region’s structure to its function', eq: null,
+    q: 'Why does a long loop of Henle help an animal that lives in a desert to produce very concentrated urine?', a: 'A longer loop sets up a steeper sodium ion gradient in the medulla (lower water potential), so more water leaves the collecting duct by osmosis and is reabsorbed.'
+  },
+  draw(R, sc) {
+    // kidney section: cortex and medulla
+    R.rrect(8, 22, 414, 466, 46, { ink: 'B', w: 1.6, fi: 'P', ft: 0.05, wob: 0.8 });
+    R.fill([10, 200, 420, 200, 420, 60, 380, 28, 50, 28, 10, 60], { ink: 'Y', t: 0.1, wob: 0.3 });
+    for (let k = 0; k < 6; k++) R.scatter(215, 228 + k * 42, 190, 18, 22 + k * 18, 0.5, { ink: 'P', t: 0.7 });
+    R.line(10, 200, 420, 200, { ink: 'B', w: 0.8, t: 0.7, taper: 'none' }); 
+    R.text('cortex', 396, 190, 4.4, { al: 'r' }); R.text('medulla', 396, 216, 4.4, { al: 'r' });
+    R.arrow([398, 236, 398, 450], { ink: 'P', w: 1.2, hs: 3.4 }); R.text('Na^+ concentration rises, water potential falls', 408, 340, 3.6, { al: 'c', rot: -90 });
+    // blood supply
+    R.chain2([10, 60, 40, 70, 62, 80], 5, 'P', 0.55, { smooth: true }); R.text('afferent', 14, 50, 4, { al: 'l' });
+    R.chain2([90, 82, 112, 62, 134, 48, 160, 52], 3.2, 'P', 0.35, { smooth: true }); R.text('efferent', 118, 38, 4, { al: 'l' });
+    // capsule and glomerulus
+    R.circle(76, 96, 28, { ink: 'B', w: 1.4, fi: 'T', ft: 0.1, wob: 0.4 });
+    R.circle(76, 96, 18, { ink: 'B', w: 0.9, fi: 'P', ft: 0.45, wob: 0.4 });
+    for (let k = 0; k < 4; k++) R.stroke([62 + k * 6, 84, 70 + k * 4, 94, 62 + k * 6, 104, 72 + k * 4, 112], { ink: 'B', w: 0.6, smooth: true, taper: 'both', t: 0.8 });
+    // tubules
+    R.chain2(NEPH.prox, 8, 'Y', 0.5, { smooth: true }); R.chain2(NEPH.desc, 8, 'T', 0.4, { smooth: true }); R.chain2(NEPH.asc, 8, 'P', 0.38, { smooth: true });
+    R.chain2(NEPH.dct, 7, 'Y', 0.4, { smooth: true }); R.chain2(NEPH.cd, 10, 'T', 0.22, { smooth: true });
+    // peritubular capillaries and vasa recta
+    [[96, 128, 90, 150, 100, 170, 140, 176, 158, 190], [140, 150, 150, 170, 162, 188], [214, 206, 226, 212, 246, 202, 262, 186], [312, 160, 322, 170]].forEach(p => R.stroke(p, { ink: 'P', w: 1.1, smooth: true, taper: 'both', wob: 0.3, t: 0.8 }));
+    R.stroke([146, 204, 146, 330, 146, 410, 190, 442, 240, 410, 240, 330, 240, 214], { ink: 'P', w: 1.3, smooth: true, taper: 'both', wob: 0.3, t: 0.8 }); R.text('capillaries', 190, 456, 4, { al: 'c', ink: 'P' });
+    // flow arrows
+    R.arrow([176, 250, 176, 262], { ink: 'B', w: 1, hs: 3 }); R.arrow([204, 262, 204, 250], { ink: 'B', w: 1, hs: 3 }); R.arrow([340, 380, 340, 392], { ink: 'B', w: 1, hs: 3 });
+    R.text('to ureter', 340, 480, 4.2, { al: 'c' });
+    // water out of descending limb, Na+ out of ascending, water out of collecting duct
+    [240, 300, 360].forEach(y => R.arrow([170, y, 154, y], { ink: 'T', w: 1, hs: 2.4 }));
+    [250, 310, 370].forEach(y => R.arrow([210, y, 228, y], { ink: 'P', w: 1, hs: 2.4 }));
+    [250, 330, 410].forEach(y => R.arrow([334, y, 316, y], { ink: 'T', w: 1, hs: 2.4 }));
+    R.text('H_2O', 150, 234, 3.8, { al: 'r', ink: 'T' }); R.text('Na^+', 232, 304, 3.8, { al: 'l', ink: 'P' }); R.text('H_2O', 312, 332, 3.8, { al: 'r', ink: 'T' });
+    // ADH
+    tok(R, 300, 112, 'ADH', { r: 6.4, fi: 'T', ft: 0.1, size: 3.6 }); R.arrow([296, 119, 288, 148], { ink: 'B', w: 0.8, hs: 2.4 }); R.arrow([307, 112, 330, 112], { ink: 'B', w: 0.8, hs: 2.4 });
+    // number callouts
+    [[42, 98], [86, 160], [160, 310], [228, 360], [250, 166], [360, 300]].forEach(([x, y], i) => R.bubble(x, y, 5, String(i + 1), { ft: 0.28 }));
+    R.text('glomerulus', 76, 134, 4, { al: 'c' }); R.text('Bowman’s capsule', 80, 141, 4, { al: 'c' });
+    // legend list
+    R.line(442, 22, 442, 488, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    const items = [
+      ['glomerulus and Bowman’s capsule', 'high blood pressure forces water and small molecules out of the blood into the capsule: glomerular filtrate. Proteins and blood cells stay in the blood.'],
+      ['proximal convoluted tubule', 'reabsorbs all the glucose, and much of the water, back into the blood. Microvilli give a large surface area.'],
+      ['descending limb of the loop of Henle', 'permeable to water: water leaves by osmosis into the medulla, where the water potential is low.'],
+      ['ascending limb of the loop of Henle', 'impermeable to water; Na^+ ions are transported out, maintaining the Na^+ gradient in the medulla.'],
+      ['distal convoluted tubule', 'water is reabsorbed by osmosis; more when ADH is present.'],
+      ['collecting duct', 'water leaves by osmosis down the water potential gradient of the medulla (more with ADH). Urine passes to the ureter.'],
+    ];
+    let y = 34;
+    items.forEach((it, i) => {
+      R.bubble(454, y - 1.5, 4.4, String(i + 1), { ft: 0.28 });
+      R.text(it[0], 464, y, 4.5, { al: 'l', ink: 'P' });
+      const ls = wrapText(it[1], 190, 4.3); ls.forEach((ln, j) => R.text(ln, 464, y + 8.4 + j * 7.2, 4.3, { al: 'l' }));
+      y += 14 + ls.length * 7.2 + 8;
+    });
+    // formation of glomerular filtrate: the three-layer barrier
+    R.line(446, 282 - 6, 656, 282 - 6, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('ultrafiltration: the filtration barrier', 548, 288, 4.3, { al: 'c', ink: 'P' });
+    R.rect(452, 296, 124, 28, { ink: 'B', w: 0.8, fi: 'P', ft: 0.1, wob: 0.2 });
+    R.circle(472, 310, 8, { ink: 'B', w: 0.8, fi: 'P', ft: 0.6 }); R.circle(472, 310, 3, { ink: 'P', w: 0.7 }); R.circle(558, 304, 7.4, { ink: 'B', w: 0.8, fi: 'P', ft: 0.6 });
+    [[500, 306], [514, 316], [530, 306]].forEach(([x, y]) => R.circle(x, y, 3, { ink: 'B', w: 0.7, fi: 'B', ft: 0.7 }));
+    [[492, 316], [524, 300], [544, 318], [504, 298]].forEach(([x, y]) => R.circle(x, y, 1.2, { ink: 'B', w: 0.5, fi: 'Y', ft: 1 }));
+    R.line(452, 330, 576, 330, { ink: 'B', w: 1.4, taper: 'none' }); [472, 500, 530, 556].forEach(x => R.rect(x - 3, 328, 6, 4, { ink: '', fi: 'Y', ft: 0.1, w: 0, solid: false }));
+    R.rect(452, 334, 124, 7, { ink: 'B', w: 0.8, fi: 'T', ft: 0.3, wob: 0.15 });
+    [458, 486, 514, 542, 568].forEach(x => { R.rrect(x - 6, 346, 12, 8, 2, { ink: 'B', w: 0.8, fi: 'P', ft: 0.3, wob: 0.1 }); });
+    R.rect(452, 362, 124, 30, { ink: 'B', w: 0.8, fi: 'Y', ft: 0.08, wob: 0.2 });
+    [[496, 372], [516, 380], [538, 370], [480, 382]].forEach(([x, y]) => R.circle(x, y, 1.2, { ink: 'B', w: 0.5, fi: 'Y', ft: 1 }));
+    [[492, 318, 492, 366], [524, 318, 524, 366], [544, 318, 544, 366]].forEach(p => R.arrow(p, { ink: 'B', w: 0.7, hs: 2.2 }));
+    R.text('blood in the glomerulus', 584, 306, 3.8, { al: 'l' }); R.text('capillary endothelium', 584, 331, 3.8, { al: 'l' }); R.text('(pores)', 584, 337, 3.4, { al: 'l' });
+    R.text('basement membrane', 584, 345, 3.8, { al: 'l' }); R.text('podocytes (slits)', 584, 354, 3.8, { al: 'l' }); R.text('inside Bowman’s capsule', 584, 380, 3.8, { al: 'l' });
+    ['small molecules pass through:', 'water, glucose, ions, urea.', 'blood cells and proteins stay in the blood.'].forEach((t, k) => R.text(t, 452, 408 + k * 7.4, 4, { al: 'l' }));
+    R.text('afferent arteriole is wider than the efferent,', 452, 436, 3.9, { al: 'l' }); R.text('so the pressure in the glomerulus is high.', 452, 443.5, 3.9, { al: 'l' });
+    R.text('filtrate flows 1 → 6', 552, 484, 4.4, { al: 'c' });
+  },
+  anim(A, sc) {
+    const p = A.ph(7), P = [NEPH.prox, NEPH.desc, NEPH.asc, NEPH.dct, NEPH.cd].flatMap(a => a);
+    const path = [[100, 118, 176, 190], [176, 190, 176, 400], [190, 420, 204, 400], [204, 400, 204, 200], [204, 200, 340, 150], [340, 112, 340, 460]];
+    const lens = path.map(s => Math.hypot(s[2] - s[0], s[3] - s[1])), tot = lens.reduce((a, b) => a + b, 0);
+    for (let k = 0; k < 5; k++) { let d = ((p + k / 5) % 1) * tot, i = 0; while (i < 5 && d > lens[i]) { d -= lens[i]; i++; } const s = path[i], u = d / lens[i]; A.dot(s[0] + (s[2] - s[0]) * u, s[1] + (s[3] - s[1]) * u, 2.2, 'P', 0.85, k); }
+  },
+});
+
+/* ---------- 3.6.4.3d Loop of Henle gradient, ADH at the collecting duct, loop length (big scene) ---------- */
+S({
+  id: '3.6.4.3d', num: '3.6.4.3', sub: 'Sodium ion gradient, ADH and aquaporins, and loop length', title: 'Control of blood water potential', topic: '3.6', slot: [2, 10], span: [2, 2], dna: 'mark', ao: 2,
+  covers: ['3.6.4.3.s5', '3.6.4.3.s6', '3.6.4.3.s7'],
+  card: {
+    text: 'The <b>loop of Henle</b> maintains a <b>gradient of sodium ions</b> in the medulla: the ascending limb is impermeable to water and actively transports Na⁺ out, so the medulla has a low water potential; the descending limb is permeable to water, which leaves by osmosis. Filtrate then reaches the <b>DCT</b> and <b>collecting duct</b>, where water is reabsorbed by osmosis down the water potential gradient into the medulla and the blood. <b>ADH</b> binds to receptors on the cells of the DCT and collecting duct, and <b>aquaporins</b> are inserted into their membranes, so more water is reabsorbed. Without ADH the walls are far less permeable and dilute urine is produced. Animals with a <b>longer loop of Henle</b> (e.g. those living in dry habitats) set up a steeper gradient and can produce more concentrated urine.',
+    terms: ['sodium ion gradient', 'water potential', 'osmosis', 'ADH', 'aquaporin', 'collecting duct', 'loop length', 'concentrated urine'],
+    skill: 'AO2 and MS 3.1: relate loop length to urine concentration', eq: null,
+    q: 'Predict the effect on urine of a mammal if the ascending limb of its loop of Henle stopped transporting sodium ions out.', a: 'The medulla would no longer have a low water potential, so less water would leave the descending limb and collecting duct; more water would stay in the filtrate and the urine would be less concentrated.'
+  },
+  draw(R, sc) {
+    // ---- A: the gradient, schematic ----
+    R.text('the loop of Henle sets up a sodium ion gradient', 164, 16, 4.6, { al: 'c' });
+    R.rrect(14, 28, 300, 208, 6, { ink: 'B', w: 1, fi: 'P', ft: 0.05, wob: 0.5 });
+    for (let k = 0; k < 7; k++) R.scatter(164, 44 + k * 27, 134, 10, 8 + k * 14, 0.6, { ink: 'P', t: 0.8 });
+    R.chain2([96, 34, 96, 200, 104, 218, 116, 218, 124, 200, 124, 34], 9, 'T', 0.2, { smooth: false });
+    R.chain2([262, 34, 262, 230], 11, 'T', 0.2, { smooth: false });
+    R.arrow([96, 38, 96, 56], { ink: 'B', w: 1, hs: 2.8 }); R.arrow([124, 56, 124, 38], { ink: 'B', w: 1, hs: 2.8 }); R.arrow([262, 38, 262, 56], { ink: 'B', w: 1, hs: 2.8 });
+    [120, 150, 180].forEach(y => R.arrow([88, y, 62, y], { ink: 'T', w: 1.2, hs: 3 })); [120, 150, 180].forEach(y => R.arrow([132, y, 158, y], { ink: 'P', w: 1.2, hs: 3 })); [120, 150, 180].forEach(y => R.arrow([254, y, 228, y], { ink: 'T', w: 1.2, hs: 3 }));
+    R.arrow([28, 44, 28, 214], { ink: 'P', w: 1.3, hs: 3.4 }); R.text('more Na^+, lower water potential', 22, 130, 3.8, { al: 'c', rot: -90 });
+    [['descending limb', 36, 66], ['permeable to water:', 36, 73], ['water leaves by', 36, 80], ['osmosis', 36, 87]].forEach(([t, x, y], i) => R.text(t, x, y, 3.8, { al: 'l', ink: i === 0 ? 'P' : 'B' }));
+    [['ascending limb', 134, 66], ['impermeable to water:', 134, 73], ['Na^+ transported out', 134, 80], ['(active transport)', 134, 87]].forEach(([t, x, y], i) => R.text(t, x, y, 3.8, { al: 'l', ink: i === 0 ? 'P' : 'B' }));
+    [['collecting duct', 196, 66], ['water leaves by', 196, 73], ['osmosis (more', 196, 80], ['with ADH)', 196, 87]].forEach(([t, x, y], i) => R.text(t, x, y, 3.8, { al: 'l', ink: i === 0 ? 'P' : 'B' }));
+    // ---- B: ADH at a collecting-duct cell ----
+    R.line(322, 14, 322, 488, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('ADH and a collecting duct cell', 490, 16, 4.6, { al: 'c' });
+    const cell = (y0, adh) => {
+      const x0 = 336, W = 308;
+      R.text(adh ? 'with ADH' : 'little ADH', x0, y0 - 4, 4.4, { al: 'l', ink: adh ? 'P' : 'T' });
+      R.rect(x0, y0, W, 16, { ink: 'B', w: 0, fi: 'T', ft: 0.14, solid: false }); R.text('filtrate in the collecting duct', x0 + W / 2, y0 + 10.5, 3.9, { al: 'c' });
+      R.rrect(x0, y0 + 18, W, 84, 8, { ink: 'B', w: 1.2, fi: 'P', ft: 0.05, wob: 0.4 });
+      R.rect(x0, y0 + 104, W, 16, { ink: 'B', w: 0, fi: 'P', ft: 0.18, solid: false }); R.text('medulla: low water potential', x0 + W / 2, y0 + 114.5, 3.9, { al: 'c' });
+      R.ellipse(x0 + 70, y0 + 70, 22, 14, { ink: 'B', w: 0.9, fi: 'B', ft: 0.12, wob: 0.3 });
+      if (adh) {
+        for (let k = 0; k < 6; k++) { const ax = x0 + 100 + k * 34; R.rrect(ax - 3.4, y0 + 15.5, 2.4, 6, 0.8, { ink: 'B', w: 0.6, fi: 'P', ft: 0.9 }); R.rrect(ax + 1, y0 + 15.5, 2.4, 6, 0.8, { ink: 'B', w: 0.6, fi: 'P', ft: 0.9 }); R.arrow([ax, y0 + 8, ax, y0 + 30], { ink: 'T', w: 1.2, hs: 2.8 }); R.arrow([ax, y0 + 38, ax, y0 + 100], { ink: 'T', w: 1.2, hs: 2.8 }); }
+        R.vesicle(x0 + 130, y0 + 60, 7.5, { dots: 3, dink: 'P' }); R.arrow([x0 + 130, y0 + 52, x0 + 130, y0 + 40], { ink: 'B', w: 0.9, hs: 2.4 });
+        R.memProtein(x0 + 282, y0 + 102, 0, 'receptor', { gap: 2, s: 0.9 }); tok(R, x0 + 282, y0 + 136, 'ADH', { r: 6, fi: 'T', ft: 0.1, size: 3.4 }); R.arrow([x0 + 282, y0 + 129, x0 + 282, y0 + 118], { ink: 'B', w: 0.9, hs: 2.4 });
+        R.text('ADH binds to a receptor;', x0 + 270, y0 + 130, 3.7, { al: 'r' }); R.text('vesicles carry aquaporins', x0 + 270, y0 + 50, 3.7, { al: 'r' });
+        R.text('to the membrane', x0 + 270, y0 + 56, 3.7, { al: 'r' });
+        R.text('more water leaves by osmosis: small volume of concentrated urine', x0, y0 + 140, 3.9, { al: 'l', ink: 'P' });
+      } else {
+        R.text('few water channels (aquaporins) in the membrane:', x0 + 170, y0 + 54, 3.9, { al: 'c' }); R.text('little water leaves by osmosis', x0 + 170, y0 + 62, 3.9, { al: 'c' });
+        R.text('large volume of dilute urine', x0, y0 + 140, 3.9, { al: 'l', ink: 'T' });
+      }
+    };
+    cell(48, false); cell(236, true);
+    // summary chain
+    R.line(332, 396, 646, 396, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('negative feedback in the kidney', 490, 410, 4.4, { al: 'c' });
+    [['water potential', 'of blood falls'], ['more ADH', 'released'], ['more', 'aquaporins'], ['more water', 'reabsorbed']].forEach((b, i) => { const x = 336 + i * 78; R.rrect(x, 420, 70, 34, 4, { ink: 'B', w: 0.8, fi: i === 3 ? 'T' : 'Y', ft: i === 3 ? 0.08 : 0.14, wob: 0.3 }); b.forEach((t, j) => R.text(t, x + 35, 434 + j * 7, 3.8, { al: 'c' })); if (i < 3) R.arrow([x + 71, 437, x + 77, 437], { ink: 'B', w: 0.8, hs: 2 }); });
+    R.text('water potential of the blood rises back towards normal', 490, 470, 3.9, { al: 'c', ink: 'P' });
+    // ---- C: loop length and urine concentration ----
+    R.line(14, 244, 314, 244, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    R.text('different loop lengths, different urine', 164, 258, 4.4, { al: 'c' });
+    [[40, 36, 'short', 0.25], [128, 80, 'medium', 0.5], [216, 140, 'long', 0.9]].forEach(([x, L, name, bar]) => {
+      R.chain2([x, 270, x, 270 + L, x + 10, 270 + L + 6, x + 20, 270 + L, x + 20, 270], 4.6, 'T', 0.25, { smooth: false });
+      R.text(name + ' loop', x + 10, 270 + L + 18, 3.8, { al: 'c' });
+      R.rect(x + 34, 456 - bar * 100, 18, bar * 100, { ink: 'B', w: 0.8, fi: 'P', ft: 0.15 + bar * 0.5, wob: 0.15 });
+    });
+    R.text('maximum urine concentration (relative)', 164, 472, 3.9, { al: 'c' });
+    R.line(18, 458, 310, 458, { ink: 'B', w: 0.8, taper: 'none' });
+  },
+  anim(A, sc) { const p = A.ph(4); for (let k = 0; k < 3; k++) { const u = (p + k / 3) % 1; A.dot(436 + k * 34, 290 + u * 60, 1.8, 'T', 0.9, k); } },
+});
+
+/* ---------- 3.6.4.3e Proximal convoluted tubule cell: structure and reabsorption ---------- */
+S({
+  id: '3.6.4.3e', num: '3.6.4.3', sub: 'Proximal convoluted tubule: reabsorption of glucose and water', title: 'Control of blood water potential', topic: '3.6', slot: [3, 9], dna: 'mark', ao: 2,
+  covers: ['3.6.4.3.s5'],
+  card: {
+    text: 'The wall of the <b>proximal convoluted tubule</b> is a single layer of epithelial cells with <b>microvilli</b> (a large surface area) facing the filtrate and many <b>mitochondria</b> to supply ATP. Sodium ions are actively transported out of the cell into the blood, giving a low Na⁺ concentration inside the cell. Glucose then enters from the filtrate by <b>co-transport</b> with sodium ions and leaves into the blood by facilitated diffusion. The lowered water potential of the cell and blood draws water in by <b>osmosis</b>. All the glucose is normally reabsorbed here, so none appears in the urine.',
+    terms: ['proximal convoluted tubule', 'microvilli', 'mitochondria', 'co-transport', 'active transport', 'facilitated diffusion', 'osmosis', 'reabsorption'],
+    skill: 'AO2: explain adaptations of a cell to its function', eq: null,
+    q: 'Why does the glucose concentration of urine normally stay at zero?', a: 'All the glucose in the filtrate is reabsorbed by co-transport and facilitated diffusion in the proximal convoluted tubule.'
+  },
+  draw(R, sc) {
+    R.text('wall of the proximal convoluted tubule', 160, 14, 4.2, { al: 'c' });
+    R.rect(12, 24, 296, 30, { ink: 'B', w: 0, fi: 'Y', ft: 0.12, solid: false }); R.text('filtrate (tubule lumen)', 160, 34, 3.8, { al: 'c' });
+    // epithelial cell
+    R.rrect(48, 56, 224, 104, 10, { ink: 'B', w: 1.3, fi: 'P', ft: 0.05, wob: 0.5 });
+    for (let k = 0; k < 12; k++) { const x = 58 + k * 17.4; R.stroke([x, 56, x, 48, x + 3, 42], { ink: 'B', w: 1.2, taper: 'end', wob: 0.15 }); R.rrect(x - 2, 44, 4, 12, 2, { ink: 'B', w: 0.7, fi: 'P', ft: 0.2, wob: 0.1 }); }
+    R.nucleus(172, 118, 24, 18, { pores: 4, chromatin: 12 });
+    [[84, 126], [96, 100], [236, 100], [244, 132]].forEach(([x, y]) => R.mito(x, y, 18, 8, 0));
+    R.rect(12, 164, 296, 22, { ink: 'B', w: 0, fi: 'P', ft: 0.2, solid: false }); R.text('blood capillary', 18, 178, 3.8, { al: 'l' });
+    // membrane proteins
+    const bl = R.bilayer([48, 57, 272, 57], { gap: 0, hr: 0.01, sp: 99, tail: 0.1, core: false, noHeads: true });
+    // apical co-transporters
+    [[88, 57], [150, 57], [212, 57]].forEach(([x]) => { R.memProtein(x, 57, 0, 'carrier', { gap: 2, s: 0.9 }); });
+    // basal Na/K pump and glucose carrier
+    R.memProtein(104, 160, 0, 'pump', { gap: 2, s: 0.9 }); R.memProtein(206, 160, 0, 'carrier', { gap: 2, s: 0.9 });
+    // tokens
+    glucTok(R, 88, 38, 3.4); tok(R, 100, 40, 'Na^+', { r: 4.2, fi: 'T', ft: 0.3, size: 3 }); R.arrow([90, 44, 90, 64], { ink: 'B', w: 0.9, hs: 2.4 });
+    glucTok(R, 150, 38, 3.4); tok(R, 162, 40, 'Na^+', { r: 4.2, fi: 'T', ft: 0.3, size: 3 }); R.arrow([152, 44, 152, 64], { ink: 'B', w: 0.9, hs: 2.4 });
+    R.text('co-transport', 120, 72, 3.6, { al: 'c', ink: 'P' });
+    tok(R, 104, 150, 'Na^+', { r: 4.2, fi: 'T', ft: 0.3, size: 3 }); R.arrow([104, 146, 104, 178], { ink: 'P', w: 1, hs: 2.6 }); R.text('Na^+ pumped out', 112, 180, 3.6, { al: 'l' });
+    glucTok(R, 206, 148, 3.4); R.arrow([206, 154, 206, 176], { ink: 'B', w: 0.9, hs: 2.4 }); R.text('facilitated diffusion', 214, 180, 3.6, { al: 'l' });
+    R.drop(246, 70, 3, { label: false }); R.drop(258, 82, 3, { label: false }); R.arrow([250, 90, 250, 150], { ink: 'T', w: 1, hs: 2.6 }); R.text('H_2O', 264, 118, 3.6, { al: 'l', ink: 'T' });
+    leader(R, 'microvilli', 72, 46, 28, 30, { size: 3.8, al: 'l' }); leader(R, 'mitochondria', 96, 100, 40, 90, { size: 3.8, al: 'l' });
+    R.line(12, 196, 308, 196, { ink: 'B', w: 0.5, t: 0.6, taper: 'none' });
+    ['large surface area (microvilli); water follows by osmosis', 'many mitochondria: ATP for the Na^+ pumps', 'all glucose reabsorbed: none in the urine'].forEach((t, i) => R.text(t, 160, 208 + i * 9, 3.9, { al: 'c', ink: i === 2 ? 'P' : 'B' }));
+  },
+  anim(A, sc) { const p = A.ph(4); for (let k = 0; k < 2; k++) { const u = (p + k / 2) % 1; A.dot(88 + k * 62, 38 + u * 100, 1.6, 'Y', 0.95, k); } },
+});
+
 /* ===================== 99 MAIN ===================== */
 (function boot() {
   initPlates(); layoutSheet(); resize();
